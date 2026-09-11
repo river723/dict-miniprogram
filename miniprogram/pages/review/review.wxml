@@ -1,0 +1,51 @@
+<view class="page">
+  <!-- 完成态 -->
+  <view wx:if="{{finished}}" class="mg-card done">
+    <view class="done-title">本轮完成 🎉</view>
+    <view class="done-row">认识 <text class="ok">{{knownCount}}</text> · 不认识 <text class="bad">{{unknownCount}}</text></view>
+    <view class="mg-btn mg-btn-primary done-btn" bindtap="goBackHome">返回</view>
+  </view>
+
+  <!-- 卡片 -->
+  <block wx:elif="{{current}}">
+    <view class="progress mg-text-tertiary">{{index + 1}} / {{queue.length}}</view>
+
+    <view class="mg-card card" bindtap="onToggleReveal">
+      <view class="word">{{current.word}}</view>
+      <view wx:if="{{current.pronunciation_uk}}" class="phonetic mg-text-tertiary">UK /{{current.pronunciation_uk}}/</view>
+      <view wx:if="{{!revealed}}" class="hint mg-text-tertiary">点击卡片查看释义</view>
+      <view wx:else class="defs">
+        <view wx:for="{{current.definitions}}" wx:key="meaning" class="def">
+          <text class="pos">{{item.part_of_speech || item.pos}}</text>
+          <text>{{item.meaning}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI 解析 -->
+    <view wx:if="{{revealed}}" class="mg-card ai">
+      <view class="ai-head" bindtap="analyze">
+        <text>AI 解析</text>
+        <text class="mg-text-tertiary">{{analyzing ? '解析中…' : (analysis ? '已生成' : '展开 ›')}}</text>
+      </view>
+      <block wx:if="{{analysis}}">
+        <view wx:if="{{analysis.root_analysis}}" class="ai-block"><text class="ai-label">词根</text>{{analysis.root_analysis}}</view>
+        <view wx:if="{{analysis.memory_tip}}" class="ai-block"><text class="ai-label">记忆</text>{{analysis.memory_tip}}</view>
+        <view wx:for="{{analysis.obscure_meanings}}" wx:key="obscure" class="ai-block obscure">
+          <text class="ai-label">僻义</text>{{item.familiar}} → {{item.obscure}}（{{item.example}}）
+        </view>
+        <view wx:if="{{analysis.raw}}" class="ai-block">{{analysis.raw}}</view>
+      </block>
+    </view>
+
+    <view class="actions">
+      <view class="mg-btn act unknown" data-known="0" bindtap="answer">不认识</view>
+      <view class="mg-btn act known" data-known="1" bindtap="answer">认识</view>
+    </view>
+  </block>
+
+  <view wx:else class="mg-card done">
+    <view class="done-title">暂无{{mode === 'new' ? '新词' : '到期复习词'}}</view>
+    <view class="done-btn mg-btn mg-btn-outline" bindtap="goBackHome">返回</view>
+  </view>
+</view>

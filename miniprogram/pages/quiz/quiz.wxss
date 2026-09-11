@@ -1,0 +1,12 @@
+.page { padding: 32rpx; }
+.center { text-align: center; padding: 96rpx 32rpx; }
+.big { font-size: 96rpx; margin-bottom: 24rpx; }
+.score { font-size: 96rpx; font-weight: 700; color: var(--mg-primary); margin-bottom: 24rpx; }
+.wrong-line { margin-bottom: 32rpx; }
+.again { margin: 0 64rpx; }
+.progress { text-align: center; margin-bottom: 16rpx; }
+.q { font-size: 32rpx; font-weight: 600; margin-bottom: 8rpx; }
+.hint { margin-bottom: 24rpx; }
+.opt { padding: 24rpx; border: 1rpx solid var(--mg-hairline); border-radius: 16rpx; margin-bottom: 16rpx; }
+.opt.right { background: var(--mg-primary-light); border-color: var(--mg-success); color: var(--mg-primary-dark); font-weight: 600; }
+.opt.wrong { background: var(--mg-danger-light); border-color: var(--mg-danger); color: var(--mg-danger); }

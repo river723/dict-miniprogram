@@ -1,0 +1,11 @@
+.page { padding: 32rpx; display: flex; flex-direction: column; gap: 24rpx; }
+.head { text-align: center; padding: 48rpx 32rpx; }
+.w { font-size: 64rpx; font-weight: 700; }
+.meta { margin: 8rpx 0 32rpx; }
+.defs { text-align: left; }
+.def { margin-bottom: 12rpx; }
+.pos { color: var(--mg-primary); font-style: italic; margin-right: 16rpx; }
+.ai-head { display: flex; justify-content: space-between; font-weight: 600; }
+.ai-block { margin-top: 16rpx; font-size: 26rpx; color: var(--mg-text-2); }
+.lb { color: var(--mg-accent); font-weight: 600; margin-right: 12rpx; }
+.del { margin-top: 24rpx; }

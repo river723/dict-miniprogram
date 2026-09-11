@@ -1,0 +1,15 @@
+<view class="page" wx:if="{{story}}">
+  <view class="mg-card">
+    <view class="title">{{story.title}}</view>
+    <view class="content" user-select>{{story.content}}</view>
+    <view wx:if="{{story.words && story.words.length}}" class="words">
+      <text wx:for="{{story.words}}" wx:key="*this" class="mg-tag w">{{item}}</text>
+    </view>
+  </view>
+  <view class="mg-btn mg-btn-outline" bindtap="toggleTranslation">
+    {{showTranslation ? '隐藏' : '查看'}}全文翻译
+  </view>
+  <view wx:if="{{showTranslation && story.translation}}" class="mg-card trans">
+    {{story.translation}}
+  </view>
+</view>

@@ -1,0 +1,7 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty mg-text-tertiary">加载中…</view>
+  <view wx:for="{{list}}" wx:key="id" class="mg-card item" data-id="{{item.id}}" bindtap="go">
+    <text class="title">{{item.title}}</text>
+    <text class="mg-text-tertiary">›</text>
+  </view>
+</view>

@@ -1,0 +1,13 @@
+<view class="page" wx:if="{{stats}}">
+  <view class="mg-card head">
+    <view class="avatar">M</view>
+    <view class="nums">
+      <text>生词本 {{stats.totalWords}}</text>
+      <text>已学 {{stats.learnedWords}}</text>
+      <text>已掌握 {{stats.masteredWords}}</text>
+    </view>
+  </view>
+  <view class="mg-card row" bindtap="goStats"><text>学习统计</text><text class="mg-text-tertiary">›</text></view>
+  <view class="mg-card row" bindtap="goSettings"><text>学习设置</text><text class="mg-text-tertiary">›</text></view>
+  <view class="mg-card row" bindtap="syncNow"><text>立即云同步</text><text class="mg-text-tertiary">›</text></view>
+</view>

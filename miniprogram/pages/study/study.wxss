@@ -1,0 +1,14 @@
+.page { padding: 32rpx; display: flex; flex-direction: column; gap: 24rpx; }
+
+.hero { text-align: center; padding: 64rpx 32rpx; }
+.hero-title { font-size: 34rpx; font-weight: 600; margin-bottom: 16rpx; }
+.hero-num { font-size: 112rpx; line-height: 128rpx; font-weight: 700; color: var(--mg-primary); }
+
+.grid { display: flex; gap: 24rpx; }
+.grid-item { flex: 1; text-align: center; padding: 40rpx 24rpx; }
+.grid-num { font-size: 72rpx; font-weight: 700; line-height: 96rpx; }
+.grid-num.new { color: var(--mg-primary); }
+.grid-num.due { color: var(--mg-accent); }
+.grid-label { margin: 8rpx 0 16rpx; }
+
+.link-row { display: flex; justify-content: space-between; align-items: center; }

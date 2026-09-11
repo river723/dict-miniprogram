@@ -1,0 +1,6 @@
+.page { padding: 32rpx; display: flex; flex-direction: column; gap: 24rpx; }
+.title { font-size: 36rpx; font-weight: 700; margin-bottom: 24rpx; }
+.content { font-size: 28rpx; line-height: 52rpx; text-align: justify; }
+.words { margin-top: 32rpx; display: flex; flex-wrap: wrap; gap: 12rpx; }
+.w { background: var(--mg-primary-light); color: var(--mg-primary-dark); }
+.trans { font-size: 26rpx; line-height: 46rpx; color: var(--mg-text-2); }

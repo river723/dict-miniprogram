@@ -1,0 +1,92 @@
+/**
+ * 全局样式 —— 设计 token 的 WXSS 变量化（与 tokens.js 对应）。
+ * 页面通过 @import "/theme/theme.wxss"; 后使用 var(--mg-primary) 等。
+ */
+page {
+  --mg-primary: #2E5E4E;
+  --mg-primary-dark: #234B3E;
+  --mg-primary-light: #E6EFEB;
+  --mg-accent: #C2603A;
+  --mg-accent-dark: #9A4A2A;
+  --mg-accent-light: #F6E5DC;
+  --mg-success: #3F7A5C;
+  --mg-danger: #B5462E;
+  --mg-danger-light: #F6E5DC;
+  --mg-bg: #F4F0E8;
+  --mg-surface: #FFFFFF;
+  --mg-surface-alt: #FAF7F1;
+  --mg-border: #E0DDD4;
+  --mg-hairline: #E5E0D6;
+  --mg-text: #1A1D1B;
+  --mg-text-2: #5C605C;
+  --mg-text-3: #8A8E89;
+
+  --mg-radius-sm: 8rpx;
+  --mg-radius-md: 16rpx;
+  --mg-radius-lg: 24rpx;
+  --mg-radius-xl: 32rpx;
+
+  --mg-gap-xs: 8rpx;
+  --mg-gap-sm: 16rpx;
+  --mg-gap-md: 24rpx;
+  --mg-gap-lg: 32rpx;
+  --mg-gap-xl: 48rpx;
+
+  background: var(--mg-bg);
+  color: var(--mg-text);
+  font-size: 28rpx;
+  line-height: 44rpx;
+}
+
+/* 通用卡片 */
+.mg-card {
+  background: var(--mg-surface);
+  border-radius: var(--mg-radius-lg);
+  border: 1rpx solid var(--mg-hairline);
+  padding: var(--mg-gap-lg);
+  box-shadow: 0 4rpx 8rpx rgba(26, 29, 27, 0.06);
+}
+
+.mg-hairline-top {
+  border-top: 1rpx solid var(--mg-hairline);
+}
+
+/* 主按钮 / 次按钮 */
+.mg-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  border-radius: var(--mg-radius-md);
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.mg-btn-primary {
+  background: var(--mg-primary);
+  color: #fff;
+}
+.mg-btn-outline {
+  background: transparent;
+  color: var(--mg-primary);
+  border: 2rpx solid var(--mg-primary);
+}
+.mg-btn-danger {
+  background: var(--mg-danger);
+  color: #fff;
+}
+.mg-btn-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.mg-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2rpx 16rpx;
+  border-radius: var(--mg-radius-pill, 999rpx);
+  font-size: 22rpx;
+  line-height: 36rpx;
+}
+
+.mg-text-secondary { color: var(--mg-text-2); }
+.mg-text-tertiary { color: var(--mg-text-3); }

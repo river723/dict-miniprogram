@@ -1,0 +1,20 @@
+<view class="page" wx:if="{{stats}}">
+  <view class="grid">
+    <view class="mg-card g-item"><view class="n">{{stats.totalWords}}</view><view>生词本</view></view>
+    <view class="mg-card g-item"><view class="n">{{stats.learnedWords}}</view><view>已学习</view></view>
+    <view class="mg-card g-item"><view class="n ok">{{stats.masteredWords}}</view><view>已掌握</view></view>
+  </view>
+
+  <view class="mg-card">
+    <view class="sec-title">近 7 天学习量</view>
+    <view class="chart">
+      <view wx:for="{{trend}}" wx:key="date" class="col">
+        <view class="bar-wrap">
+          <view class="bar" style="height: {{item.height}}%"></view>
+        </view>
+        <view class="lbl">{{item.dayLabel}}</view>
+        <view class="rate mg-text-tertiary">{{item.rateLabel}}</view>
+      </view>
+    </view>
+  </view>
+</view>

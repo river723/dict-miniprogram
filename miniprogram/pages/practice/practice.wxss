@@ -1,0 +1,3 @@
+.page { padding: 32rpx; display: flex; flex-direction: column; gap: 24rpx; }
+.entry { padding: 40rpx 32rpx; }
+.e-title { font-size: 34rpx; font-weight: 600; margin-bottom: 8rpx; }

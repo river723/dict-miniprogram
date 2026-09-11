@@ -1,0 +1,29 @@
+<view class="page">
+  <view wx:if="{{generating}}" class="mg-card center">
+    <view class="big">🧠</view>
+    <view>AI 正在出题…（约 30s，10 题含题干翻译）</view>
+  </view>
+
+  <view wx:elif="{{finished}}" class="mg-card center">
+    <view class="score">{{correctCount}} / {{questions.length}}</view>
+    <view wx:if="{{wrongWords.length}}" class="mg-text-secondary wrong-line">
+      错题词：{{wrongWords.join('、')}}（已记入错题本）
+    </view>
+    <view class="mg-btn mg-btn-primary again" bindtap="onLoad">再来一组</view>
+  </view>
+
+  <block wx:elif="{{questions.length}}">
+    <view class="progress mg-text-tertiary">{{index + 1}} / {{questions.length}}</view>
+    <view class="mg-card">
+      <view class="q">{{questions[index].question}}</view>
+      <view wx:if="{{questions[index].translation_hint}}" class="mg-text-tertiary hint">
+        {{questions[index].translation_hint}}
+      </view>
+      <view wx:for="{{questions[index].options}}" wx:key="*this"
+            class="opt {{selected === index ? (index === questions[index].answer ? 'right' : 'wrong') : ''}}"
+            data-idx="{{index}}" bindtap="select">
+        {{'ABCD'[index]}}. {{item}}
+      </view>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,18 @@
+<view class="page">
+  <view class="mg-card entry" bindtap="goQuiz">
+    <view class="e-title">AI 出题练习</view>
+    <view class="mg-text-secondary">基于生词本智能生成选择题，即时判分入库</view>
+  </view>
+  <view class="mg-card entry" bindtap="goWrong">
+    <view class="e-title">错题本</view>
+    <view class="mg-text-secondary">做对 3 次自动移出，专攻薄弱词</view>
+  </view>
+  <view class="mg-card entry" bindtap="goExams">
+    <view class="e-title">真题套卷</view>
+    <view class="mg-text-secondary">历年考研英语真题阅读，按套练习</view>
+  </view>
+  <view class="mg-card entry" bindtap="goStories">
+    <view class="e-title">故事阅读</view>
+    <view class="mg-text-secondary">目标词融入短文，语境记忆</view>
+  </view>
+</view>

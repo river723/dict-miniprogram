@@ -1,0 +1,44 @@
+<view class="page">
+  <view class="tabs">
+    <view class="tab {{tab === 'mine' ? 'on' : ''}}" data-tab="mine" bindtap="switchTab">我的生词本（{{myWords.length}}）</view>
+    <view class="tab {{tab === 'dict' ? 'on' : ''}}" data-tab="dict" bindtap="switchTab">词库查询</view>
+  </view>
+
+  <!-- 我的生词本 -->
+  <block wx:if="{{tab === 'mine'}}">
+    <view wx:for="{{myWords}}" wx:key="id" class="mg-card word-row" data-idx="{{index}}" bindtap="goDetail">
+      <view class="word-main">
+        <text class="word">{{item.word}}</text>
+        <text wx:if="{{item.frequency}}" class="mg-tag freq">考频 {{item.frequency}}</text>
+      </view>
+      <view class="mg-text-secondary def-line">
+        {{item.definitions.length ? (item.definitions[0].part_of_speech || item.definitions[0].pos || '') + ' ' + item.definitions[0].meaning : '暂无释义'}}
+      </view>
+    </view>
+    <view wx:if="{{myWords.length === 0}}" class="empty mg-text-tertiary">
+      生词本为空，去「词库查询」添加，或由自动配词补足
+    </view>
+  </block>
+
+  <!-- 词库查询 -->
+  <block wx:else>
+    <view class="search-bar">
+      <input class="search-input" placeholder="输入单词，如 abandon" value="{{keyword}}"
+             confirm-type="search" bindinput="onKeyword" bindconfirm="searchDict" />
+      <view class="mg-btn mg-btn-primary search-btn" bindtap="searchDict">
+        {{searching ? '查询中' : '查询'}}
+      </view>
+    </view>
+    <view wx:for="{{dictWords}}" wx:key="word_id" class="mg-card word-row">
+      <view class="word-main">
+        <text class="word">{{item.word}}</text>
+        <text wx:if="{{item.frequency}}" class="mg-tag freq">考频 {{item.frequency}}</text>
+      </view>
+      <view class="mg-text-secondary def-line">
+        {{item.definitions.length ? item.definitions[0].meaning : ''}}
+      </view>
+      <view class="add-btn" data-idx="{{index}}" bindtap="addFromDict">+ 加入生词本</view>
+    </view>
+    <view wx:if="{{!searching && keyword && dictWords.length === 0}}" class="empty mg-text-tertiary">未查询到结果</view>
+  </block>
+</view>

@@ -1,0 +1,14 @@
+{
+  "name": "memo-grad-miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "import:worddict": "node scripts/import-worddict.mjs",
+    "upload:content": "node scripts/upload-content.mjs"
+  },
+  "devDependencies": {
+    "@cloudbase/node-sdk": "^4.0.0",
+    "miniprogram-ci": "^2.1.0"
+  }
+}

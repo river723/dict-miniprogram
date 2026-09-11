@@ -1,0 +1,12 @@
+<view class="page">
+  <view wx:for="{{list}}" wx:key="id" class="mg-card item">
+    <view class="head">
+      <text class="w">{{item.wordText}}</text>
+      <text class="mg-tag count">错 {{item.wrong_count}} 次 · 对 {{item.mastery_count}}/3</text>
+    </view>
+    <view class="mg-text-secondary q" wx:if="{{item.question}}">{{item.question}}</view>
+    <view class="mg-text-secondary def">{{item.definition}}</view>
+    <view class="ok-btn" data-idx="{{index}}" bindtap="markCorrect">✓ 这次做对了</view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty mg-text-tertiary">错题本是空的，去练习吧</view>
+</view>

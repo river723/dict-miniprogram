@@ -1,0 +1,38 @@
+{
+  "pages": [
+    "pages/study/study",
+    "pages/wordbook/wordbook",
+    "pages/practice/practice",
+    "pages/profile/profile",
+    "pages/review/review",
+    "pages/word-detail/word-detail",
+    "pages/quiz/quiz",
+    "pages/wrong-questions/wrong-questions",
+    "pages/exam-list/exam-list",
+    "pages/exam-practice/exam-practice",
+    "pages/story-list/story-list",
+    "pages/story-read/story-read",
+    "pages/stats/stats",
+    "pages/settings/settings"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#F4F0E8",
+    "navigationBarTitleText": "MemoGrad 考研词汇",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F4F0E8"
+  },
+  "tabBar": {
+    "color": "#8A8E89",
+    "selectedColor": "#2E5E4E",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/study/study", "text": "学习" },
+      { "pagePath": "pages/wordbook/wordbook", "text": "词库" },
+      { "pagePath": "pages/practice/practice", "text": "练习" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,4 @@
+.page { padding: 32rpx; }
+.row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.sub { font-size: 24rpx; margin-top: 4rpx; }
+.picker { color: var(--mg-primary); font-weight: 600; }

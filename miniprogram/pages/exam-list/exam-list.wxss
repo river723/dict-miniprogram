@@ -1,0 +1,4 @@
+.page { padding: 32rpx; }
+.item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.title { font-size: 30rpx; font-weight: 600; }
+.empty { text-align: center; padding: 96rpx 32rpx; }

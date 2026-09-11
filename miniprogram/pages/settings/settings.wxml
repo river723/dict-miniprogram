@@ -1,0 +1,18 @@
+<view class="page" wx:if="{{settings}}">
+  <view class="mg-card row">
+    <view>
+      <view>自动配词</view>
+      <view class="mg-text-tertiary sub">每天按考频自动补足生词本</view>
+    </view>
+    <switch checked="{{settings.autoAddNewWords}}" bindchange="onAutoAddChange" color="#2E5E4E" />
+  </view>
+  <view class="mg-card row">
+    <view>
+      <view>每日新词数</view>
+      <view class="mg-text-tertiary sub">当前 {{settings.dailyNewWords}} 个/天</view>
+    </view>
+    <picker range="{{dailyOptions}}" bindchange="onDailyChange">
+      <view class="picker">调整 ›</view>
+    </picker>
+  </view>
+</view>

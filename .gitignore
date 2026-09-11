@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.local
+# 小程序上传私钥，绝不入库
+private.*.key

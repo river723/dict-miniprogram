@@ -1,0 +1,26 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty mg-text-tertiary">加载中…</view>
+  <block wx:elif="{{exam}}">
+    <view wx:for="{{sections}}" wx:key="key" class="mg-card sec">
+      <view class="sec-head" data-key="{{item.key}}" bindtap="toggle">
+        <text class="sec-title">{{item.label}}（{{item.items.length}} 篇）</text>
+        <text class="mg-text-tertiary">{{openSection === item.key ? '收起' : '展开'}}</text>
+      </view>
+      <block wx:if="{{openSection === item.key}}">
+        <view wx:for="{{item.items}}" wx:for-item="passage" wx:key="id" class="passage">
+          <view class="p-title">{{passage.title || passage.id}}</view>
+          <text class="p-body" user-select>{{passage.passage || passage.content || passage.text || ''}}</text>
+          <view wx:if="{{passage.questions}}" class="qs">
+            <view wx:for="{{passage.questions}}" wx:for-item="q" wx:key="index" class="q">
+              <view>{{q.question || q.stem}}</view>
+              <view wx:for="{{q.options || q.choices || []}}" wx:for-item="opt" wx:key="*this" class="opt mg-text-secondary">
+                {{'ABCD'[index]}}. {{opt}}
+              </view>
+              <view class="ans" wx:if="{{q.answer}}">答案：{{q.answer}}</view>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+  </block>
+</view>

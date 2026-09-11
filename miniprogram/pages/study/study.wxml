@@ -1,0 +1,25 @@
+<view class="page">
+  <view class="mg-card hero">
+    <view class="hero-title">今日学习</view>
+    <view class="hero-num">{{todayStudied}}</view>
+    <view class="mg-text-tertiary">今日已学次数 · 累计 {{totalWords}} 词 / 掌握 {{masteredWords}} 词</view>
+  </view>
+
+  <view class="grid">
+    <view class="mg-card grid-item" bindtap="goNew">
+      <view class="grid-num new">{{newCount}}</view>
+      <view class="grid-label">待学新词</view>
+      <view class="grid-cta mg-text-secondary">开始学习 ›</view>
+    </view>
+    <view class="mg-card grid-item" bindtap="goReview">
+      <view class="grid-num due">{{dueCount}}</view>
+      <view class="grid-label">到期复习</view>
+      <view class="grid-cta mg-text-secondary">开始复习 ›</view>
+    </view>
+  </view>
+
+  <view class="mg-card link-row" bindtap="goStats">
+    <text>学习统计</text>
+    <text class="mg-text-tertiary">›</text>
+  </view>
+</view>
