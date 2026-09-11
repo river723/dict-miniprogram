@@ -1,5 +1,0 @@
-﻿icons: 166
-swatches: 27
-tabs: 8
-rows: 29
-unreplaced-placeholder: False

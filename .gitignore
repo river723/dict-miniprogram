@@ -8,3 +8,8 @@ dist/
 private.*.key
 # 控制台导入用的临时产物（可由 npm run export:jsonl 重新生成）
 import-data/
+
+# 构建/调试临时产物：.workbuddy 下划线临时文件、对比图、预览图（均可重新生成）
+.workbuddy/_*
+.workbuddy/grid_*.png
+.workbuddy/preview/
