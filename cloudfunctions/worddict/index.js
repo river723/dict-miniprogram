@@ -15,17 +15,15 @@ exports.main = async (event) => {
   try {
     switch (event.action) {
       case 'byLetter': {
+        // 热门字母（s/c/p…）可能远超 1000 条，必须分页取完，否则列表被静默截断
         const prefix = (event.prefix || 'a').toLowerCase();
-        const res = await db.collection(COL).where({ prefix }).limit(1000).get();
-        return { ok: true, words: res.data };
+        return { ok: true, ...(await fetchByPrefix(prefix)) };
       }
       case 'search': {
         const kw = (event.keyword || '').toLowerCase().trim();
         if (!kw) return { ok: true, words: [] };
         const res = await db.collection(COL)
-          .where(_.or([
-            { word: db.RegExp({ regexp: `^${escapeRe(kw)}`, options: 'i' }) },
-          ]))
+          .where({ word: db.RegExp({ regexp: `^${escapeRe(kw)}`, options: 'i' }) })
           .limit(50)
           .get();
         return { ok: true, words: res.data };
@@ -56,3 +54,22 @@ exports.main = async (event) => {
 };
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const PAGE = 1000;
+const MAX_TOTAL = 5000; // 单个字母的保护上限，超出则认为数据异常并告知调用方
+
+/** 按字母前缀分页取全量，返回是否被截断（供 UI 提示）。 */
+async function fetchByPrefix(prefix) {
+  let skip = 0;
+  let words = [];
+  let truncated = false;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const res = await db.collection(COL).where({ prefix }).skip(skip).limit(PAGE).get();
+    words = words.concat(res.data);
+    if (res.data.length < PAGE) break;
+    skip += PAGE;
+    if (words.length >= MAX_TOTAL) { truncated = true; break; }
+  }
+  return { words, truncated };
+}

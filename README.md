@@ -24,9 +24,10 @@ scripts/              数据导入脚本（数据源 ../memo-grad/src/data/*.jso
 ## 首次部署
 
 1. 微信开发者工具导入本目录，`project.config.json` 中替换 `appid`，开通云开发
-2. 建云数据库集合：`words`、`study_records`、`study_plans`、`wrong_questions`、`user_settings`（仅创建者可读写）；`worddict`（所有用户可读 + `prefix` 索引）
-3. 部署全部云函数；`ai` 函数配置环境变量 `DEEPSEEK_API_KEY`（可选 `DEEPSEEK_MODEL`）
-4. 导入数据（本地执行，凭据为腾讯云 API 密钥）：
+2. 云环境 ID 写在 `miniprogram/constants/index.js` 的 `CLOUD_ENV`（当前 `cloud1-d6gfdnelqf7478e85`），换环境改这一处即可
+3. 建云数据库集合：`words`、`study_records`、`study_plans`、`wrong_questions`、`user_settings`（仅创建者可读写）；`worddict`（所有用户可读 + `prefix` 索引）；`content_files`（存「云存储路径 → fileID」映射，由 `upload-content` 写入，权限保持默认即可，云函数以服务端权限访问）
+4. 部署全部云函数；`ai` 函数配置环境变量 `DEEPSEEK_API_KEY`（可选 `DEEPSEEK_MODEL`）
+5. 导入数据（本地执行，凭据为腾讯云 API 密钥）：
 
 ```bash
 npm install

@@ -29,19 +29,38 @@ const read = (key, fallback) => {
 };
 const write = (key, val) => { mem[key] = val; try { wx.setStorageSync(key, val); } catch {} };
 
-/** 启动时从云端全量拉取（增量游标后续迭代，初期数据量小全量足够）。 */
+/**
+ * 启动时从云端全量拉取（增量游标后续迭代，初期数据量小全量足够）。
+ *
+ * 顺序很关键：必须先把本地未上推的写操作（脏队列）推上去，再用云端覆盖本地，
+ * 否则离线新增/修改的数据会在这一刻被直接抹掉。
+ */
 async function pullAll() {
+  await flushDirty();
+  // 仍有没推出去的（如当前无网络）：这些 id 在覆盖时以本地为准，避免静默丢数据
+  const pending = new Map(read(K.dirty, []).map((it) => [it.doc && it.doc.id, true]));
+  pending.delete(undefined);
   try {
     const res = await callCloud('words', { action: 'pullAll' });
-    write(K.words, res.words || []);
-    write(K.records, res.records || []);
-    write(K.plans, res.plans || []);
-    write(K.wrong, res.wrongQuestions || []);
-    if (res.settings) write(K.settings, res.settings);
+    write(K.words, mergeKeepingLocal(res.words || [], getWords(), pending));
+    write(K.records, mergeKeepingLocal(res.records || [], getStudyRecords(), pending));
+    write(K.plans, mergeKeepingLocal(res.plans || [], getStudyPlans(), pending));
+    write(K.wrong, mergeKeepingLocal(res.wrongQuestions || [], getWrongQuestions(), pending));
+    if (res.settings && pending.size === 0) write(K.settings, res.settings);
   } catch (e) {
     console.warn('[storage] 云端拉取失败，使用本地缓存', e);
   }
 }
+
+/** 云端文档为准，但 id 命中脏队列的用本地版本（云端还没收到，覆盖会丢数据）。 */
+const mergeKeepingLocal = (serverDocs, localDocs, pending) => {
+  const byId = new Map();
+  for (const d of serverDocs) if (d && d.id) byId.set(d.id, d);
+  for (const d of localDocs) {
+    if (d && d.id && (pending.has(d.id) || !byId.has(d.id))) byId.set(d.id, d);
+  }
+  return [...byId.values()];
+};
 
 // ---------- Words ----------
 const getWords = () => read(K.words, []).filter((w) => !w.deleted);

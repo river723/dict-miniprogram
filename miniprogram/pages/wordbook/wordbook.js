@@ -30,7 +30,13 @@ Page({
     try {
       const res = await searchWorddict({ prefix: kw[0], keyword: kw });
       const kwRe = new RegExp(`^${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
-      this.setData({ dictWords: (res.words || []).filter((w) => kwRe.test(w.word)) });
+      const words = (res.words || []).filter((w) => kwRe.test(w.word));
+      this.setData({ dictWords: words });
+      if (res.truncated) {
+        wx.showToast({ title: '结果过多，已截断', icon: 'none' });
+      } else if (words.length === 0) {
+        wx.showToast({ title: '词库中未找到', icon: 'none' });
+      }
     } catch (e) {
       wx.showToast({ title: '查询失败', icon: 'none' });
     } finally {

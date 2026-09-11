@@ -16,7 +16,10 @@ const loadCache = () => {
   return cache;
 };
 
-/** 全量刷新（自动配词候选池用），带本地缓存。 */
+/**
+ * 词库查询：keyword 走服务端正则前缀查询（search），无 keyword 才按整字母取（byLetter）。
+ * 两者都已在云函数侧分页取全量，避免 limit(1000) 静默截断。
+ */
 export async function searchWorddict({ all = false, prefix = '', keyword = '' } = {}) {
   if (all) {
     if (loadCache() && cache.length > 0) return cache;
@@ -28,7 +31,12 @@ export async function searchWorddict({ all = false, prefix = '', keyword = '' } 
     } catch {}
     return cache;
   }
-  return callCloud('worddict', { action: 'byLetter', prefix, keyword });
+  if (keyword) {
+    const res = await callCloud('worddict', { action: 'search', keyword });
+    return { words: res.words || [], truncated: false };
+  }
+  const res = await callCloud('worddict', { action: 'byLetter', prefix });
+  return { words: res.words || [], truncated: !!res.truncated };
 }
 
 export const worddictCacheStale = () => {

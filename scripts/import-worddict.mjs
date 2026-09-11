@@ -57,12 +57,17 @@ for (let i = 0; i < entries.length && imported < limit; i += BATCH) {
     .get();
   const existSet = new Set(existRes.data.map((d) => d.word_id));
 
-  for (const doc of docs) {
-    if (existSet.has(doc.word_id)) { skipped++; continue; }
-    if (imported >= limit) break;
-    await db.collection('worddict').add(doc);
-    imported++;
+  // 批量写：一次 add 一个数组（SDK 支持 Object | Object[]），比逐条快两个数量级
+  const todo = docs.filter((d) => !existSet.has(d.word_id));
+  if (limit < Infinity) {
+    const room = limit - imported;
+    todo.splice(Math.max(0, room));
   }
+  if (todo.length > 0) {
+    await db.collection('worddict').add(todo);
+    imported += todo.length;
+  }
+  skipped += docs.length - todo.length;
   console.log(`进度 ${Math.min(i + BATCH, entries.length)}/${entries.length}（新增 ${imported} / 跳过 ${skipped}）`);
 }
 
