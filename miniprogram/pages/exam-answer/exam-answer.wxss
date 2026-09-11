@@ -1,0 +1,226 @@
+/* 整页固定高度：进度条 + 可滚动题目区 + 底部操作条 */
+.ea {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ---------- 空态 ---------- */
+.ea__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64rpx 48rpx;
+}
+
+.ea__empty-text {
+  margin-top: 24rpx;
+  font-size: 30rpx;
+  color: var(--mg-text-3);
+}
+
+.ea__empty-btn { width: 100%; margin-top: 40rpx; }
+
+/* ---------- 顶部进度 ---------- */
+.ea__bar {
+  flex-shrink: 0;
+  padding: 24rpx 32rpx 20rpx;
+  background: var(--mg-surface);
+  border-bottom: 1rpx solid var(--mg-outline);
+}
+
+.ea__bar-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14rpx;
+}
+
+.ea__bar-index {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.ea__bar-acc {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--mg-primary);
+}
+
+.ea__bar-track {
+  height: 6rpx;
+  border-radius: 4rpx;
+  background: var(--mg-outline);
+  overflow: hidden;
+}
+
+.ea__bar-fill {
+  height: 100%;
+  background: var(--mg-primary);
+  transition: width 0.3s ease;
+}
+
+/* ---------- 题目区 ---------- */
+.ea__scroll { flex: 1; min-height: 0; }
+
+.ea__card {
+  margin: 32rpx 32rpx 0;
+  padding: 32rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-hairline);
+}
+
+.ea__scroll-space { height: 40rpx; }
+
+/* 题型标签 */
+.ea__tag {
+  align-self: flex-start;
+  padding: 6rpx 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.ea__tag--definition { background: var(--mg-primary-container); }
+.ea__tag--cloze { background: var(--mg-warning-light); }
+
+.ea__tag-text { font-size: 22rpx; font-weight: 600; }
+.ea__tag-text--definition { color: var(--mg-primary); }
+.ea__tag-text--cloze { color: var(--mg-warning); }
+
+/* 题干句子 */
+.ea__sentbox {
+  padding: 24rpx;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-bg);
+  border-left: 8rpx solid var(--mg-primary);
+  margin-bottom: 20rpx;
+}
+.ea__sentbox--warning { border-left-color: var(--mg-warning); }
+
+.ea__sentence {
+  font-size: 34rpx;
+  line-height: 54rpx;
+  color: var(--mg-text);
+}
+
+.ea__word {
+  color: var(--mg-primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.ea__blank {
+  color: var(--mg-primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.ea__prompt {
+  display: block;
+  font-size: 28rpx;
+  line-height: 42rpx;
+  color: var(--mg-text-2);
+  margin-bottom: 24rpx;
+}
+
+/* ---------- 选项 ---------- */
+.ea__options {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.opt {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16rpx;
+  min-height: 88rpx;
+  padding: 20rpx 24rpx;
+  background: var(--mg-surface);
+  border: 3rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-md);
+}
+
+.opt__letter {
+  flex-shrink: 0;
+  width: 44rpx;
+  margin-top: 2rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--mg-text-3);
+}
+
+.opt__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  line-height: 42rpx;
+  color: var(--mg-text);
+}
+
+.opt--selected {
+  border-color: var(--mg-primary);
+  background: var(--mg-primary-container);
+}
+.opt--selected .opt__letter,
+.opt--selected .opt__text { color: var(--mg-primary); font-weight: 600; }
+
+.opt--correct {
+  border-color: var(--mg-success);
+  background: var(--mg-success-light);
+}
+.opt--correct .opt__letter,
+.opt--correct .opt__text { color: var(--mg-success); font-weight: 600; }
+
+.opt--wrong {
+  border-color: var(--mg-danger);
+  background: var(--mg-danger-light);
+}
+.opt--wrong .opt__letter,
+.opt--wrong .opt__text { color: var(--mg-danger); font-weight: 600; }
+
+/* ---------- 底部操作条 ---------- */
+.ea__bottom {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: var(--mg-surface);
+  border-top: 1rpx solid var(--mg-outline);
+}
+
+.ea__verdict {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.ea__verdict--ok { color: var(--mg-success); }
+.ea__verdict--bad { color: var(--mg-danger); }
+
+.ea__hint {
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+}
+
+.ea__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.ea__skip {
+  font-size: 28rpx;
+  color: var(--mg-text-3);
+}

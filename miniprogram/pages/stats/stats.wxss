@@ -1,12 +1,224 @@
-.page { padding: 32rpx; display: flex; flex-direction: column; gap: 24rpx; }
-.grid { display: flex; gap: 16rpx; }
-.g-item { flex: 1; text-align: center; padding: 32rpx 0; font-size: 24rpx; color: var(--mg-text-2); }
-.n { font-size: 56rpx; font-weight: 700; color: var(--mg-primary); }
-.n.ok { color: var(--mg-success); }
-.sec-title { font-weight: 600; margin-bottom: 24rpx; }
-.chart { display: flex; align-items: flex-end; height: 320rpx; }
-.col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
-.bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
-.bar { width: 40rpx; background: var(--mg-primary); border-radius: 8rpx 8rpx 0 0; min-height: 4rpx; }
-.lbl { margin-top: 12rpx; font-size: 22rpx; }
-.rate { font-size: 20rpx; }
+.st {
+  padding-bottom: 48rpx;
+}
+
+.st-card {
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+/* ---------- 折线图 ---------- */
+.st-chart {
+  position: relative;
+  align-self: center;
+  margin: 0 auto;
+}
+
+.st-grid {
+  position: absolute;
+  height: 1rpx;
+  background: var(--mg-outline);
+  opacity: 0.4;
+}
+
+.st-avg {
+  position: absolute;
+  height: 0;
+  border-top: 1rpx dashed var(--mg-text-3);
+  opacity: 0.6;
+}
+
+.st-seg {
+  position: absolute;
+  height: 4rpx;
+  background: var(--mg-primary);
+  border-radius: 2rpx;
+  transform-origin: 0 50%;
+}
+
+.st-dot {
+  position: absolute;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--mg-primary);
+  border: 3rpx solid var(--mg-surface);
+  box-sizing: border-box;
+}
+
+.st-dot.is-off {
+  background: var(--mg-outline);
+}
+
+.st-xlabel {
+  position: absolute;
+  width: 48rpx;
+  text-align: center;
+  font-size: 22rpx;
+  font-weight: 500;
+  color: var(--mg-text-3);
+}
+
+/* ---------- 图例 ---------- */
+.st-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32rpx;
+}
+
+.st-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.st-swatch {
+  width: 24rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
+}
+
+.st-swatch--main { background: var(--mg-primary); }
+.st-swatch--avg { background: var(--mg-text-3); opacity: 0.5; }
+
+.st-legend__text {
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+}
+
+.st-strip {
+  margin-bottom: 32rpx;
+}
+
+/* ---------- 困难词 ---------- */
+.st-list {
+  padding: 8rpx 0;
+}
+
+.st-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid var(--mg-outline);
+}
+
+.st-row.is-last {
+  border-bottom: 0;
+}
+
+.st-row__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.st-row__word {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.st-row__sub {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+}
+
+/* ---------- Sparkline ---------- */
+.st-spark {
+  position: relative;
+  width: 112rpx;
+  height: 40rpx;
+  flex: none;
+}
+
+.st-spark__seg {
+  position: absolute;
+  height: 3rpx;
+  background: var(--mg-danger);
+  border-radius: 2rpx;
+  transform-origin: 0 50%;
+}
+
+.st-spark__dot {
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--mg-danger);
+}
+
+.st-spark__dot.is-off {
+  background: var(--mg-outline);
+}
+
+.st-hint {
+  padding: 48rpx 32rpx;
+}
+
+.st-hint__text {
+  display: block;
+  text-align: center;
+  font-size: 28rpx;
+  color: var(--mg-text-3);
+}
+
+.st-cta {
+  margin-bottom: 32rpx;
+}
+
+/* ---------- 里程碑 ---------- */
+.st-ms-list {
+  padding: 16rpx 32rpx;
+}
+
+.st-ms {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 0;
+}
+
+.st-ms.is-off {
+  opacity: 0.4;
+}
+
+.st-ms__badge {
+  width: 72rpx;
+  height: 72rpx;
+  flex: none;
+  border-radius: 50%;
+  background: var(--mg-outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.st-ms__badge.is-on {
+  background: var(--mg-primary-container);
+}
+
+.st-ms__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.st-ms__label {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.st-ms__hint {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+}

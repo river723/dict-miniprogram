@@ -1,0 +1,11 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-empty": "/components/mg-empty/index",
+    "mg-modal": "/components/mg-modal/index"
+  },
+  "navigationBarTitleText": "词条详情",
+  "navigationBarBackgroundColor": "#2E5E4E",
+  "navigationBarTextStyle": "white"
+}

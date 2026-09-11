@@ -1,0 +1,11 @@
+// WXML 的数据绑定只支持受限表达式：不能写 'ABCD'[index]、也不能调用方法。
+// 这类取值/格式化逻辑统一放这里，模板用 module 名调用（如 tools.optionLabel(oi)）。
+var LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+function optionLabel(index) {
+  return LETTERS[index] || '';
+}
+
+module.exports = {
+  optionLabel: optionLabel,
+};

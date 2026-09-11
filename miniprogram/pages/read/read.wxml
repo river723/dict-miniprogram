@@ -1,0 +1,137 @@
+<view class="mg-page read">
+
+  <!-- Hero -->
+  <view class="read__head">
+    <view class="hero">
+      <text class="hero__label">阅读中心</text>
+      <view class="hero__divider"></view>
+
+      <view class="hero__row">
+        <view class="hero__icon"><mg-icon name="book-open-variant" size="34" color="#FFFFFF" /></view>
+        <text class="hero__name">系列故事</text>
+        <text class="hero__val">共 {{heroChapters}} 章 · {{heroWords}} 词</text>
+      </view>
+
+      <view class="hero__row">
+        <view class="hero__icon"><mg-icon name="file-document-outline" size="34" color="#FFFFFF" /></view>
+        <text class="hero__name">趣味文章</text>
+        <text class="hero__val">已读 {{readArticles}}/{{articleCount}} · 进度 {{progressPct}}%</text>
+      </view>
+    </view>
+
+    <!-- 段切换 -->
+    <view class="seg">
+      <view
+        class="seg__item {{active === 'story' ? 'seg__item--on' : ''}}"
+        hover-class="mg-hover-soft"
+        data-key="story"
+        bindtap="switchSeg"
+      >
+        <mg-icon name="book-open-variant" size="32" color="{{active === 'story' ? '#2E5E4E' : '#8A8E89'}}" />
+        <text class="seg__label">系列故事</text>
+        <view class="seg__count"><text>{{heroChapters}}</text></view>
+      </view>
+
+      <view
+        class="seg__item {{active === 'article' ? 'seg__item--on' : ''}}"
+        hover-class="mg-hover-soft"
+        data-key="article"
+        bindtap="switchSeg"
+      >
+        <mg-icon name="file-document-outline" size="32" color="{{active === 'article' ? '#2E5E4E' : '#8A8E89'}}" />
+        <text class="seg__label">趣味文章</text>
+        <view class="seg__count"><text>{{articleCount}}</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ============ 系列故事 ============ -->
+  <block wx:if="{{active === 'story'}}">
+    <view wx:if="{{storyLoading}}" class="mg-loading">
+      <mg-icon name="refresh" size="64" color="#2E5E4E" />
+      <text style="margin-top:24rpx">加载中…</text>
+    </view>
+
+    <mg-empty
+      wx:elif="{{chapters.length === 0}}"
+      icon="book-open-variant"
+      title="暂无故事章节"
+      description="系列故事尚未发布，请稍后再来。"
+    />
+
+    <view wx:else class="list">
+      <view
+        wx:for="{{chapters}}"
+        wx:key="chapterId"
+        class="chapter"
+        hover-class="mg-hover-soft"
+        data-id="{{item.chapterId}}"
+        bindtap="openChapter"
+      >
+        <view class="chapter__row">
+          <view class="chapter__num"><text>第{{item.chapterId}}章</text></view>
+          <text class="chapter__title mg-serif">{{item.title}}</text>
+          <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+        </view>
+        <view class="chapter__meta">
+          <mg-icon name="text" size="26" color="#8A8E89" />
+          <text class="chapter__words">{{item.wordCount}} 词</text>
+          <text wx:if="{{item.themeLabel}}" class="mg-pill chapter__theme">{{item.themeLabel}}</text>
+        </view>
+      </view>
+      <view class="bottomspace"></view>
+    </view>
+  </block>
+
+  <!-- ============ 趣味文章 ============ -->
+  <block wx:else>
+    <mg-empty
+      wx:if="{{articles.length === 0}}"
+      icon="file-document-outline"
+      title="还没有文章"
+      description="用你的生词本生成一篇生动有趣的英文短文吧。"
+      action-label="生成文章"
+      bind:action="goGenerate"
+    />
+
+    <block wx:else>
+      <view class="list">
+        <view
+          wx:for="{{articles}}"
+          wx:for-item="art"
+          wx:key="id"
+          class="article"
+          hover-class="mg-hover-soft"
+          data-id="{{art.id}}"
+          bindtap="openArticle"
+        >
+          <view class="article__head">
+            <text class="article__title">{{art.title}}</text>
+            <view class="article__del" data-id="{{art.id}}" catchtap="askDeleteArticle">
+              <mg-icon name="delete-outline" size="38" color="#8A8E89" />
+            </view>
+          </view>
+
+          <view class="article__meta">
+            <mg-icon name="clock-outline" size="24" color="#8A8E89" />
+            <text>{{art.dateText}}</text>
+            <text>· 已读 {{art.readCount}} 次</text>
+          </view>
+
+          <text class="article__preview">{{art.preview}}</text>
+
+          <view class="article__foot">
+            <text wx:if="{{art.themeLabel}}" class="mg-pill article__theme">{{art.themeLabel}}</text>
+            <text wx:for="{{art.words}}" wx:key="*this" class="mg-pill article__wchip">{{item}}</text>
+            <text wx:if="{{art.moreWords}}" class="article__more">+{{art.moreWords}}</text>
+          </view>
+        </view>
+        <view class="bottomspace"></view>
+      </view>
+
+      <view class="mg-fab" hover-class="mg-hover-soft" bindtap="goGenerate">
+        <mg-icon name="plus" size="56" color="#FFFFFF" />
+      </view>
+    </block>
+  </block>
+</view>

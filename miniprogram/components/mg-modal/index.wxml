@@ -1,0 +1,37 @@
+<view
+  wx:if="{{visible}}"
+  class="mg-modal__mask"
+  catchtouchmove="noop"
+  bindtap="onMaskTap"
+>
+  <view class="mg-modal__card" catchtap="noop">
+    <view wx:if="{{icon}}" class="mg-modal__icon mg-modal__icon--{{iconTone}}">
+      <mg-icon name="{{icon}}" size="56" color="{{iconTone === 'danger' ? '#B5462E' : iconTone === 'warning' ? '#C2603A' : '#2E5E4E'}}" />
+    </view>
+
+    <text wx:if="{{title}}" class="mg-modal__title">{{title}}</text>
+    <text wx:if="{{content}}" class="mg-modal__content">{{content}}</text>
+
+    <view class="mg-modal__body">
+      <slot></slot>
+    </view>
+
+    <view wx:if="{{showActions}}" class="mg-modal__actions {{actionsVertical ? 'mg-modal__actions--vertical' : ''}}">
+      <view
+        wx:if="{{showCancel}}"
+        class="mg-modal__btn mg-modal__btn--cancel"
+        hover-class="mg-hover-soft"
+        bindtap="onCancel"
+      >
+        <text>{{cancelText}}</text>
+      </view>
+      <view
+        class="mg-modal__btn mg-modal__btn--confirm {{danger ? 'mg-modal__btn--danger' : ''}}"
+        hover-class="mg-hover-soft"
+        bindtap="onConfirm"
+      >
+        <text>{{confirmText}}</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,26 +1,150 @@
-<view class="page">
-  <view wx:if="{{loading}}" class="empty mg-text-tertiary">加载中…</view>
-  <block wx:elif="{{exam}}">
-    <view wx:for="{{sections}}" wx:key="key" class="mg-card sec">
-      <view class="sec-head" data-key="{{item.key}}" bindtap="toggle">
-        <text class="sec-title">{{item.label}}（{{item.items.length}} 篇）</text>
-        <text class="mg-text-tertiary">{{openSection === item.key ? '收起' : '展开'}}</text>
+<view class="rep">
+
+  <view wx:if="{{loading}}" class="rep-center">
+    <text class="rep-center__text">真题加载中…</text>
+  </view>
+
+  <block wx:elif="{{missing}}">
+    <view class="rep-center">
+      <text class="rep-center__text">题目不存在或已被移除</text>
+      <mg-button title="返回列表" variant="primary" size="md" bind:tap="backToList" />
+    </view>
+  </block>
+
+  <block wx:else>
+    <!-- 顶部进度条 -->
+    <view class="rep-head">
+      <view class="rep-head__row">
+        <text class="rep-head__title">{{headTitle}}</text>
+        <text class="rep-head__count">{{submitted ? '得分 ' + scoreText : '已答 ' + answered + ' / ' + total}}</text>
       </view>
-      <block wx:if="{{openSection === item.key}}">
-        <view wx:for="{{item.items}}" wx:for-item="passage" wx:key="id" class="passage">
-          <view class="p-title">{{passage.title || passage.id}}</view>
-          <text class="p-body" user-select>{{passage.passage || passage.content || passage.text || ''}}</text>
-          <view wx:if="{{passage.questions}}" class="qs">
-            <view wx:for="{{passage.questions}}" wx:for-item="q" wx:key="index" class="q">
-              <view>{{q.question || q.stem}}</view>
-              <view wx:for="{{q.options || q.choices || []}}" wx:for-item="opt" wx:key="*this" class="opt mg-text-secondary">
-                {{'ABCD'[index]}}. {{opt}}
-              </view>
-              <view class="ans" wx:if="{{q.answer}}">答案：{{q.answer}}</view>
-            </view>
+      <view class="rep-bar">
+        <view class="rep-bar__fill" style="width: {{progress}}%"></view>
+      </view>
+    </view>
+
+    <scroll-view class="rep-scroll" scroll-y enable-flex>
+      <view class="rep-body">
+
+        <!-- Directions（新题型） -->
+        <view wx:if="{{direction}}" class="rep-card">
+          <view class="rep-tag"><text class="rep-tag__text">Directions</text></view>
+          <text class="rep-dir">{{direction}}</text>
+        </view>
+
+        <!-- 原文 -->
+        <view wx:if="{{showPassage}}" class="rep-card">
+          <view class="rep-tag">
+            <text class="rep-tag__text">{{mode === 'newtype' ? 'Text' : 'Passage'}}</text>
+          </view>
+          <text class="rep-passage" user-select>{{passage}}</text>
+        </view>
+
+        <!-- 选项池 A-H（正误判断题无选项池） -->
+        <view wx:if="{{hasPool}}" class="rep-card">
+          <view class="rep-tag">
+            <text class="rep-tag__text">{{mode === 'newtype' && subtypeLabel ? 'Options' : 'Options'}}</text>
+          </view>
+          <view wx:for="{{pool}}" wx:key="letter" class="rep-pool__item">
+            <text class="rep-pool__letter">[{{item.letter}}]{{item.fixed ? ' ·已给定' : ''}}</text>
+            <text class="rep-pool__text">{{item.text}}</text>
           </view>
         </view>
-      </block>
+
+        <view wx:if="{{mode === 'cloze'}}" class="rep-sect">题目（共 {{total}} 空）</view>
+        <view wx:elif="{{mode === 'newtype'}}" class="rep-sect">作答区（41–45）</view>
+
+        <!-- 逐题作答 -->
+        <view wx:for="{{items}}" wx:key="key" wx:for-index="qi" class="rep-card rep-q">
+          <view class="rep-q__head">
+            <text class="rep-q__idx">{{item.label}}</text>
+            <block wx:if="{{submitted}}">
+              <text wx:if="{{!item.selected}}" class="rep-badge rep-badge--muted">未作答</text>
+              <text wx:elif="{{item.selected === item.answer}}" class="rep-badge rep-badge--ok">✓ 正确</text>
+              <text wx:else class="rep-badge rep-badge--no">✗ 应选 {{item.answer}}</text>
+            </block>
+          </view>
+
+          <text wx:if="{{item.stem}}" class="rep-q__stem">{{item.stem}}</text>
+
+          <!-- 阅读：竖排选项 -->
+          <view wx:if="{{item.layout === 'list'}}" class="rep-opts">
+            <view
+              wx:for="{{item.opts}}"
+              wx:for-item="opt"
+              wx:key="letter"
+              class="rep-opt {{item.selected === opt.letter ? 'is-sel' : ''}}"
+              hover-class="mg-hover"
+              data-qi="{{qi}}"
+              data-letter="{{opt.letter}}"
+              bindtap="onSelect"
+            >
+              <text class="rep-opt__letter {{item.selected === opt.letter ? 'is-sel' : ''}}">{{opt.letter}}</text>
+              <text class="rep-opt__text {{item.selected === opt.letter ? 'is-sel' : ''}}">{{opt.text}}</text>
+            </view>
+          </view>
+
+          <!-- 完形：两列选项 -->
+          <view wx:elif="{{item.layout === 'grid'}}" class="rep-grid">
+            <view
+              wx:for="{{item.opts}}"
+              wx:for-item="opt"
+              wx:key="letter"
+              class="rep-grid__cell"
+            >
+              <view
+                class="rep-opt rep-opt--sm {{item.selected === opt.letter ? 'is-sel' : ''}}"
+                hover-class="mg-hover"
+                data-qi="{{qi}}"
+                data-letter="{{opt.letter}}"
+                bindtap="onSelect"
+              >
+                <text class="rep-opt__letter rep-opt__letter--sm {{item.selected === opt.letter ? 'is-sel' : ''}}">{{opt.letter}}</text>
+                <text class="rep-opt__text rep-opt__text--sm {{item.selected === opt.letter ? 'is-sel' : ''}}">{{opt.text}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 新题型：字母选择器 -->
+          <view wx:else class="rep-chips">
+            <view
+              wx:for="{{item.opts}}"
+              wx:for-item="opt"
+              wx:key="letter"
+              class="rep-chip
+                {{item.selected === opt.letter ? 'is-sel' : ''}}
+                {{opt.fixed ? 'is-fixed' : ''}}
+                {{submitted && opt.letter === item.answer ? 'is-ok' : ''}}
+                {{submitted && item.selected === opt.letter && item.selected !== item.answer ? 'is-no' : ''}}"
+              data-qi="{{qi}}"
+              data-letter="{{opt.letter}}"
+              data-fixed="{{opt.fixed}}"
+              bindtap="onSelect"
+            >
+              <text class="rep-chip__text
+                {{item.selected === opt.letter ? 'is-sel' : ''}}
+                {{submitted && (opt.letter === item.answer || (item.selected === opt.letter && item.selected !== item.answer)) ? 'is-emph' : ''}}">{{opt.letter}}</text>
+            </view>
+          </view>
+
+          <view wx:if="{{submitted && item.explanation}}" class="rep-exp">
+            <text class="rep-exp__label">解析</text>
+            <text class="rep-exp__text">{{item.explanation}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{submitted}}" class="rep-actions">
+          <mg-button title="返回列表" variant="secondary" size="md" block bind:tap="backToList" />
+          <mg-button title="再练一次" variant="primary" size="md" block icon="restart" bind:tap="retry" />
+        </view>
+
+        <view class="rep-foot"></view>
+      </view>
+    </scroll-view>
+
+    <view wx:if="{{!submitted}}" class="rep-bottom">
+      <text class="rep-bottom__hint">{{countText}}</text>
+      <mg-button title="提交" variant="primary" size="md" icon="check-circle" disabled="{{answered === 0}}" bind:tap="onSubmit" />
     </view>
   </block>
 </view>

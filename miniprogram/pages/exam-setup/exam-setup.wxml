@@ -1,0 +1,159 @@
+<view class="mg-page es">
+
+  <mg-empty
+    wx:if="{{empty}}"
+    icon="book-open-variant"
+    title="生词本为空"
+    description="先在学习页添加或从词库选词，再来做 AI 出题练习。"
+    action-label="去学习"
+    bind:action="goStudy"
+  />
+
+  <block wx:else>
+    <!-- Hero + 题数步进器 -->
+    <view class="es__hero">
+      <view class="es__hero-text">
+        <text class="es__hero-label">AI 出题练习</text>
+        <text class="es__hero-title">{{typeLabel}} · {{questionCount}} 题</text>
+        <text class="es__hero-desc">由云端 DeepSeek 根据你的生词出题</text>
+      </view>
+      <view class="es__stepper">
+        <text class="es__stepper-label">题数</text>
+        <view class="es__stepper-row">
+          <view
+            class="es__stepbtn {{questionCount <= minCount ? 'es__stepbtn--off' : ''}}"
+            hover-class="{{questionCount <= minCount ? '' : 'mg-hover'}}"
+            bindtap="decCount"
+          >
+            <mg-icon name="minus" size="30" color="#FFFFFF" />
+          </view>
+          <view class="es__numbadge"><text class="es__numbadge-text">{{questionCount}}</text></view>
+          <view
+            class="es__stepbtn {{questionCount >= maxCount ? 'es__stepbtn--off' : ''}}"
+            hover-class="{{questionCount >= maxCount ? '' : 'mg-hover'}}"
+            bindtap="incCount"
+          >
+            <mg-icon name="plus" size="30" color="#FFFFFF" />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 选择题型 -->
+    <view class="sec">
+      <mg-section-header title="选择题型" icon="format-list-bulleted" compact />
+    </view>
+    <view class="card">
+      <view class="seg2">
+        <view
+          wx:for="{{typeOptions}}"
+          wx:key="value"
+          class="seg2__item {{questionType === item.value ? 'seg2__item--on' : ''}}"
+          hover-class="mg-hover-soft"
+          data-type="{{item.value}}"
+          bindtap="switchType"
+        >{{item.label}}</view>
+      </view>
+      <text class="es__hint">{{typeHint}}</text>
+    </view>
+
+    <!-- 选择生词 -->
+    <view class="sec">
+      <mg-section-header title="选择生词" icon="book-open-variant" compact />
+    </view>
+    <view class="card">
+      <view class="seg2">
+        <view
+          wx:for="{{modeOptions}}"
+          wx:key="value"
+          class="seg2__item {{selectMode === item.value ? 'seg2__item--on' : ''}}"
+          hover-class="mg-hover-soft"
+          data-mode="{{item.value}}"
+          bindtap="switchSelectMode"
+        >{{item.label}}</view>
+      </view>
+
+      <text class="es__count">已选 {{selected.length}}/{{questionCount}} 个</text>
+
+      <!-- 智能推荐 -->
+      <block wx:if="{{selectMode === 'smart'}}">
+        <text wx:if="{{selected.length === 0}}" class="es__warn">生词本中的词都已覆盖 ≥3 次，可切换手动选择</text>
+        <view class="wgrid">
+          <view wx:for="{{selected}}" wx:key="id" class="witem">
+            <view class="wchip">
+              <text class="wchip__text">{{item.word}}</text>
+              <view class="wchip__x" data-id="{{item.id}}" catchtap="replaceWord">
+                <mg-icon name="close" size="22" color="#2E5E4E" />
+              </view>
+            </view>
+            <text class="cov cov--{{item.covLevel}}">{{item.covLabel}}</text>
+          </view>
+        </view>
+        <view class="textaction" hover-class="mg-hover" bindtap="recommend">
+          <mg-icon name="refresh" size="30" color="#2E5E4E" />
+          <text>重新推荐</text>
+        </view>
+      </block>
+
+      <!-- 手动选择 -->
+      <block wx:else>
+        <view class="mg-search es__search">
+          <mg-icon name="magnify" size="34" color="#8A8E89" />
+          <input
+            class="mg-search-input"
+            placeholder="搜索单词…"
+            placeholder-class="ph"
+            value="{{searchQuery}}"
+            bindinput="onSearch"
+          />
+        </view>
+        <view class="wgrid wgrid--manual">
+          <view
+            wx:for="{{manualList}}"
+            wx:key="id"
+            class="witem"
+            hover-class="mg-hover"
+            data-id="{{item.id}}"
+            bindtap="toggleWord"
+          >
+            <view class="mchip {{item.selected ? 'mchip--on' : ''}}">
+              <text class="mchip__text">{{item.word}}</text>
+            </view>
+            <text class="cov cov--{{item.covLevel}}">{{item.covLabel}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 出题按钮 -->
+    <view class="es__gen">
+      <mg-button
+        title="{{generating ? '正在出题…' : 'AI 出题'}}"
+        variant="primary"
+        size="lg"
+        block
+        icon="creation"
+        loading="{{generating}}"
+        disabled="{{!canStart || generating}}"
+        bind:tap="generate"
+      />
+      <view wx:if="{{generating}}" class="es__genhint">
+        <text>{{generatingHint}}</text>
+      </view>
+      <text wx:elif="{{!canStart}}" class="es__genhint-sub">还需选够 {{questionCount}} 个生词才能出题</text>
+    </view>
+
+    <view class="es__bottomspace"></view>
+  </block>
+
+  <!-- 草稿恢复弹窗 -->
+  <mg-modal
+    visible="{{resumeVisible}}"
+    title="继续未完成的练习"
+    content="{{resumeContent}}"
+    confirm-text="继续答题"
+    cancel-text="放弃"
+    bind:confirm="onResumeConfirm"
+    bind:cancel="onResumeCancel"
+  />
+</view>

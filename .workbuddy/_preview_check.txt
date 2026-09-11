@@ -1,0 +1,4 @@
+entities=0 pua_literals=166
+min=U+E000 max=U+E0A5
+over_bmp=[]
+placeholder_left=False

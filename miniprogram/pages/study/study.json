@@ -1,4 +1,10 @@
 {
-  "navigationBarTitleText": "今日学习",
-  "enablePullDownRefresh": true
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-empty": "/components/mg-empty/index",
+    "mg-modal": "/components/mg-modal/index"
+  },
+  "navigationBarTitleText": "开始学习",
+  "disableScroll": false
 }

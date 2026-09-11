@@ -1,0 +1,10 @@
+<view class="mg-empty {{compact ? 'mg-empty--compact' : ''}}">
+  <view class="mg-empty__icon-wrap {{compact ? 'mg-empty__icon-wrap--compact' : ''}}">
+    <mg-icon name="{{icon}}" size="{{compact ? 64 : 80}}" color="#2E5E4E" />
+  </view>
+  <text class="mg-empty__title">{{title}}</text>
+  <text wx:if="{{description}}" class="mg-empty__desc">{{description}}</text>
+  <view wx:if="{{actionLabel}}" class="mg-empty__action">
+    <mg-button title="{{actionLabel}}" variant="{{variant}}" bind:tap="onAction" />
+  </view>
+</view>

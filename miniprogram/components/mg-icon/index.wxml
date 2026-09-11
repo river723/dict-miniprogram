@@ -1,0 +1,4 @@
+<text
+  class="mg-icon {{disabled ? 'mg-icon--disabled' : ''}}"
+  style="font-size:{{size}}rpx;{{color ? 'color:' + color + ';' : ''}}"
+>{{char}}</text>

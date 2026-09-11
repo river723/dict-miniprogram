@@ -1,0 +1,11 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index"
+  },
+  "navigationBarTitleText": "词库",
+  "navigationBarBackgroundColor": "#2E5E4E",
+  "navigationBarTextStyle": "white",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "light"
+}

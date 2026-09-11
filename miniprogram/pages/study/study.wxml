@@ -1,25 +1,319 @@
-<view class="page">
-  <view class="mg-card hero">
-    <view class="hero-title">今日学习</view>
-    <view class="hero-num">{{todayStudied}}</view>
-    <view class="mg-text-tertiary">今日已学次数 · 累计 {{totalWords}} 词 / 掌握 {{masteredWords}} 词</view>
+<view class="mg-page study">
+
+  <!-- ============ 加载 ============ -->
+  <view wx:if="{{loading}}" class="mg-loading">
+    <mg-icon name="refresh" size="64" color="#2E5E4E" />
+    <text style="margin-top:24rpx">加载中…</text>
   </view>
 
-  <view class="grid">
-    <view class="mg-card grid-item" bindtap="goNew">
-      <view class="grid-num new">{{newCount}}</view>
-      <view class="grid-label">待学新词</view>
-      <view class="grid-cta mg-text-secondary">开始学习 ›</view>
-    </view>
-    <view class="mg-card grid-item" bindtap="goReview">
-      <view class="grid-num due">{{dueCount}}</view>
-      <view class="grid-label">到期复习</view>
-      <view class="grid-cta mg-text-secondary">开始复习 ›</view>
+  <!-- ============ 空态 ============ -->
+  <view wx:elif="{{isEmptyState}}" class="study__empty">
+    <mg-empty icon="book-open-page-variant" title="{{emptyTitle}}" description="{{emptyText}}" />
+    <view class="study__empty-actions">
+      <mg-button wx:if="{{emptyTitle === '今日任务已完成！'}}" title="继续学习" variant="primary" block icon="refresh" bind:tap="onContinue" />
+      <mg-button wx:if="{{emptyTitle !== '暂无可复习单词' && emptyTitle !== '加载失败'}}" title="添加单词" variant="secondary" block icon="plus-box" bind:tap="goAddWord" />
+      <mg-button title="返回" variant="ghost" block icon="arrow-left" bind:tap="backFromEmpty" />
     </view>
   </view>
 
-  <view class="mg-card link-row" bindtap="goStats">
-    <text>学习统计</text>
-    <text class="mg-text-tertiary">›</text>
+  <!-- ============ 完成卡 ============ -->
+  <view wx:elif="{{showCompletion}}" class="study__done">
+    <view class="done-card">
+      <view class="done-card__icon">
+        <mg-icon name="{{completionIcon}}" size="96" color="#2E5E4E" />
+      </view>
+      <text class="done-card__title">{{completionTitle}}</text>
+
+      <view class="done-card__stats">
+        <view class="done-card__stat">
+          <text class="done-card__num">{{completionNew}}</text>
+          <text class="done-card__label">新词</text>
+        </view>
+        <view class="done-card__stat">
+          <text class="done-card__num">{{completionReview}}</text>
+          <text class="done-card__label">复习</text>
+        </view>
+        <view class="done-card__stat">
+          <text class="done-card__num done-card__num--acc">{{completionAccuracy}}</text>
+          <text class="done-card__label">准确率</text>
+        </view>
+      </view>
+
+      <text class="done-card__detail">{{completionDetail}}</text>
+
+      <view class="done-card__actions">
+        <mg-button title="再练一遍" variant="primary" block icon="refresh" bind:tap="onContinue" />
+        <mg-button title="返回" variant="secondary" block icon="arrow-left" bind:tap="onBackFromCompletion" />
+      </view>
+    </view>
   </view>
+
+  <!-- ============ 学习主体 ============ -->
+  <block wx:else>
+    <!-- 模式选择 -->
+    <view class="modebar">
+      <view
+        wx:for="{{modes}}"
+        wx:key="key"
+        class="modebar__item {{mode === item.key ? 'modebar__item--active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="switchMode"
+      >
+        <mg-icon name="{{item.icon}}" size="30" color="{{mode === item.key ? '#FFFFFF' : '#5C605C'}}" />
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+
+    <!-- 进度卡 -->
+    <view class="progress">
+      <view class="progress__head">
+        <text class="progress__count">{{trulyCompleted}} / {{total}}</text>
+        <view class="progress__right">
+          <text class="progress__acc">准确率: {{accuracyText}}</text>
+          <view class="progress__exit" hover-class="mg-hover" bindtap="openExit">
+            <mg-icon name="close" size="26" color="#8A8E89" />
+            <text>退出</text>
+          </view>
+        </view>
+      </view>
+      <view class="progress__bar">
+        <view class="progress__fill" style="width:{{progressPercent}}%"></view>
+      </view>
+    </view>
+
+    <!-- ---------------- 单词卡 ---------------- -->
+    <block wx:if="{{mode === 'flashcard'}}">
+      <view class="fc-stage">
+        <view class="fc-card {{flipped ? 'fc-card--flipped' : ''}}">
+
+          <!-- 正面 -->
+          <view class="fc-face fc-face--front" bindtap="flipCard">
+            <view class="fc-topline" style="background:{{difficultyColor}}"></view>
+            <text class="fc-pos">{{current.definitions[0].part_of_speech}}</text>
+            <text class="fc-word" style="font-size:{{wordFontSize}}rpx;line-height:{{wordFontSize + 16}}rpx">{{current.word}}</text>
+            <text wx:if="{{current.pronunciation_uk || current.pronunciation_us}}" class="fc-phonetic">
+              {{current.pronunciation_uk ? 'UK ' + current.pronunciation_uk : ''}}{{current.pronunciation_us ? '  US ' + current.pronunciation_us : ''}}
+            </text>
+
+            <view class="fc-audio" hover-class="mg-hover" catchtap="playAudio">
+              <mg-icon name="{{soundEnabled ? 'volume-high' : 'volume-off'}}" size="52" color="{{soundEnabled ? '#2E5E4E' : '#8A8E89'}}" />
+            </view>
+
+            <view class="fc-hint">
+              <text>点击翻释义</text>
+            </view>
+          </view>
+
+          <!-- 背面 -->
+          <view class="fc-face fc-face--back">
+            <scroll-view scroll-y class="fc-back-scroll">
+              <view class="fc-back-body">
+                <view class="fc-back-link" hover-class="mg-hover" catchtap="unflipCard">
+                  <mg-icon name="arrow-left" size="30" color="#2E5E4E" />
+                  <text>返回单词面</text>
+                </view>
+
+                <text class="fc-back-word">{{current.word}}</text>
+                <text wx:if="{{current.pronunciation_uk || current.pronunciation_us}}" class="fc-back-phonetic">
+                  {{current.pronunciation_uk ? 'UK ' + current.pronunciation_uk : ''}}{{current.pronunciation_us ? '  US ' + current.pronunciation_us : ''}}
+                </text>
+
+                <view wx:for="{{current.definitions}}" wx:key="index" class="def {{index < current.definitions.length - 1 ? 'def--line' : ''}}">
+                  <view class="def__head">
+                    <text class="def__pos">{{item.part_of_speech}}</text>
+                    <text wx:if="{{item.is_core}}" class="mg-pill def__pill def__pill--core">核心</text>
+                    <text wx:if="{{item.is_rare_sense}}" class="mg-pill def__pill def__pill--rare">熟词僻义</text>
+                  </view>
+                  <text class="def__meaning">{{item.meaning || '暂无释义'}}</text>
+                  <text wx:if="{{item.example}}" class="def__example">例：{{item.example}}</text>
+                </view>
+
+                <view wx:if="{{current.etymology}}" class="sec">
+                  <text class="sec__label">词根</text>
+                  <text class="sec__text">{{current.etymology}}</text>
+                </view>
+
+                <view wx:if="{{current.memory_tip}}" class="sec">
+                  <text class="sec__label">记忆</text>
+                  <text class="sec__text">{{current.memory_tip}}</text>
+                </view>
+
+                <view wx:if="{{current.similar_words.length > 0}}" class="sec">
+                  <text class="sec__label">易混词</text>
+                  <view wx:for="{{current.similar_words}}" wx:key="index" class="sec__item">
+                    <text>· {{item.word}}（{{item.relation === 'spelling' ? '形近' : item.relation === 'meaning' ? '义近' : '同根'}}）— {{item.description}}</text>
+                  </view>
+                </view>
+              </view>
+            </scroll-view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部三按钮 -->
+      <view class="bottombar">
+        <view class="bbtn bbtn--left {{flipped ? '' : 'bbtn--off'}}" hover-class="mg-hover-soft" bindtap="onTooEasy">
+          <mg-icon name="lightning-bolt-outline" size="36" color="#5C605C" />
+          <text>太简单</text>
+        </view>
+        <view class="bbtn bbtn--warn {{flipped ? '' : 'bbtn--off'}}" hover-class="mg-hover-soft" bindtap="onUnknown">
+          <mg-icon name="close" size="40" color="#FFFFFF" />
+          <text>不认识</text>
+        </view>
+        <view class="bbtn bbtn--primary {{flipped ? '' : 'bbtn--off'}}" hover-class="mg-hover-soft" bindtap="onKnown">
+          <mg-icon name="check" size="40" color="#FFFFFF" />
+          <text>认识</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- ---------------- 听写 ---------------- -->
+    <scroll-view wx:elif="{{mode === 'listening'}}" scroll-y class="mode-scroll">
+      <view class="card">
+        <view class="listen">
+          <text class="listen__title">听力练习</text>
+          <view class="listen__icon">
+            <mg-icon name="{{playing ? 'volume-high' : 'ear-hearing'}}" size="80" color="#2E5E4E" />
+          </view>
+          <text class="listen__hint">
+            {{soundEnabled ? (listenStarted ? '播放中…' : '点击听取单词发音') : '发音功能已关闭，请先到设置中开启'}}
+          </text>
+          <mg-button
+            title="{{soundEnabled ? '播放' : '发音已关闭'}}"
+            variant="primary"
+            icon="{{soundEnabled ? 'play' : 'volume-off'}}"
+            disabled="{{!soundEnabled}}"
+            bind:tap="startListening"
+          />
+
+          <view wx:if="{{listenStarted}}" class="listen__answer">
+            <text class="listen__q">你听到了哪个单词？</text>
+            <input
+              class="listen__input"
+              placeholder="输入你听到的单词"
+              placeholder-class="ph"
+              value="{{listenAnswer}}"
+              bindinput="onListenInput"
+            />
+            <view class="listen__btns">
+              <mg-button title="跳过" variant="secondary" block bind:tap="skipListen" />
+              <mg-button title="提交" variant="primary" block disabled="{{!listenAnswer}}" bind:tap="submitListen" />
+            </view>
+            <text wx:if="{{listenSubmitted}}" class="listen__result {{listenCorrect ? 'is-ok' : 'is-bad'}}">
+              {{listenCorrect ? '回答正确 ✓' : '正确答案：' + current.word}}
+            </text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- ---------------- 释义 ---------------- -->
+    <scroll-view wx:elif="{{mode === 'quiz'}}" scroll-y class="mode-scroll">
+      <view class="card">
+        <text class="quiz__title">选择正确的释义</text>
+        <text class="quiz__word">{{current.word}}</text>
+        <view class="quiz__options">
+          <view
+            wx:for="{{options}}"
+            wx:key="key"
+            class="quiz__opt {{showQuizResult && item.text === current.definitions[0].meaning ? 'quiz__opt--correct' : ''}} {{showQuizResult && item.text === selectedAnswer && item.text !== current.definitions[0].meaning ? 'quiz__opt--wrong' : ''}}"
+            data-text="{{item.text}}"
+            bindtap="onSelectOption"
+          >
+            <text class="quiz__opt-text">{{item.text}}</text>
+            <mg-icon wx:if="{{showQuizResult && item.text === current.definitions[0].meaning}}" name="check-circle" size="40" color="#3F7A5C" />
+            <mg-icon wx:elif="{{showQuizResult && item.text === selectedAnswer}}" name="close-circle-outline" size="40" color="#B5462E" />
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- ---------------- 短文 ---------------- -->
+    <scroll-view wx:else scroll-y class="mode-scroll">
+      <view wx:if="{{articleSegments.length === 0}}" class="card">
+        <text class="art__title">生成短文</text>
+        <text class="art__sub">用本轮生词生成一篇英文短文，在语境中记忆。</text>
+        <view class="art__chips">
+          <text wx:for="{{current ? [current] : []}}" wx:key="index" class="mg-pill art__chip">{{item.word}}</text>
+        </view>
+        <text class="art__note">将根据 {{total}} 个生词生成短文（最多取前 30 个）。</text>
+        <mg-button
+          wx:if="{{!articleLoading}}"
+          title="生成短文"
+          variant="primary"
+          block
+          icon="creation"
+          bind:tap="generateArticle"
+        />
+        <view wx:else class="art__loading">
+          <mg-icon name="creation" size="48" color="#2E5E4E" />
+          <text>AI 正在为你创作短文…</text>
+        </view>
+        <text wx:if="{{articleError}}" class="art__err">{{articleError}}</text>
+      </view>
+
+      <view wx:else class="card">
+        <mg-button title="重新生成短文" variant="secondary" block icon="refresh" bind:tap="generateArticle" />
+        <view class="art__body">
+          <text wx:for="{{articleSegments}}" wx:key="index" class="art__seg {{item.hit ? 'art__seg--hit' : ''}}" data-word="{{item.text}}" bindtap="onArticleWordTap">{{item.text}}</text>
+        </view>
+        <view class="art__tip">
+          <mg-icon name="lightbulb-outline" size="28" color="#8A8E89" />
+          <text>点击文中高亮生词可查看释义</text>
+        </view>
+        <mg-button
+          title="{{showTranslation ? '隐藏中文翻译' : '显示中文翻译'}}"
+          variant="ghost"
+          block
+          bind:tap="toggleTranslation"
+        />
+        <view wx:if="{{showTranslation}}" class="art__trans">
+          <text>{{articleTranslation}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </block>
+
+  <!-- ============ 退出确认 ============ -->
+  <mg-modal
+    visible="{{showExitConfirm}}"
+    title="退出学习？"
+    confirm-text="确认退出"
+    cancel-text="继续学习"
+    danger
+    bind:confirm="confirmExit"
+    bind:cancel="closeExit"
+  >
+    <view class="exit-stats">
+      <view class="exit-stats__row">
+        <text class="exit-stats__label">已学单词</text>
+        <text class="exit-stats__value">{{exitLearned}}<text class="exit-stats__sep"> / </text>{{exitTotal}}</text>
+      </view>
+      <view class="mg-divider"></view>
+      <view class="exit-stats__row">
+        <text class="exit-stats__label">准确率</text>
+        <text class="exit-stats__value">{{exitAccuracy}} %</text>
+      </view>
+    </view>
+    <text class="exit-tip">剩余单词将保留在学习计划中\n下次可继续学习</text>
+  </mg-modal>
+
+  <!-- ============ 文中生词释义 ============ -->
+  <mg-modal
+    visible="{{showWordModal}}"
+    title="{{modalWord.word}}"
+    confirm-text="知道了"
+    show-cancel="{{false}}"
+    bind:confirm="closeWordModal"
+    bind:close="closeWordModal"
+  >
+    <view class="wm">
+      <text wx:if="{{modalWord.pronunciation_uk}}" class="wm__ph">英 {{modalWord.pronunciation_uk}}</text>
+      <view wx:for="{{modalWord.definitions}}" wx:key="index" class="wm__def">
+        <text class="wm__pos">{{item.part_of_speech}}</text>
+        <text class="wm__meaning">{{item.meaning}}</text>
+        <text wx:if="{{item.example}}" class="wm__eg">例：{{item.example}}</text>
+      </view>
+    </view>
+  </mg-modal>
 </view>

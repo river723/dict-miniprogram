@@ -1,18 +1,104 @@
-<view class="page">
-  <view class="mg-card entry" bindtap="goQuiz">
-    <view class="e-title">AI 出题练习</view>
-    <view class="mg-text-secondary">基于生词本智能生成选择题，即时判分入库</view>
-  </view>
-  <view class="mg-card entry" bindtap="goWrong">
-    <view class="e-title">错题本</view>
-    <view class="mg-text-secondary">做对 3 次自动移出，专攻薄弱词</view>
-  </view>
-  <view class="mg-card entry" bindtap="goExams">
-    <view class="e-title">真题套卷</view>
-    <view class="mg-text-secondary">历年考研英语真题阅读，按套练习</view>
-  </view>
-  <view class="mg-card entry" bindtap="goStories">
-    <view class="e-title">故事阅读</view>
-    <view class="mg-text-secondary">目标词融入短文，语境记忆</view>
+<view class="mg-page">
+  <view class="pr-content">
+
+    <!-- Hero 统计 -->
+    <view class="hero">
+      <view class="hero__top">
+        <view class="hero__badge">
+          <mg-icon name="puzzle" size="56" color="#2E5E4E" />
+        </view>
+        <view class="hero__heading">
+          <text class="hero__title">练习中心</text>
+          <text class="hero__sub">{{heroSub}}</text>
+        </view>
+      </view>
+
+      <view class="hero__metrics">
+        <view class="hero__metric">
+          <text class="hero__metric-num">{{totalExams}}</text>
+          <text class="hero__metric-label">练习次数</text>
+        </view>
+        <view class="hero__metric-line"></view>
+        <view class="hero__metric">
+          <text class="hero__metric-num">{{avgText}}</text>
+          <text class="hero__metric-label">平均正确率</text>
+        </view>
+        <view class="hero__metric-line"></view>
+        <view class="hero__metric">
+          <text class="hero__metric-num">{{totalWrong}}</text>
+          <text class="hero__metric-label">待复习</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 双 CTA -->
+    <view class="cta">
+      <mg-button
+        title="AI 出题练习"
+        variant="primary"
+        size="lg"
+        block
+        icon="creation"
+        bind:tap="goExamSetup"
+      />
+      <mg-button
+        title="真题练习"
+        variant="secondary"
+        block
+        icon="book-open-page-variant"
+        bind:tap="goRealExam"
+      />
+    </view>
+
+    <!-- 题库 / 错题本入口 -->
+    <view class="entries">
+      <view class="todo" hover-class="mg-hover" bindtap="goExamSetBank">
+        <view class="todo__icon todo__icon--primary">
+          <mg-icon name="library" size="40" color="#2E5E4E" />
+        </view>
+        <view class="todo__body">
+          <text class="todo__title">AI 题库</text>
+          <text class="todo__desc">{{bankSub}}</text>
+        </view>
+        <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+      </view>
+
+      <view class="todo" hover-class="mg-hover" bindtap="goWrong">
+        <view class="todo__icon todo__icon--danger">
+          <mg-icon name="alert-circle-outline" size="40" color="#B5462E" />
+        </view>
+        <view class="todo__body">
+          <text class="todo__title">错题本</text>
+          <text class="todo__desc">{{wrongSub}}</text>
+        </view>
+        <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+      </view>
+    </view>
+
+    <!-- 最近练习 -->
+    <view class="block">
+      <mg-section-header title="最近练习" action-label="全部记录" bind:action="goHistory" />
+
+      <view wx:if="{{recent.length === 0}}" class="recent-empty">
+        <mg-icon name="history" size="64" color="#C7C4BA" />
+        <text class="recent-empty__text">还没有练习记录，从上面开始吧</text>
+      </view>
+
+      <view wx:else class="card-list">
+        <view
+          wx:for="{{recent}}"
+          wx:key="key"
+          class="recent-row {{index < recent.length - 1 ? 'recent-row--line' : ''}}"
+        >
+          <view class="recent__body">
+            <text class="recent__label">{{item.label}}</text>
+            <text class="recent__meta">{{item.timeText}} · {{item.count}} 题</text>
+          </view>
+          <text class="recent__acc recent__acc--{{item.level}}">{{item.accuracyText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-space"></view>
   </view>
 </view>

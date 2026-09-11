@@ -1,0 +1,11 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-empty": "/components/mg-empty/index",
+    "mg-modal": "/components/mg-modal/index"
+  },
+  "navigationBarTitleText": "生词本",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
+}

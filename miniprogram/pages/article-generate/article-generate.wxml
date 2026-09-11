@@ -1,0 +1,189 @@
+<view class="mg-page ag">
+
+  <mg-empty
+    wx:if="{{empty}}"
+    icon="book-open-page-variant"
+    title="生词本为空"
+    description="先在学习页添加或从词库选词，再来生成专属阅读文章。"
+    action-label="去学习"
+    bind:action="goStudy"
+  />
+
+  <block wx:else>
+    <!-- Hero -->
+    <view class="ag__hero">
+      <view class="ag__hero-text">
+        <text class="ag__hero-label">生成文章</text>
+        <text class="ag__hero-title">AI 趣味阅读</text>
+        <text class="ag__hero-desc">用你的生词生成语境短文，加深记忆</text>
+      </view>
+      <view class="ag__hero-icon">
+        <mg-icon name="creation" size="52" color="#FFFFFF" />
+      </view>
+    </view>
+
+    <!-- 文章参数 -->
+    <view class="sec">
+      <mg-section-header title="文章参数" icon="tune" />
+    </view>
+    <view class="card">
+      <view class="stepper">
+        <text class="stepper__label">每篇生词</text>
+        <view class="stepper__ctrl">
+          <view class="stepper__btn" hover-class="mg-hover" bindtap="decWords">−</view>
+          <text class="stepper__val">{{articleWordCount}} 个</text>
+          <view class="stepper__btn" hover-class="mg-hover" bindtap="incWords">+</view>
+        </view>
+      </view>
+      <view class="divider"></view>
+      <view class="stepper">
+        <text class="stepper__label">目标词数</text>
+        <view class="stepper__ctrl">
+          <view class="stepper__btn" hover-class="mg-hover" bindtap="decLength">−</view>
+          <text class="stepper__val">{{articleLength}} 词</text>
+          <view class="stepper__btn" hover-class="mg-hover" bindtap="incLength">+</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 选择生词 -->
+    <view class="sec">
+      <mg-section-header title="选择生词" icon="book-open-variant" />
+    </view>
+    <view class="card">
+      <view class="seg2">
+        <view
+          class="seg2__item {{selectMode === 'smart' ? 'seg2__item--on' : ''}}"
+          hover-class="mg-hover-soft"
+          data-mode="smart"
+          bindtap="switchSelectMode"
+        >智能推荐</view>
+        <view
+          class="seg2__item {{selectMode === 'manual' ? 'seg2__item--on' : ''}}"
+          hover-class="mg-hover-soft"
+          data-mode="manual"
+          bindtap="switchSelectMode"
+        >手动选择</view>
+      </view>
+
+      <text class="ag__count">已选 {{selected.length}}/{{articleWordCount}} 个</text>
+
+      <!-- 智能推荐 -->
+      <block wx:if="{{selectMode === 'smart'}}">
+        <text wx:if="{{selected.length === 0}}" class="ag__warn">生词本中的词都已覆盖 ≥3 次，可切换手动选择</text>
+        <view class="wgrid">
+          <view wx:for="{{selected}}" wx:key="id" class="witem">
+            <view class="wchip">
+              <text class="wchip__text">{{item.word}}</text>
+              <view class="wchip__x" data-id="{{item.id}}" catchtap="replaceWord">
+                <mg-icon name="close" size="22" color="#2E5E4E" />
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="textaction" hover-class="mg-hover" bindtap="recommend">
+          <mg-icon name="refresh" size="30" color="#2E5E4E" />
+          <text>重新推荐</text>
+        </view>
+      </block>
+
+      <!-- 手动选择 -->
+      <block wx:else>
+        <view class="mg-search ag__search">
+          <mg-icon name="magnify" size="34" color="#8A8E89" />
+          <input
+            class="mg-search-input"
+            placeholder="搜索单词…"
+            placeholder-class="ph"
+            value="{{searchQuery}}"
+            bindinput="onSearch"
+          />
+        </view>
+        <view class="wgrid wgrid--manual">
+          <view
+            wx:for="{{manualList}}"
+            wx:key="id"
+            class="mchip {{item.selected ? 'mchip--on' : ''}}"
+            hover-class="mg-hover"
+            data-id="{{item.id}}"
+            bindtap="toggleWord"
+          >
+            <text class="mchip__text">{{item.word}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 文章主题 -->
+    <view class="sec">
+      <mg-section-header title="文章主题" icon="palette-outline" />
+    </view>
+    <view class="card">
+      <view class="tgrid">
+        <view
+          wx:for="{{themes}}"
+          wx:key="key"
+          class="tchip {{theme === item.key ? 'tchip--on' : ''}}"
+          hover-class="mg-hover"
+          data-key="{{item.key}}"
+          bindtap="pickTheme"
+        >
+          <mg-icon name="{{item.icon}}" size="28" color="{{theme === item.key ? '#FFFFFF' : '#5C605C'}}" />
+          <text>{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 状态提示 -->
+    <view wx:if="{{error}}" class="ag__err">
+      <mg-icon name="alert" size="30" color="#B5462E" />
+      <text>{{error}}</text>
+    </view>
+
+    <!-- 生成按钮 -->
+    <view wx:if="{{!preview}}" class="ag__gen">
+      <mg-button
+        title="{{generating ? '正在生成…' : '生成文章'}}"
+        variant="primary"
+        size="lg"
+        block
+        icon="creation"
+        loading="{{generating}}"
+        disabled="{{generating}}"
+        bind:tap="generate"
+      />
+      <view wx:if="{{generating}}" class="ag__genhint">
+        <text>AI 正在为你创作文章…</text>
+        <text class="ag__genhint-sub">这可能需要 10-30 秒</text>
+      </view>
+    </view>
+
+    <!-- 预览 -->
+    <block wx:if="{{preview}}">
+      <view class="sec">
+        <mg-section-header title="预览" icon="eye-outline" />
+      </view>
+      <view class="card">
+        <text class="preview__title">{{preview.title}}</text>
+        <text class="preview__body"><text wx:for="{{preview.segments}}" wx:key="index" class="{{item.hit ? 'hit' : ''}}">{{item.text}}</text></text>
+
+        <block wx:if="{{preview.translation}}">
+          <view class="divider"></view>
+          <text class="preview__tlabel">中文翻译</text>
+          <text class="preview__trans">{{preview.translation}}</text>
+        </block>
+      </view>
+
+      <view class="ag__actions">
+        <view class="ag__act-flex">
+          <mg-button title="重新生成" variant="secondary" size="lg" block icon="refresh" bind:tap="generate" />
+        </view>
+        <view class="ag__act-flex">
+          <mg-button title="保存文章" variant="primary" size="lg" block icon="content-save" loading="{{saving}}" bind:tap="save" />
+        </view>
+      </view>
+    </block>
+
+    <view class="ag__bottomspace"></view>
+  </block>
+</view>

@@ -1,3 +1,9 @@
 {
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-section-header": "/components/mg-section-header/index",
+    "mg-empty": "/components/mg-empty/index"
+  },
   "navigationBarTitleText": "练习"
 }

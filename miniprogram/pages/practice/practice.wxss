@@ -1,3 +1,218 @@
-.page { padding: 32rpx; display: flex; flex-direction: column; gap: 24rpx; }
-.entry { padding: 40rpx 32rpx; }
-.e-title { font-size: 34rpx; font-weight: 600; margin-bottom: 8rpx; }
+.pr-content {
+  box-sizing: border-box;
+  padding: 32rpx 32rpx 0;
+  min-height: 100vh;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  box-sizing: border-box;
+  padding: 36rpx 36rpx 32rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-xl);
+  box-shadow: var(--mg-shadow-card);
+}
+
+.hero__top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.hero__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
+  background: var(--mg-primary-container);
+}
+
+.hero__heading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero__title {
+  font-size: 38rpx;
+  line-height: 52rpx;
+  font-weight: 700;
+  letter-spacing: 0.4rpx;
+  color: var(--mg-text);
+}
+
+.hero__sub {
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: var(--mg-text-2);
+}
+
+.hero__metrics {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 32rpx;
+  padding-top: 28rpx;
+  border-top: 1rpx solid var(--mg-hairline);
+}
+
+.hero__metric {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero__metric-num {
+  font-size: 48rpx;
+  line-height: 64rpx;
+  font-weight: 700;
+  letter-spacing: -0.8rpx;
+  color: var(--mg-primary);
+}
+
+.hero__metric-label {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  line-height: 32rpx;
+  color: var(--mg-text-3);
+}
+
+.hero__metric-line {
+  flex-shrink: 0;
+  width: 1rpx;
+  height: 56rpx;
+  background: var(--mg-hairline);
+}
+
+/* ---------- CTA ---------- */
+.cta {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 32rpx;
+}
+
+/* ---------- 入口行 ---------- */
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 32rpx;
+}
+
+.todo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
+  padding: 28rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+}
+
+.todo__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+}
+.todo__icon--primary { background: var(--mg-primary-container); }
+.todo__icon--danger { background: var(--mg-danger-light); }
+
+.todo__body { flex: 1; min-width: 0; }
+
+.todo__title {
+  font-size: 30rpx;
+  line-height: 48rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.todo__desc {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  line-height: 32rpx;
+  color: var(--mg-text-2);
+}
+
+/* ---------- 最近练习 ---------- */
+.block { margin-top: 48rpx; }
+
+.card-list {
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+  overflow: hidden;
+}
+
+.recent-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
+  padding: 28rpx;
+}
+
+.recent-row--line { border-bottom: 1rpx solid var(--mg-hairline); }
+
+.recent__body { flex: 1; min-width: 0; }
+
+.recent__label {
+  font-size: 30rpx;
+  line-height: 44rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.recent__meta {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  line-height: 32rpx;
+  color: var(--mg-text-3);
+}
+
+.recent__acc {
+  flex-shrink: 0;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  font-weight: 700;
+}
+.recent__acc--success { color: var(--mg-success); }
+.recent__acc--warning { color: var(--mg-warning); }
+.recent__acc--danger { color: var(--mg-danger); }
+
+/* ---------- 空状态 ---------- */
+.recent-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56rpx 32rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+}
+
+.recent-empty__text {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  line-height: 40rpx;
+  color: var(--mg-text-3);
+}
+
+.bottom-space { height: 96rpx; }

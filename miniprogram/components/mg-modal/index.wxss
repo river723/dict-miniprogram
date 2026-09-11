@@ -1,0 +1,95 @@
+.mg-modal__mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 29, 27, 0.45);
+}
+
+.mg-modal__card {
+  box-sizing: border-box;
+  width: 600rpx;
+  max-width: 88%;
+  padding: 48rpx 40rpx 32rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: 32rpx;
+  box-shadow: var(--mg-shadow-overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: mg-modal-in 0.18s ease-out;
+}
+
+@keyframes mg-modal-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.mg-modal__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  margin-bottom: 24rpx;
+}
+.mg-modal__icon--danger { background: var(--mg-danger-light); }
+.mg-modal__icon--warning { background: var(--mg-warning-light); }
+.mg-modal__icon--primary { background: var(--mg-primary-container); }
+
+.mg-modal__title {
+  font-size: 40rpx;
+  line-height: 56rpx;
+  font-weight: 700;
+  letter-spacing: 0.4rpx;
+  color: var(--mg-text);
+  text-align: center;
+}
+
+.mg-modal__content {
+  margin-top: 18rpx;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: var(--mg-text-2);
+  text-align: center;
+}
+
+.mg-modal__body { width: 100%; }
+
+.mg-modal__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  gap: 24rpx;
+  margin-top: 32rpx;
+}
+
+.mg-modal__actions--vertical { flex-direction: column-reverse; }
+
+.mg-modal__btn {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.mg-modal__btn--cancel { color: var(--mg-text-2); }
+
+.mg-modal__btn--confirm {
+  background: var(--mg-primary);
+  color: var(--mg-on-primary);
+}
+
+.mg-modal__btn--danger { background: var(--mg-danger); color: var(--mg-on-primary); }

@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-difficulty": "/components/mg-difficulty/index",
+    "mg-modal": "/components/mg-modal/index"
+  },
+  "navigationBarTitleText": "添加生词"
+}

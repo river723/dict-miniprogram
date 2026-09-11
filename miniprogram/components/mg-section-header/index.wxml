@@ -1,0 +1,12 @@
+<view class="mg-sh {{compact ? 'mg-sh--compact' : ''}}">
+  <view class="mg-sh__left">
+    <mg-icon wx:if="{{icon}}" name="{{icon}}" size="36" color="#5C605C" />
+    <view class="mg-sh__titles">
+      <text class="mg-sh__title">{{title}}</text>
+      <text wx:if="{{subtitle}}" class="mg-sh__subtitle">{{subtitle}}</text>
+    </view>
+  </view>
+  <view wx:if="{{actionLabel}}" class="mg-sh__action" hover-class="mg-hover" bindtap="onAction">
+    <text>{{actionLabel}}</text>
+  </view>
+</view>

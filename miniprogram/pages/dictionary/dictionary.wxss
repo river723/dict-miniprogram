@@ -1,0 +1,82 @@
+.dict { min-height: 100vh; padding-bottom: 64rpx; }
+
+.dict__sub {
+  padding: 20rpx 32rpx 8rpx;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: var(--mg-text-2);
+}
+
+.dict__list { padding: 16rpx 32rpx 0; }
+
+.dcard {
+  margin-bottom: 24rpx;
+  padding: 32rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-card);
+}
+
+.dcard__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.dcard__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+}
+
+.dcard__badge {
+  flex-shrink: 0;
+  padding: 6rpx 20rpx;
+  border-radius: 999rpx;
+  background: var(--mg-primary-container);
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--mg-on-primary-container);
+}
+
+.dcard__desc {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  line-height: 42rpx;
+  color: var(--mg-text-2);
+}
+
+.dcard__actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 28rpx;
+}
+
+.dict__err {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  padding: 24rpx;
+  font-size: 24rpx;
+  color: var(--mg-danger);
+}
+
+.dict__foot {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  margin-top: 24rpx;
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}

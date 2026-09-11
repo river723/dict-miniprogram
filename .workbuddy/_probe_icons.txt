@@ -1,0 +1,7 @@
+'const ICONS = {'
+"  'react': '\\uf0708',"
+"  'web': '\\uf059f',"
+"  'wrap': '\\uf05b6',"
+"  'book-open-page-variant': '\\uf05da',"
+"  'chevron-right': '\\uf0142',"
+"  'text': '\\uf09a8',"

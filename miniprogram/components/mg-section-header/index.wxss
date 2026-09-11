@@ -1,0 +1,57 @@
+.mg-sh {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.mg-sh--compact { margin-top: 16rpx; margin-bottom: 16rpx; }
+
+.mg-sh__left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-sh__titles {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  margin-left: 16rpx;
+}
+
+.mg-sh__left > .mg-icon:first-child { margin-right: 0; }
+
+.mg-sh__title {
+  font-size: 34rpx;
+  line-height: 52rpx;
+  font-weight: 600;
+  letter-spacing: 0.4rpx;
+  color: var(--mg-text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mg-sh__subtitle {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  line-height: 32rpx;
+  color: var(--mg-text-2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mg-sh__action {
+  flex-shrink: 0;
+  padding: 0 8rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--mg-primary);
+}

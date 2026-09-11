@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-empty": "/components/mg-empty/index"
+  },
+  "navigationBarTitleText": "套题详情"
+}

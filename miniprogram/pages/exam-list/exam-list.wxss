@@ -1,4 +1,157 @@
-.page { padding: 32rpx; }
-.item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.title { font-size: 30rpx; font-weight: 600; }
-.empty { text-align: center; padding: 96rpx 32rpx; }
+.rel-page {
+  padding-bottom: 48rpx;
+}
+
+.rel-loading {
+  padding: 160rpx 32rpx;
+  text-align: center;
+}
+
+.rel-loading-text {
+  font-size: 28rpx;
+  color: var(--mg-text-3);
+}
+
+/* ---------- 卷别筛选 ---------- */
+.rel-seg {
+  display: flex;
+  margin: 8rpx 0 24rpx;
+  padding: 6rpx;
+  border-radius: var(--mg-radius-pill);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.rel-seg__item {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--mg-text-2);
+  border-radius: var(--mg-radius-pill);
+}
+
+.rel-seg__item.is-on {
+  background: var(--mg-primary-container);
+  color: var(--mg-primary);
+}
+
+.rel-tip {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+  padding: 24rpx 0 8rpx;
+}
+
+/* ---------- 年份卡 ---------- */
+.rel-year {
+  margin-bottom: 20rpx;
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-surface);
+  overflow: hidden;
+}
+
+.rel-year__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+}
+
+.rel-year__titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.rel-year__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+}
+
+.rel-year__sub {
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+}
+
+.rel-year__body {
+  padding: 0 32rpx 28rpx;
+}
+
+.rel-set {
+  margin-bottom: 24rpx;
+}
+
+.rel-set:last-child {
+  margin-bottom: 0;
+}
+
+.rel-set__title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+  margin-bottom: 16rpx;
+}
+
+.rel-set__hint {
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+  padding: 8rpx 0 12rpx;
+}
+
+/* ---------- 条目行 ---------- */
+.rel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.rel-entry {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-surface-alt);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.rel-entry__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rel-entry__title {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--mg-text);
+}
+
+.rel-entry__sub {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}
+
+.rel-entry__status {
+  margin-top: 4rpx;
+  font-size: 24rpx;
+}
+
+.rel-entry__status--success { color: var(--mg-success); }
+.rel-entry__status--warning { color: var(--mg-warning); }
+.rel-entry__status--danger { color: var(--mg-danger); }
+.rel-entry__status--muted { color: var(--mg-text-3); }
+
+.rel-foot {
+  padding: 24rpx 0 8rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}

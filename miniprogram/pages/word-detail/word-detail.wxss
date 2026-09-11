@@ -1,11 +1,200 @@
-.page { padding: 32rpx; display: flex; flex-direction: column; gap: 24rpx; }
-.head { text-align: center; padding: 48rpx 32rpx; }
-.w { font-size: 64rpx; font-weight: 700; }
-.meta { margin: 8rpx 0 32rpx; }
-.defs { text-align: left; }
-.def { margin-bottom: 12rpx; }
-.pos { color: var(--mg-primary); font-style: italic; margin-right: 16rpx; }
-.ai-head { display: flex; justify-content: space-between; font-weight: 600; }
-.ai-block { margin-top: 16rpx; font-size: 26rpx; color: var(--mg-text-2); }
-.lb { color: var(--mg-accent); font-weight: 600; margin-right: 12rpx; }
-.del { margin-top: 24rpx; }
+.wd {
+  box-sizing: border-box;
+  padding: 32rpx 32rpx 96rpx;
+}
+
+.wd__missing { padding-top: 48rpx; }
+
+.card {
+  box-sizing: border-box;
+  margin-bottom: 24rpx;
+  padding: 32rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+}
+
+.card__title {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+}
+
+.card__text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: var(--mg-text);
+}
+
+.card__empty {
+  display: block;
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+}
+
+/* ---------- 单词头 ---------- */
+.wd__head {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.wd__headinfo { flex: 1; min-width: 0; }
+
+.wd__word {
+  display: block;
+  font-size: 64rpx;
+  line-height: 80rpx;
+  font-weight: 700;
+  font-family: Georgia, "Times New Roman", "Songti SC", "STSong", serif;
+  letter-spacing: -1rpx;
+  color: var(--mg-text);
+}
+
+.wd__ph {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  font-style: italic;
+  color: var(--mg-text-2);
+}
+
+.wd__audio {
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mg-primary-container);
+}
+
+.wd__meta {
+  display: flex;
+  flex-direction: row;
+  gap: 24rpx;
+  margin-top: 20rpx;
+}
+
+.wd__meta-item {
+  font-size: 24rpx;
+  line-height: 34rpx;
+  letter-spacing: 1rpx;
+}
+
+.wd__meta-item--freq { color: var(--mg-text-2); }
+
+/* ---------- 释义 ---------- */
+.defitem {
+  margin-bottom: 20rpx;
+  padding: 24rpx;
+  background: var(--mg-bg);
+  border-radius: var(--mg-radius-md);
+}
+
+.defitem__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.defitem__pos {
+  font-size: 26rpx;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--mg-primary);
+}
+
+.defitem__meaning {
+  display: block;
+  font-size: 28rpx;
+  line-height: 42rpx;
+  color: var(--mg-text);
+}
+
+.defitem__eg {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  line-height: 38rpx;
+  color: var(--mg-text-2);
+}
+
+/* ---------- 易混词 ---------- */
+.similar { margin-bottom: 18rpx; }
+
+.similar__word {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+}
+
+.similar__desc {
+  display: block;
+  font-size: 26rpx;
+  line-height: 38rpx;
+  color: var(--mg-text-2);
+}
+
+/* ---------- 补全中 ---------- */
+.enhancing {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  background: var(--mg-primary-container);
+  border-radius: var(--mg-radius-md);
+  font-size: 26rpx;
+  color: var(--mg-primary);
+}
+
+/* ---------- 操作区 ---------- */
+.wd__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+/* ---------- AI 解析弹窗 ---------- */
+.ai { width: 100%; margin-top: 24rpx; text-align: left; }
+
+.ai__def { margin-bottom: 16rpx; }
+
+.ai__pos {
+  margin-right: 12rpx;
+  font-size: 24rpx;
+  font-style: italic;
+  color: var(--mg-primary);
+}
+
+.ai__meaning { font-size: 28rpx; color: var(--mg-text); }
+
+.ai__block { margin-bottom: 20rpx; }
+
+.ai__label {
+  display: block;
+  margin-bottom: 6rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--mg-accent);
+}
+
+.ai__text {
+  font-size: 26rpx;
+  line-height: 40rpx;
+  color: var(--mg-text-2);
+}

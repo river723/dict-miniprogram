@@ -1,3 +1,9 @@
 {
-  "navigationBarTitleText": "故事阅读"
+  "navigationBarTitleText": "故事阅读",
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-modal": "/components/mg-modal/index",
+    "mg-empty": "/components/mg-empty/index"
+  }
 }

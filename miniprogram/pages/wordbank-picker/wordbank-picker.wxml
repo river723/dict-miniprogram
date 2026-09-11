@@ -1,0 +1,157 @@
+<view class="mg-page wp">
+
+  <!-- 顶部：搜索 + 统计 + 工具条 -->
+  <view class="wp__top">
+    <view class="mg-search">
+      <mg-icon name="magnify" size="36" color="#8A8E89" />
+      <input
+        class="mg-search-input"
+        placeholder="搜索单词…"
+        placeholder-class="ph"
+        value="{{query}}"
+        confirm-type="search"
+        bindinput="onSearch"
+      />
+      <view wx:if="{{query}}" hover-class="mg-hover" bindtap="clearSearch">
+        <mg-icon name="close" size="32" color="#8A8E89" />
+      </view>
+    </view>
+
+    <view class="wp__stats">
+      <view class="wp__stat">
+        <text class="wp__statnum">{{poolCount}}</text>
+        <text class="wp__statlbl">候选词</text>
+      </view>
+      <view class="wp__sep"></view>
+      <view class="wp__stat">
+        <text class="wp__statnum">{{existingCount}}</text>
+        <text class="wp__statlbl">已在生词本</text>
+      </view>
+      <view class="wp__sep"></view>
+      <view class="wp__stat" hover-class="mg-hover" bindtap="restoreIgnored">
+        <text class="wp__statnum {{ignoredCount ? 'wp__statnum--on' : ''}}">{{ignoredCount}}</text>
+        <text class="wp__statlbl">{{ignoredCount ? '已忽略 · 点此恢复' : '已忽略'}}</text>
+      </view>
+    </view>
+
+    <view class="wp__tools">
+      <view class="chip" hover-class="mg-hover" bindtap="openSort">
+        <mg-icon name="sort" size="26" color="#5C605C" />
+        <text>{{sortLabel}}</text>
+      </view>
+      <view class="chip {{allInGroupSelected ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="toggleAll">
+        <mg-icon name="{{allInGroupSelected ? 'check-circle' : 'circle-outline'}}" size="28" color="{{allInGroupSelected ? '#2E5E4E' : '#5C605C'}}" />
+        <text>{{allInGroupSelected ? '取消全选' : '全选本组'}}</text>
+      </view>
+      <view wx:if="{{selectedCount > 0}}" class="chip" hover-class="mg-hover" bindtap="askIgnoreGroup">
+        <mg-icon name="eye-off" size="26" color="#5C605C" />
+        <text>忽略未选</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 列表 -->
+  <view wx:if="{{loading}}" class="mg-loading">
+    <mg-icon name="refresh" size="64" color="#2E5E4E" />
+    <text style="margin-top:24rpx">加载中…</text>
+  </view>
+
+  <mg-empty
+    wx:elif="{{items.length === 0}}"
+    icon="{{emptyIcon}}"
+    title="{{emptyText}}"
+    description="{{emptyHint}}"
+  />
+
+  <view wx:else class="wp__list">
+    <view
+      wx:for="{{items}}"
+      wx:key="key"
+      class="row {{item.selected ? 'row--on' : ''}}"
+      hover-class="mg-hover-soft"
+      data-key="{{item.key}}"
+      bindtap="toggle"
+    >
+      <view class="row__check">
+        <mg-icon
+          name="{{item.selected ? 'check-circle' : 'circle-outline'}}"
+          size="46"
+          color="{{item.selected ? '#2E5E4E' : '#C6C9C4'}}"
+        />
+      </view>
+
+      <view class="row__body">
+        <view class="row__line1">
+          <text class="row__word">{{item.word}}</text>
+          <text wx:if="{{item.phonetic}}" class="row__ph">{{item.phonetic}}</text>
+        </view>
+        <text class="row__meaning">{{item.meaning}}</text>
+        <view class="row__meta">
+          <text class="row__diff" style="color:{{item.diffColor}}">{{item.stars}}</text>
+          <text class="row__freq">{{item.squares}}</text>
+        </view>
+      </view>
+
+      <view class="row__ignore" data-key="{{item.key}}" catchtap="ignoreOne">
+        <mg-icon name="close-circle-outline" size="42" color="#B0B4AF" />
+      </view>
+    </view>
+
+    <!-- 分组翻页 -->
+    <view class="wp__pager">
+      <view
+        class="pager__btn {{group <= 0 ? 'pager__btn--off' : ''}}"
+        hover-class="{{group <= 0 ? '' : 'mg-hover'}}"
+        bindtap="prevGroup"
+      >
+        <mg-icon name="chevron-left" size="40" color="#2E5E4E" />
+      </view>
+      <text class="pager__label">第 {{group + 1}} 组 · 每组 10 词</text>
+      <view
+        class="pager__btn {{isLast ? 'pager__btn--off' : ''}}"
+        hover-class="{{isLast ? '' : 'mg-hover'}}"
+        bindtap="nextGroup"
+      >
+        <mg-icon name="chevron-right" size="40" color="#2E5E4E" />
+      </view>
+    </view>
+
+    <view class="wp__bottomspace"></view>
+  </view>
+
+  <!-- 底部操作条 -->
+  <view wx:if="{{selectedCount > 0}}" class="wp__bar">
+    <text class="wp__barcount">已选 <text class="wp__barcount--num">{{selectedCount}}</text> 词</text>
+    <mg-button
+      title="加入生词本"
+      variant="primary"
+      size="md"
+      icon="plus"
+      loading="{{saving}}"
+      bind:tap="addSelected"
+    />
+  </view>
+
+  <!-- 排序弹层 -->
+  <mg-modal
+    visible="{{showSort}}"
+    title="排序方式"
+    show-actions="{{false}}"
+    bind:close="closeSort"
+    bind:cancel="closeSort"
+  >
+    <view class="picker">
+      <view
+        wx:for="{{sortOptions}}"
+        wx:key="value"
+        class="picker__item {{item.value === sortMode ? 'picker__item--on' : ''}}"
+        hover-class="mg-hover"
+        data-value="{{item.value}}"
+        bindtap="pickSort"
+      >
+        <mg-icon wx:if="{{item.value === sortMode}}" name="check" size="34" color="#2E5E4E" />
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+  </mg-modal>
+</view>

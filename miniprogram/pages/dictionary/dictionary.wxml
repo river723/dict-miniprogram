@@ -1,0 +1,40 @@
+<view class="mg-page dict">
+
+  <view class="dict__sub">
+    <text>选择一个词库打开，可浏览全部单词或按单词查询</text>
+  </view>
+
+  <view class="dict__list">
+    <view wx:for="{{dicts}}" wx:key="id" class="dcard">
+      <view class="dcard__head">
+        <text class="dcard__name">{{item.name}}</text>
+        <view class="dcard__badge">
+          <text>{{item.countText}}</text>
+        </view>
+      </view>
+
+      <text class="dcard__desc">{{item.description}}</text>
+
+      <view class="dcard__actions">
+        <mg-button
+          title="打开词库"
+          variant="primary"
+          size="md"
+          icon="book-open-variant"
+          data-id="{{item.id}}"
+          bind:tap="openDict"
+        />
+      </view>
+    </view>
+
+    <view wx:if="{{error}}" class="dict__err">
+      <mg-icon name="alert-circle-outline" size="32" color="#B5462E" />
+      <text>{{error}}</text>
+    </view>
+
+    <view class="dict__foot">
+      <mg-icon name="lightning-bolt-outline" size="26" color="#8A8E89" />
+      <text>更多词库持续整理中</text>
+    </view>
+  </view>
+</view>

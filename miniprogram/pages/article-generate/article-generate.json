@@ -1,0 +1,11 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-empty": "/components/mg-empty/index",
+    "mg-section-header": "/components/mg-section-header/index"
+  },
+  "navigationBarTitleText": "生成文章",
+  "navigationBarBackgroundColor": "#2E5E4E",
+  "navigationBarTextStyle": "white"
+}

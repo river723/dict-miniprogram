@@ -1,0 +1,77 @@
+<view class="mg-page rer">
+
+  <view wx:if="{{loading}}" class="rer-center">
+    <text class="rer-center__text">结果加载中…</text>
+  </view>
+
+  <view wx:elif="{{missing}}" class="rer-center">
+    <text class="rer-center__text">结果数据丢失</text>
+    <mg-button title="返回列表" variant="primary" size="md" bind:tap="backToList" />
+  </view>
+
+  <block wx:else>
+    <!-- 得分卡 -->
+    <view class="rer-score">
+      <text class="rer-score__label">{{title}}</text>
+      <text class="rer-score__num rer-score__num--{{scoreCls}}">{{score}} / {{total}}</text>
+      <text class="rer-score__pct">正确率 {{percent}}%</text>
+    </view>
+
+    <!-- 新题型无独立结果页 -->
+    <view wx:if="{{unsupported}}" class="rer-card rer-tip">
+      <text class="rer-tip__text">新题型为原地揭晓模式，提交后即可查看对错与解析。</text>
+    </view>
+
+    <!-- 原文 & 译文 -->
+    <view wx:if="{{hasBilingual}}" class="rer-card">
+      <view class="rer-bi__head" hover-class="mg-hover" bindtap="toggleBilingual">
+        <text class="rer-bi__title">{{bilingualTitle}}</text>
+        <text class="rer-bi__toggle">{{bilingualOpen ? '收起 ▲' : '展开 ▼'}}</text>
+      </view>
+      <block wx:if="{{bilingualOpen}}">
+        <view wx:for="{{paragraphs}}" wx:key="no" class="rer-bi__para">
+          <text class="rer-bi__no">{{item.no}}</text>
+          <text class="rer-bi__en">{{item.en}}</text>
+          <text class="rer-bi__zh">{{item.zh}}</text>
+        </view>
+      </block>
+    </view>
+
+    <!-- 逐题回顾 -->
+    <block wx:if="{{items.length > 0}}">
+      <view class="rer-sect">逐题回顾</view>
+      <view wx:for="{{items}}" wx:key="label" class="rer-card">
+        <view class="rer-item__head">
+          <text class="rer-item__idx">{{item.label}}</text>
+          <text wx:if="{{item.state === 'skip'}}" class="rer-badge rer-badge--muted">未作答</text>
+          <text wx:elif="{{item.state === 'ok'}}" class="rer-badge rer-badge--ok">✓ 正确</text>
+          <text wx:else class="rer-badge rer-badge--no">✗ 错误</text>
+        </view>
+
+        <text wx:if="{{item.stem}}" class="rer-item__stem">{{item.stem}}</text>
+
+        <view
+          wx:for="{{item.opts}}"
+          wx:for-item="opt"
+          wx:key="letter"
+          class="rer-opt {{opt.isCorrect ? 'is-ok' : ''}} {{opt.isSelected && !opt.isCorrect ? 'is-no' : ''}}"
+        >
+          <text class="rer-opt__letter {{opt.isCorrect ? 'is-ok' : ''}} {{opt.isSelected && !opt.isCorrect ? 'is-no' : ''}}">{{opt.letter}}</text>
+          <text class="rer-opt__text {{opt.isCorrect ? 'is-ok' : ''}} {{opt.isSelected && !opt.isCorrect ? 'is-no' : ''}}">{{opt.text}}</text>
+          <text wx:if="{{opt.isCorrect}}" class="rer-mark rer-mark--ok">✓</text>
+          <text wx:elif="{{opt.isSelected}}" class="rer-mark rer-mark--no">✗</text>
+        </view>
+
+        <view wx:if="{{item.explanation}}" class="rer-exp">
+          <text class="rer-exp__label">解析</text>
+          <text class="rer-exp__text">{{item.explanation}}</text>
+        </view>
+      </view>
+    </block>
+
+    <view class="rer-actions">
+      <mg-button title="返回列表" variant="secondary" size="md" block bind:tap="backToList" />
+      <mg-button wx:if="{{!unsupported}}" title="再练一次" variant="primary" size="md" block icon="restart" bind:tap="again" />
+    </view>
+  </block>
+</view>

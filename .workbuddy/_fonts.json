@@ -1,0 +1,9 @@
+{
+ "fonts": [
+  "E:\\cc_study\\memo-grad\\node_modules\\@expo\\vector-icons\\build\\vendor\\react-native-vector-icons\\Fonts\\MaterialCommunityIcons.ttf",
+  "E:\\cc_study\\memo-grad\\node_modules\\@expo\\vector-icons\\build\\vendor\\react-native-vector-icons\\Fonts\\MaterialIcons.ttf",
+  "E:\\cc_study\\memo-grad\\web-build\\static\\media\\MaterialCommunityIcons.1fcc36272ea3e53d0031.ttf",
+  "E:\\cc_study\\memo-grad\\web-build\\static\\media\\MaterialIcons.f20305dee9d396fea5c7.ttf"
+ ],
+ "glyphmaps": []
+}

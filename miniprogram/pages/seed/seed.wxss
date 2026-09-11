@@ -1,0 +1,10 @@
+.page { padding: 32rpx; }
+.sub { font-size: 24rpx; margin-top: 8rpx; }
+.bar { height: 16rpx; background: #E8E4DA; border-radius: 8rpx; margin: 16rpx 0 8rpx; overflow: hidden; }
+.bar-inner { height: 100%; background: var(--mg-primary); transition: width .2s; }
+.row-btns { display: flex; gap: 16rpx; margin-bottom: 16rpx; }
+.row-btns .mg-btn { flex: 1; margin: 0; }
+.err { color: #C0392B; font-size: 26rpx; }
+.dup-warn { color: #B8860B; line-height: 1.5; }
+.log-line { font-size: 24rpx; color: var(--mg-text-2); margin-top: 8rpx; word-break: break-all; }
+.tip { font-size: 24rpx; }

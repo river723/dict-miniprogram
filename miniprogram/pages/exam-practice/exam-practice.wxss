@@ -1,12 +1,341 @@
-.page { padding: 32rpx; }
-.empty { text-align: center; padding: 96rpx 32rpx; }
-.sec { margin-bottom: 16rpx; }
-.sec-head { display: flex; justify-content: space-between; }
-.sec-title { font-weight: 600; }
-.passage { margin-top: 24rpx; border-top: 1rpx solid var(--mg-hairline); padding-top: 24rpx; }
-.p-title { font-weight: 600; margin-bottom: 12rpx; }
-.p-body { font-size: 26rpx; line-height: 44rpx; color: var(--mg-text-2); }
-.qs { margin-top: 24rpx; }
-.q { margin-bottom: 24rpx; font-size: 26rpx; line-height: 42rpx; }
-.opt { padding-left: 24rpx; }
-.ans { color: var(--mg-success); margin-top: 8rpx; }
+.rep {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--mg-bg);
+}
+
+.rep-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  padding: 64rpx;
+}
+
+.rep-center__text {
+  font-size: 30rpx;
+  color: var(--mg-text-3);
+}
+
+/* ---------- 顶部进度 ---------- */
+.rep-head {
+  flex: none;
+  padding: 20rpx 32rpx 16rpx;
+  background: var(--mg-surface);
+  border-bottom: 1rpx solid var(--mg-outline);
+}
+
+.rep-head__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.rep-head__title {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.rep-head__count {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--mg-primary);
+}
+
+.rep-bar {
+  height: 12rpx;
+  border-radius: 6rpx;
+  background: var(--mg-surface-alt);
+  border: 1rpx solid var(--mg-outline);
+  overflow: hidden;
+}
+
+.rep-bar__fill {
+  height: 100%;
+  background: var(--mg-primary);
+  transition: width 0.2s ease;
+}
+
+/* ---------- 滚动区 ---------- */
+.rep-scroll {
+  flex: 1;
+  overflow: hidden;
+}
+
+.rep-body {
+  padding: 32rpx;
+  padding-bottom: 24rpx;
+}
+
+.rep-card {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.rep-tag {
+  align-self: flex-start;
+  display: inline-block;
+  padding: 6rpx 20rpx;
+  margin-bottom: 20rpx;
+  border-radius: var(--mg-radius-pill);
+  background: var(--mg-primary-container);
+}
+
+.rep-tag__text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--mg-primary);
+}
+
+.rep-dir {
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+  line-height: 40rpx;
+}
+
+.rep-passage {
+  font-size: 30rpx;
+  color: var(--mg-text);
+  line-height: 50rpx;
+}
+
+.rep-pool__item {
+  margin-bottom: 24rpx;
+}
+
+.rep-pool__item:last-child {
+  margin-bottom: 0;
+}
+
+.rep-pool__letter {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  margin-bottom: 8rpx;
+}
+
+.rep-pool__text {
+  font-size: 28rpx;
+  color: var(--mg-text);
+  line-height: 44rpx;
+}
+
+.rep-sect {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+  margin: 4rpx 0 16rpx;
+}
+
+/* ---------- 题卡 ---------- */
+.rep-q__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.rep-q__idx {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+}
+
+.rep-q__stem {
+  display: block;
+  font-size: 28rpx;
+  color: var(--mg-text);
+  line-height: 42rpx;
+  margin-bottom: 20rpx;
+}
+
+.rep-badge {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.rep-badge--ok { color: var(--mg-success); }
+.rep-badge--no { color: var(--mg-danger); }
+.rep-badge--muted { color: var(--mg-text-3); }
+
+/* ---------- 选项（竖排 / 两列） ---------- */
+.rep-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.rep-opt {
+  display: flex;
+  align-items: flex-start;
+  min-height: 88rpx;
+  padding: 20rpx 24rpx;
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-surface);
+  border: 3rpx solid var(--mg-outline);
+}
+
+.rep-opt.is-sel {
+  border-color: var(--mg-primary);
+  background: var(--mg-primary-container);
+}
+
+.rep-opt__letter {
+  width: 44rpx;
+  flex: none;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--mg-text-3);
+}
+
+.rep-opt__letter.is-sel { color: var(--mg-primary); }
+
+.rep-opt__text {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--mg-text);
+  line-height: 40rpx;
+}
+
+.rep-opt__text.is-sel {
+  color: var(--mg-primary);
+  font-weight: 500;
+}
+
+.rep-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.rep-grid__cell {
+  width: calc(50% - 8rpx);
+}
+
+.rep-opt--sm {
+  min-height: 76rpx;
+  padding: 16rpx 16rpx;
+  align-items: center;
+}
+
+.rep-opt__letter--sm {
+  width: 34rpx;
+  font-size: 26rpx;
+}
+
+.rep-opt__text--sm {
+  font-size: 26rpx;
+  line-height: 36rpx;
+}
+
+/* ---------- 新题型字母选择器 ---------- */
+.rep-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.rep-chip {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: var(--mg-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mg-surface);
+  border: 3rpx solid var(--mg-outline);
+}
+
+.rep-chip.is-sel {
+  border-color: var(--mg-primary);
+  background: var(--mg-primary-container);
+}
+
+.rep-chip.is-fixed {
+  opacity: 0.4;
+}
+
+.rep-chip.is-ok {
+  border-color: var(--mg-success);
+  background: var(--mg-primary-container);
+}
+
+.rep-chip.is-no {
+  border-color: var(--mg-danger);
+  background: var(--mg-danger-light);
+}
+
+.rep-chip__text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+}
+
+.rep-chip__text.is-sel { color: var(--mg-primary); }
+.rep-chip__text.is-emph { font-weight: 800; }
+
+/* ---------- 解析 ---------- */
+.rep-exp {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-primary-container);
+}
+
+.rep-exp__label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  margin-bottom: 8rpx;
+}
+
+.rep-exp__text {
+  font-size: 26rpx;
+  color: var(--mg-text);
+  line-height: 40rpx;
+}
+
+/* ---------- 底部条 ---------- */
+.rep-bottom {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 16rpx 32rpx;
+  background: var(--mg-surface);
+  border-top: 1rpx solid var(--mg-outline);
+}
+
+.rep-bottom__hint {
+  flex: 1;
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+}
+
+.rep-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 16rpx;
+}
+
+.rep-actions > mg-button {
+  flex: 1;
+}
+
+.rep-foot {
+  height: 24rpx;
+}

@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "mg-icon": "../mg-icon/index",
+    "mg-button": "../mg-button/index"
+  }
+}

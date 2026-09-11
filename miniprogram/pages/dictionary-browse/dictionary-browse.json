@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-empty": "/components/mg-empty/index",
+    "mg-modal": "/components/mg-modal/index"
+  },
+  "navigationBarTitleText": "浏览词库",
+  "navigationBarBackgroundColor": "#2E5E4E",
+  "navigationBarTextStyle": "white"
+}

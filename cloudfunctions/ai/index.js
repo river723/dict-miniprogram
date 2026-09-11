@@ -4,6 +4,10 @@
  *   analyze  单词解析：翻译、词性、熟词僻义、例句
  *   quiz     依据给定词表生成选择题（中文释义单选，含题干中文翻译）
  *   story    依据给定词表生成短文（上下文记词）
+ *   definition_questions  生成「英文释义单选题」（题干含目标词，选项为英文释义）
+ *   cloze_questions       生成「完形选词题」（题干留 [BLANK]，选项为单词）
+ *
+ * 后两个供「练习 Tab · AI 出题」使用，返回结构见各自的 build 函数。
  */
 const cloud = require('wx-server-sdk');
 const https = require('https');
@@ -27,7 +31,16 @@ exports.main = async (event) => {
         prompt = buildQuizPrompt(event.words, event.count || 10);
         break;
       case 'story':
-        prompt = buildStoryPrompt(event.words);
+        prompt = buildStoryPrompt(event.words, event.theme, event.length, event.withTitle);
+        break;
+      case 'definition_questions':
+        prompt = buildDefinitionQuestionsPrompt(event.words);
+        break;
+      case 'cloze_questions':
+        prompt = buildClozeQuestionsPrompt(event.words);
+        break;
+      case 'real_exam_explanation':
+        prompt = buildRealExamExplanationPrompt(event);
         break;
       default:
         return { ok: false, error: `unknown action: ${event.action}` };
@@ -64,12 +77,94 @@ function buildQuizPrompt(words, count) {
   ].join('\n');
 }
 
-function buildStoryPrompt(words) {
+/** 把 [{word, meaning}] 或 ['word'] 统一格式化成提示词里的词表。 */
+function formatWordList(words) {
+  return (words || [])
+    .map((w, i) => (typeof w === 'string' ? `${i + 1}. ${w}` : `${i + 1}. ${w.word}${w.meaning ? ' —— ' + w.meaning : ''}`))
+    .join('\n');
+}
+
+/** 释义单选：题干含目标词（用 **词** 标出），选项是英文释义。 */
+function buildDefinitionQuestionsPrompt(words) {
   return [
-    `你是考研英语写作专家。请用以下单词写一篇 150 词左右、难度适中的英文短文，`,
-    `并将目标单词自然融入文中（用 **词** 标出），文末给中文全文翻译。`,
-    `单词列表：${words.join(', ')}`,
+    '你是考研英语出题专家。请为下面每个单词各出 1 道「英文释义单选题」。',
+    '单词与释义：',
+    formatWordList(words),
+    '',
+    '要求：',
+    '1. sentence：一个含目标单词的英文句子，难度贴近考研阅读；目标单词必须用 **词** 包裹（例如 **abandon**）。',
+    '2. options：4 个英文释义选项（英文短语），其中恰好 1 个是该词的正确英文释义，其余 3 个为干扰项。',
+    '3. correct_definition：正确选项的原文，必须与 options 中某一项完全一致。',
+    '4. chinese_translation：该英文句子的中文翻译。',
+    '严格输出 JSON 数组（不要 markdown 代码块、不要多余说明），每项格式：',
+    '{"target_word":"abandon","sentence":"He had to **abandon** the plan.","options":["...","...","...","..."],"correct_definition":"...","chinese_translation":"..."}',
   ].join('\n');
+}
+
+/** 完形选词：题干留 [BLANK]，选项是单词。 */
+function buildClozeQuestionsPrompt(words) {
+  return [
+    '你是考研英语出题专家。请为下面每个单词各出 1 道「完形选词题」。',
+    '单词与释义：',
+    formatWordList(words),
+    '',
+    '要求：',
+    '1. sentence：一个英文句子，目标单词的位置用 [BLANK] 占位（例如 "He decided to [BLANK] his old plan."），句中不要出现目标单词本身。',
+    '2. options：4 个英文单词选项，其中恰好 1 个是正确答案（即目标单词），其余 3 个为干扰词。',
+    '3. correct_answer：正确选项的单词，必须与 options 中某一项完全一致。',
+    '4. chinese_hint：该句的中文提示，帮助理解语境但不要直接给出答案。',
+    '严格输出 JSON 数组（不要 markdown 代码块、不要多余说明），每项格式：',
+    '{"target_word":"abandon","sentence":"He had to [BLANK] the plan.","options":["...","...","...","..."],"correct_answer":"...","chinese_hint":"..."}',
+  ].join('\n');
+}
+
+/**
+ * 真题错题解析：给定题干 / 选项 / 正确答案 / 考生答案，输出中文解析。
+ * 供「错题本 · 真题错题」的 AI 解析按钮使用，结果回写到错题快照。
+ */
+function buildRealExamExplanationPrompt({ mode, stem, blankIndex, options, correctAnswer, userAnswer }) {
+  const typeLabel = mode === 'reading' ? '阅读理解' : mode === 'newtype' ? '新题型' : '完形填空';
+  const opts = (options || []).map((o, i) => `${'ABCDEFGH'[i]}. ${o}`).join('\n');
+  return [
+    `你是考研英语辅导老师。下面是考生做错的一道${typeLabel}题，请用中文给出简明解析。`,
+    stem ? `题干：${stem}` : '',
+    blankIndex != null ? `（这是第 ${blankIndex} 空）` : '',
+    opts ? `选项：\n${opts}` : '',
+    `正确答案：${correctAnswer}`,
+    userAnswer ? `考生答案：${userAnswer}` : '',
+    '',
+    '要求：直接输出解析正文（不要 markdown 代码块、不要 JSON）。内容包括：',
+    '1. 正确答案为什么对（结合原文线索或语法搭配）；',
+    '2. 考生答案为什么错（常见误区）；',
+    '3. 一句话解题技巧。',
+    '全文控制在 150 字以内。',
+  ].filter(Boolean).join('\n');
+}
+
+const THEME_CN = {  technology: '科技',
+  life: '生活',
+  history: '历史',
+  nature: '自然',
+  science: '科学',
+};
+
+/**
+ * 短文生成。向后兼容：只传 words 时行为与旧版一致（约 150 词、无标题）。
+ * theme / length / withTitle 为「阅读 Tab · 生成文章」页新增的可选参数。
+ * 返回文本必须保留 **词** 与「中文翻译：」两处标记 —— 学习页短文模式依赖它们切分。
+ */
+function buildStoryPrompt(words, theme, length, withTitle) {
+  const n = Number(length) > 0 ? Number(length) : 150;
+  const themeLine = theme && theme !== 'random'
+    ? `主题方向：${THEME_CN[theme] || theme}。`
+    : '主题不限。';
+  return [
+    `你是考研英语写作专家。请用以下单词写一篇约 ${n} 词、难度适中的英文短文，`,
+    `并将目标单词自然融入文中（用 **词** 标出）。${themeLine}`,
+    withTitle ? '第一行输出「标题：<英文标题>」，标题不要加引号。' : '',
+    `文末另起一行，以「中文翻译：」开头给出全文中文翻译。`,
+    `单词列表：${words.join(', ')}`,
+  ].filter(Boolean).join('\n');
 }
 
 function chat(apiKey, prompt) {

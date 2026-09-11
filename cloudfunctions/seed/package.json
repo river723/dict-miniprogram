@@ -1,0 +1,9 @@
+{
+  "name": "seed",
+  "version": "1.0.0",
+  "description": "词库播种 / 环境初始化（内置 worddict 全量数据）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

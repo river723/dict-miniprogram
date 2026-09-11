@@ -1,0 +1,113 @@
+<view class="mg-page db">
+
+  <!-- 状态栏 -->
+  <view class="db__status">
+    <text class="db__status-text">{{dictName}} · 共 {{totalText}} 词</text>
+    <text wx:if="{{hitText}}" class="db__status-hit"> · 命中 {{hitText}}</text>
+  </view>
+
+  <!-- 搜索 -->
+  <view class="db__search">
+    <view class="mg-search">
+      <mg-icon name="magnify" size="36" color="#8A8E89" />
+      <input
+        class="mg-search-input"
+        placeholder="输入单词查询..."
+        placeholder-class="ph"
+        value="{{query}}"
+        confirm-type="search"
+        bindinput="onSearch"
+      />
+      <view wx:if="{{query}}" hover-class="mg-hover" bindtap="clearSearch">
+        <mg-icon name="close" size="32" color="#8A8E89" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 排序 + 难度 / 考频筛选 -->
+  <view class="db__chips">
+    <view class="chip" hover-class="mg-hover" bindtap="openSort">
+      <mg-icon name="sort" size="26" color="#5C605C" />
+      <text>{{sortLabel}}</text>
+    </view>
+    <view class="chip {{diffFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openDiff">
+      <mg-icon name="filter-variant" size="26" color="{{diffFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
+      <text>{{diffLabel}}</text>
+    </view>
+    <view class="chip {{freqFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openFreq">
+      <mg-icon name="filter-variant" size="26" color="{{freqFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
+      <text>{{freqLabel}}</text>
+    </view>
+  </view>
+
+  <!-- A–Z 索引（小程序按字母分页取词） -->
+  <scroll-view wx:if="{{!query}}" class="db__index" scroll-x enable-flex show-scrollbar="{{false}}">
+    <view class="db__index-inner">
+      <view
+        wx:for="{{letters}}"
+        wx:key="*this"
+        class="lchip {{item === letter ? 'lchip--on' : ''}}"
+        hover-class="mg-hover"
+        data-letter="{{item}}"
+        bindtap="pickLetter"
+      >{{item}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 列表 -->
+  <view wx:if="{{loading}}" class="mg-loading">
+    <mg-icon name="refresh" size="64" color="#2E5E4E" />
+    <text style="margin-top:24rpx">词库加载中…</text>
+  </view>
+
+  <mg-empty
+    wx:elif="{{items.length === 0}}"
+    icon="magnify-close"
+    title="没有找到匹配的单词"
+    description="试试其他搜索词或切换字母"
+  />
+
+  <view wx:else class="db__list">
+    <view
+      wx:for="{{items}}"
+      wx:key="key"
+      class="dbrow"
+      hover-class="mg-hover-soft"
+      data-word="{{item.word}}"
+      bindtap="openWord"
+    >
+      <view class="dbrow__info">
+        <text class="dbrow__word">{{item.word}}</text>
+        <text class="dbrow__meaning">{{item.meaning}}</text>
+      </view>
+      <view class="dbrow__meta">
+        <text class="dbrow__diff" style="color:{{item.diffColor}}">{{item.stars}}</text>
+        <text class="dbrow__freq">{{item.squares}}</text>
+      </view>
+    </view>
+    <view class="db__bottomspace"></view>
+  </view>
+
+  <!-- 排序 / 筛选弹层 -->
+  <mg-modal
+    visible="{{showPicker}}"
+    title="{{pickerTitle}}"
+    show-actions="{{false}}"
+    bind:close="closePicker"
+    bind:cancel="closePicker"
+  >
+    <view class="picker">
+      <view
+        wx:for="{{pickerOptions}}"
+        wx:key="index"
+        class="picker__item {{item.value === pickerValue ? 'picker__item--on' : ''}}"
+        hover-class="mg-hover"
+        data-value="{{item.value}}"
+        bindtap="onPick"
+      >
+        <mg-icon wx:if="{{item.value === pickerValue}}" name="check" size="34" color="#2E5E4E" />
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+  </mg-modal>
+</view>

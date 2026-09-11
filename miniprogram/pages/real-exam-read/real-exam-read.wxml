@@ -1,0 +1,79 @@
+<view class="mg-page rex">
+
+  <view wx:if="{{loading}}" class="rex-center">
+    <text class="rex-center__text">真题加载中…</text>
+  </view>
+
+  <view wx:elif="{{missing}}" class="rex-center">
+    <text class="rex-center__text">题目不存在或已被移除</text>
+    <mg-button title="返回列表" variant="primary" size="md" bind:tap="backToList" />
+  </view>
+
+  <!-- 翻译 -->
+  <block wx:elif="{{mode === 'translation'}}">
+    <view class="rex-card">
+      <view class="rex-tag"><text class="rex-tag__text">Directions</text></view>
+      <text class="rex-dir">{{direction}}</text>
+      <text class="rex-hint">{{hint}}</text>
+    </view>
+
+    <view wx:if="{{hasPassage}}" class="rex-card">
+      <view class="rex-tag"><text class="rex-tag__text">English Text</text></view>
+      <text class="rex-passage" user-select>{{passage}}</text>
+    </view>
+
+    <view class="rex-sect">{{isSentence ? '逐句参考译文' : '参考译文'}}</view>
+
+    <view wx:for="{{items}}" wx:key="key" class="rex-card">
+      <block wx:if="{{isSentence}}">
+        <text class="rex-item__idx">{{item.label}}</text>
+        <text class="rex-item__en">{{item.en}}</text>
+      </block>
+
+      <view class="rex-reveal" hover-class="mg-hover" data-key="{{item.key}}" bindtap="toggleItem">
+        <text class="rex-reveal__label">参考译文</text>
+        <text class="rex-reveal__toggle">{{item.open ? '收起 ▲' : '查看 ▼'}}</text>
+      </view>
+
+      <view wx:if="{{item.open}}" class="rex-box">
+        <text class="rex-box__text">{{item.zh}}</text>
+        <text wx:if="{{item.note}}" class="rex-box__note">{{item.note}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 写作 -->
+  <block wx:else>
+    <view class="rex-hint rex-hint--top">{{hint}}</view>
+
+    <view wx:for="{{parts}}" wx:key="key" class="rex-card">
+      <view class="rex-tag"><text class="rex-tag__text">{{item.label}}</text></view>
+      <text class="rex-dir">{{item.direction}}</text>
+
+      <view wx:if="{{item.sample}}" class="rex-reveal" hover-class="mg-hover" data-index="{{index}}" bindtap="togglePart">
+        <text class="rex-reveal__label">参考范文</text>
+        <text class="rex-reveal__toggle">{{item.open ? '收起 ▲' : '查看 ▼'}}</text>
+      </view>
+
+      <view wx:if="{{item.open}}" class="rex-box">
+        <text class="rex-box__text">{{item.sample}}</text>
+
+        <block wx:if="{{item.sampleTranslation}}">
+          <view class="rex-divider"></view>
+          <text class="rex-box__label">参考译文</text>
+          <text class="rex-box__note">{{item.sampleTranslation}}</text>
+        </block>
+
+        <block wx:if="{{item.analysis}}">
+          <view class="rex-divider"></view>
+          <text class="rex-box__label">写作解析</text>
+          <text class="rex-box__note">{{item.analysis}}</text>
+        </block>
+      </view>
+    </view>
+  </block>
+
+  <view wx:if="{{!loading && !missing}}" class="rex-actions">
+    <mg-button title="返回列表" variant="secondary" size="md" block bind:tap="backToList" />
+  </view>
+</view>

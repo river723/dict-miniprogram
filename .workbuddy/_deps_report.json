@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "counts": {
+    "wxs": 0,
+    "src": 0,
+    "components": 102,
+    "requires": 100,
+    "assets": 8,
+    "pages": 30
+  },
+  "missing": [],
+  "soft": []
+}

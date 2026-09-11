@@ -1,20 +1,138 @@
-<view class="page" wx:if="{{stats}}">
-  <view class="grid">
-    <view class="mg-card g-item"><view class="n">{{stats.totalWords}}</view><view>生词本</view></view>
-    <view class="mg-card g-item"><view class="n">{{stats.learnedWords}}</view><view>已学习</view></view>
-    <view class="mg-card g-item"><view class="n ok">{{stats.masteredWords}}</view><view>已掌握</view></view>
-  </view>
+<view class="mg-page st">
 
-  <view class="mg-card">
-    <view class="sec-title">近 7 天学习量</view>
-    <view class="chart">
-      <view wx:for="{{trend}}" wx:key="date" class="col">
-        <view class="bar-wrap">
-          <view class="bar" style="height: {{item.height}}%"></view>
+  <!-- 空态：还没有学习数据 -->
+  <block wx:if="{{loaded && totalWords === 0}}">
+    <mg-empty
+      icon="chart-line-variant"
+      title="还没有学习数据"
+      description="开始背单词后，这里会展示你的学习趋势和进步轨迹。"
+      action-label="开始学习"
+      bind:action="goHome"
+    />
+  </block>
+
+  <block wx:elif="{{loaded}}">
+    <!-- ===== 第一段：过去 7 天 ===== -->
+    <mg-section-header title="过去 7 天" subtitle="每日学习次数" icon="chart-line-variant" />
+    <view class="st-card">
+      <view class="st-chart" style="width: {{chartW}}; height: {{chartH}};">
+        <!-- Y 轴刻度线 -->
+        <view
+          wx:for="{{chart.yTicks}}"
+          wx:key="top"
+          class="st-grid"
+          style="top: {{item.top}}rpx; left: 0; right: 0;"
+        ></view>
+
+        <!-- 7 日均值虚线 -->
+        <view
+          wx:if="{{chart.avgTop >= 0}}"
+          class="st-avg"
+          style="top: {{chart.avgTop}}rpx; left: {{chart.avgLeft}}rpx; right: {{chart.avgRight}}rpx;"
+        ></view>
+
+        <!-- 折线段 -->
+        <view
+          wx:for="{{chart.segs}}"
+          wx:key="index"
+          class="st-seg"
+          style="left: {{item.left}}rpx; top: {{item.top}}rpx; width: {{item.width}}rpx; transform: rotate({{item.angle}}deg);"
+        ></view>
+
+        <!-- 数据点 -->
+        <view
+          wx:for="{{chart.dots}}"
+          wx:key="index"
+          class="st-dot {{item.active ? '' : 'is-off'}}"
+          style="left: {{item.left}}rpx; top: {{item.top}}rpx;"
+        ></view>
+
+        <!-- X 轴标签 -->
+        <view
+          wx:for="{{chart.xLabels}}"
+          wx:key="index"
+          class="st-xlabel"
+          style="left: {{item.left}}rpx; top: {{item.top}}rpx;"
+        >{{item.text}}</view>
+      </view>
+
+      <view class="st-legend">
+        <view class="st-legend__item">
+          <view class="st-swatch st-swatch--main"></view>
+          <text class="st-legend__text">每日次数</text>
         </view>
-        <view class="lbl">{{item.dayLabel}}</view>
-        <view class="rate mg-text-tertiary">{{item.rateLabel}}</view>
+        <view class="st-legend__item">
+          <view class="st-swatch st-swatch--avg"></view>
+          <text class="st-legend__text">7 天均值 {{avgText}}</text>
+        </view>
       </view>
     </view>
-  </view>
+
+    <view class="st-strip">
+      <mg-stat-strip metrics="{{metrics}}" />
+    </view>
+
+    <!-- ===== 第二段：困难词 ===== -->
+    <mg-section-header title="困难词" subtitle="历史正确率低于 50%" icon="alert-circle-outline" />
+
+    <view wx:if="{{difficultWords.length > 0}}" class="st-card st-list">
+      <view
+        wx:for="{{difficultWords}}"
+        wx:key="id"
+        class="st-row {{index === difficultWords.length - 1 ? 'is-last' : ''}}"
+        hover-class="mg-hover"
+        data-id="{{item.id}}"
+        bindtap="openWord"
+      >
+        <view class="st-row__main">
+          <text class="st-row__word mg-serif">{{item.text}}</text>
+          <text class="st-row__sub">{{item.rateText}}</text>
+        </view>
+
+        <view class="st-spark">
+          <view
+            wx:for="{{item.segs}}"
+            wx:key="index"
+            class="st-spark__seg"
+            style="left: {{item.left}}rpx; top: {{item.top}}rpx; width: {{item.width}}rpx; transform: rotate({{item.angle}}deg);"
+          ></view>
+          <view
+            wx:for="{{item.dots}}"
+            wx:key="index"
+            class="st-spark__dot {{item.hit ? '' : 'is-off'}}"
+            style="left: {{item.left}}rpx; top: {{item.top}}rpx;"
+          ></view>
+        </view>
+
+        <mg-icon name="chevron-right" size="36" color="#8A8E89" />
+      </view>
+    </view>
+
+    <view wx:else class="st-card st-hint">
+      <text class="st-hint__text">目前没有困难词，继续保持！</text>
+    </view>
+
+    <view wx:if="{{difficultWords.length > 0}}" class="st-cta">
+      <mg-button title="强化复习困难词" variant="primary" size="lg" block icon="refresh" bind:tap="reinforce" />
+    </view>
+
+    <!-- ===== 第三段：里程碑 ===== -->
+    <mg-section-header title="里程碑" icon="trophy-outline" />
+    <view class="st-card st-ms-list">
+      <view
+        wx:for="{{milestones}}"
+        wx:key="key"
+        class="st-ms {{item.achieved ? '' : 'is-off'}}"
+      >
+        <view class="st-ms__badge {{item.achieved ? 'is-on' : ''}}">
+          <mg-icon name="{{item.icon}}" size="40" color="{{item.achieved ? '#3F7A5C' : '#8A8E89'}}" />
+        </view>
+        <view class="st-ms__main">
+          <text class="st-ms__label">{{item.label}}</text>
+          <text class="st-ms__hint">{{item.hint}}</text>
+        </view>
+        <mg-icon wx:if="{{item.achieved}}" name="check-circle" size="36" color="#3F7A5C" />
+      </view>
+    </view>
+  </block>
 </view>

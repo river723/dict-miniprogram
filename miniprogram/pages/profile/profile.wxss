@@ -1,6 +1,205 @@
-.page { padding: 32rpx; display: flex; flex-direction: column; gap: 16rpx; }
-.head { display: flex; align-items: center; gap: 32rpx; padding: 48rpx 32rpx; }
-.avatar { width: 112rpx; height: 112rpx; border-radius: 50%; background: var(--mg-primary); color: #fff;
-          display: flex; align-items: center; justify-content: center; font-size: 48rpx; font-weight: 700; }
-.nums { display: flex; flex-direction: column; gap: 8rpx; font-size: 26rpx; color: var(--mg-text-2); }
-.row { display: flex; justify-content: space-between; }
+.pf {
+  padding-bottom: 48rpx;
+}
+
+/* ---------- Hero ---------- */
+.pf-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 280rpx;
+  padding: 40rpx;
+  margin-bottom: 32rpx;
+  border-radius: var(--mg-radius-xl);
+  background: var(--mg-primary);
+  box-shadow: var(--mg-shadow-card);
+}
+
+.pf-hero__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-hero__eyebrow {
+  display: block;
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.pf-hero__numrow {
+  display: flex;
+  align-items: baseline;
+  margin-top: 8rpx;
+}
+
+.pf-hero__num {
+  font-size: 68rpx;
+  line-height: 76rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+  color: #ffffff;
+}
+
+.pf-hero__unit {
+  margin-left: 12rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.pf-hero__summary {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ---------- 进度环 ---------- */
+.pf-ring {
+  position: relative;
+  width: 128rpx;
+  height: 128rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-ring__track,
+.pf-ring__prog {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+  border-width: 12rpx;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.pf-ring__track {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.pf-ring__prog {
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: rotate(-90deg);
+}
+
+.pf-ring__text {
+  position: relative;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* ---------- CTA / 指标 ---------- */
+.pf-cta {
+  margin-bottom: 32rpx;
+}
+
+.pf-strip {
+  margin-bottom: 32rpx;
+}
+
+/* ---------- 卡片 ---------- */
+.pf-card {
+  padding: 24rpx 32rpx;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.pf-account {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.pf-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  flex: none;
+  border-radius: 50%;
+  background: var(--mg-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-account__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-account__name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.pf-account__sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+  line-height: 34rpx;
+}
+
+/* ---------- 设置预览行 ---------- */
+.pf-settings {
+  padding: 8rpx 32rpx;
+  margin-bottom: 32rpx;
+}
+
+.pf-setting {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid var(--mg-outline);
+}
+
+.pf-setting.is-last {
+  border-bottom: 0;
+}
+
+.pf-setting__label {
+  flex: 1;
+  font-size: 30rpx;
+  color: var(--mg-text);
+}
+
+.pf-setting__value {
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+  margin-right: 8rpx;
+}
+
+.pf-sync {
+  margin-bottom: 32rpx;
+}
+
+/* ---------- 版本信息 ---------- */
+.pf-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 48rpx 0 24rpx;
+}
+
+.pf-footer__name {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--mg-text-2);
+}
+
+.pf-footer__meta {
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}

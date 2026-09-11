@@ -1,0 +1,28 @@
+﻿v22.22.2
+node.exe : file:///E:/cc_study/memo-grad-miniprogram/.workbuddy/check_syntax.js
+:5
+At line:447 char:1
++ & "C:\Users\Administrator\.workbuddy\binaries\node\versions\22.22.2-3 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (file:///E:/cc_s...eck_syntax.js:5 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+const fs = require('fs');
+           ^
+
+ReferenceError: require is not defined in ES module scope, you can use import i
+nstead
+This file is being treated as an ES module because it has a '.js' file extensio
+n and 'E:\cc_study\memo-grad-miniprogram\package.json' contains "type": "module
+". To treat it as a CommonJS script, rename it to use the '.cjs' file extension
+.
+    at file:///E:/cc_study/memo-grad-miniprogram/.workbuddy/check_syntax.js:5:1
+2
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:
+665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:11
+7:5)
+
+Node.js v22.22.2

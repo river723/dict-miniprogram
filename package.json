@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "import:worddict": "node scripts/import-worddict.mjs",
-    "upload:content": "node scripts/upload-content.mjs"
+    "upload:content": "node scripts/upload-content.mjs",
+    "check:data": "node scripts/check-data.mjs",
+    "export:jsonl": "node scripts/export-jsonl.mjs",
+    "export:single": "node scripts/export-single.mjs",
+    "seed:build": "node scripts/build-seed-data.mjs",
+    "deploy:cf": "node scripts/deploy-cloudfunctions.mjs"
   },
   "devDependencies": {
     "@cloudbase/node-sdk": "^4.0.0",

@@ -1,0 +1,86 @@
+<view class="mg-page esd">
+
+  <mg-empty
+    wx:if="{{missing}}"
+    icon="library"
+    title="套题不存在"
+    description="这套题可能已被删除。"
+    action-label="返回题库"
+    bind:action="goBank"
+  />
+
+  <block wx:elif="{{ready}}">
+    <!-- 概览 -->
+    <view class="esd__summary">
+      <view class="esd__tagrow">
+        <view class="tag tag--{{type}}">
+          <text class="tag__text tag__text--{{type}}">{{typeLabel}}</text>
+        </view>
+        <text class="esd__meta">{{total}} 题 · 已练 {{count}} 次</text>
+      </view>
+      <view class="esd__statrow">
+        <text class="esd__dates">出题 {{createdText}} · 上次练习 {{lastText}}</text>
+        <text class="esd__acc esd__acc--{{accuracyCls}}">{{accuracyText}}</text>
+      </view>
+    </view>
+
+    <!-- 题目与答案 -->
+    <view class="esd__section">
+      <text class="esd__section-title">题目与答案</text>
+    </view>
+
+    <view wx:for="{{questions}}" wx:key="idx" class="esd__card">
+      <text class="esd__qidx esd__qidx--{{item.type}}">{{item.label}}</text>
+
+      <!-- 释义单选 -->
+      <block wx:if="{{item.isDefinition}}">
+        <view class="esd__sentbox esd__sentbox--primary">
+          <text class="esd__sentence mg-serif">
+            <text
+              wx:for="{{item.sentenceParts}}"
+              wx:for-item="part"
+              wx:key="index"
+              class="{{part.isWord ? 'esd__word' : ''}}"
+              data-id="{{part.isWord ? item.wordId : ''}}"
+              data-word="{{part.isWord ? part.text : ''}}"
+              bindtap="openWord"
+            >{{part.text}}</text>
+          </text>
+        </view>
+        <text wx:if="{{item.translation}}" class="esd__translation">题干译文：{{item.translation}}</text>
+      </block>
+
+      <!-- 完形选词 -->
+      <block wx:else>
+        <view class="esd__sentbox esd__sentbox--warning">
+          <text class="esd__sentence mg-serif">{{item.blankBefore}}<text class="esd__blank">______</text>{{item.blankAfter}}</text>
+        </view>
+        <text wx:if="{{item.translation}}" class="esd__translation">题干译文：{{item.translation}}</text>
+        <view class="esd__wordline" hover-class="mg-hover" data-id="{{item.wordId}}" data-word="{{item.word}}" bindtap="openWord">
+          <text class="esd__prompt">正确答案：</text>
+          <text class="esd__word">{{item.word}}</text>
+        </view>
+      </block>
+
+      <text class="esd__prompt">{{item.isDefinition ? item.prompt : '选项：'}}</text>
+
+      <view
+        wx:for="{{item.options}}"
+        wx:for-item="opt"
+        wx:key="letter"
+        class="orow {{opt.isCorrect ? 'orow--correct' : ''}}"
+      >
+        <text class="orow__letter">{{opt.letter}}</text>
+        <text class="orow__text">{{opt.text}}</text>
+        <mg-icon wx:if="{{opt.isCorrect}}" name="check-bold" size="30" color="#3F7A5C" />
+      </view>
+    </view>
+
+    <view class="esd__bottomspace"></view>
+
+    <!-- 底部重做 -->
+    <view class="esd__footer">
+      <mg-button title="重做这套题" variant="primary" size="lg" block icon="restart" bind:tap="redo" />
+    </view>
+  </block>
+</view>

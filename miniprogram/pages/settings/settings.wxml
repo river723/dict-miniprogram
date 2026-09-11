@@ -1,18 +1,191 @@
-<view class="page" wx:if="{{settings}}">
-  <view class="mg-card row">
-    <view>
-      <view>自动配词</view>
-      <view class="mg-text-tertiary sub">每天按考频自动补足生词本</view>
+<view class="mg-page se" wx:if="{{settings}}">
+
+  <!-- ===== 外观 ===== -->
+  <mg-section-header title="外观" icon="palette-outline" />
+  <view class="se-card">
+    <text class="se-label">主题</text>
+    <view class="se-seg">
+      <view
+        wx:for="{{themes}}"
+        wx:key="value"
+        class="se-seg__item {{settings.theme === item.value ? 'is-on' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="onThemeChange"
+      >
+        <mg-icon name="{{item.icon}}" size="32" color="{{settings.theme === item.value ? '#2E5E4E' : '#5C605C'}}" />
+        <text class="se-seg__text">{{item.label}}</text>
+      </view>
     </view>
-    <switch checked="{{settings.autoAddNewWords}}" bindchange="onAutoAddChange" color="#2E5E4E" />
   </view>
-  <view class="mg-card row">
-    <view>
-      <view>每日新词数</view>
-      <view class="mg-text-tertiary sub">当前 {{settings.dailyNewWords}} 个/天</view>
+
+  <!-- ===== 学习设置 ===== -->
+  <mg-section-header title="学习设置" icon="cog-outline" />
+  <view class="se-card">
+    <!-- 每日新词 -->
+    <view class="se-step">
+      <view class="se-step__head">
+        <text class="se-label">每日新词数量</text>
+        <view class="se-step__ctrl">
+          <view class="se-btn {{settings.dailyNewWords <= 1 ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="dailyDec">
+            <text class="se-btn__g">−</text>
+          </view>
+          <view class="se-num"><text class="se-num__t">{{settings.dailyNewWords}}</text></view>
+          <view class="se-btn {{settings.dailyNewWords >= dailyMax ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="dailyInc">
+            <text class="se-btn__g">+</text>
+          </view>
+        </view>
+      </view>
+      <view class="se-slider">
+        <view class="se-slider__fill" style="width: {{settings.dailyNewWords / dailyMax * 100}}%"></view>
+      </view>
+      <view class="se-slider__labels">
+        <text class="se-slider__label">1</text>
+        <text class="se-slider__label">{{dailyMax}}</text>
+      </view>
     </view>
-    <picker range="{{dailyOptions}}" bindchange="onDailyChange">
-      <view class="picker">调整 ›</view>
-    </picker>
+
+    <view class="se-divider"></view>
+
+    <!-- AI 出题练习题数 -->
+    <view class="se-step">
+      <view class="se-step__head">
+        <text class="se-label">AI 出题练习题数</text>
+        <view class="se-step__ctrl">
+          <view class="se-btn {{settings.examQuestionCount <= 5 ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="examDec">
+            <text class="se-btn__g">−</text>
+          </view>
+          <view class="se-num"><text class="se-num__t">{{settings.examQuestionCount}}</text></view>
+          <view class="se-btn {{settings.examQuestionCount >= 20 ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="examInc">
+            <text class="se-btn__g">+</text>
+          </view>
+        </view>
+      </view>
+      <view class="se-slider">
+        <view class="se-slider__fill" style="width: {{settings.examQuestionCount / 20 * 100}}%"></view>
+      </view>
+      <view class="se-slider__labels">
+        <text class="se-slider__label">5</text>
+        <text class="se-slider__label">20</text>
+      </view>
+    </view>
+
+    <view class="se-divider"></view>
+
+    <view class="se-toggle">
+      <view class="se-toggle__main">
+        <text class="se-toggle__label">答题自动跳转</text>
+        <text class="se-toggle__sub">{{settings.examAutoAdvance ? '答对后 2.5 秒自动下一题' : '手动点击下一题'}}</text>
+      </view>
+      <switch checked="{{settings.examAutoAdvance}}" data-key="examAutoAdvance" bindchange="onSwitch" color="#2E5E4E" />
+    </view>
+
+    <view class="se-toggle">
+      <view class="se-toggle__main">
+        <text class="se-toggle__label">自动配词</text>
+        <text wx:if="{{settings.autoAddNewWords}}" class="se-toggle__sub">每天按考频自动补足到 {{settings.dailyNewWords}} 个新词</text>
+        <text wx:else class="se-toggle__sub">关闭后仅手动添加生词</text>
+      </view>
+      <switch checked="{{settings.autoAddNewWords}}" data-key="autoAddNewWords" bindchange="onSwitch" color="#2E5E4E" />
+    </view>
+
+    <view class="se-toggle">
+      <view class="se-toggle__main">
+        <text class="se-toggle__label">发音功能</text>
+        <text class="se-toggle__sub">朗读单词发音</text>
+      </view>
+      <switch checked="{{settings.soundEnabled}}" data-key="soundEnabled" bindchange="onSwitch" color="#2E5E4E" />
+    </view>
+
+    <view class="se-toggle">
+      <view class="se-toggle__main">
+        <text class="se-toggle__label {{settings.soundEnabled ? '' : 'is-off'}}">自动发音</text>
+        <text class="se-toggle__sub">{{settings.soundEnabled ? '学新单词时自动朗读' : '需先开启发音功能'}}</text>
+      </view>
+      <switch
+        checked="{{settings.soundEnabled && settings.autoPlaySound}}"
+        disabled="{{!settings.soundEnabled}}"
+        data-key="autoPlaySound"
+        bindchange="onSwitch"
+        color="#2E5E4E"
+      />
+    </view>
+  </view>
+
+  <!-- ===== 文章生成设置 ===== -->
+  <mg-section-header title="文章生成设置" icon="file-document-outline" />
+  <view class="se-card">
+    <view class="se-step">
+      <view class="se-step__head">
+        <text class="se-label">每篇文章生词数</text>
+        <view class="se-step__ctrl">
+          <view class="se-btn {{settings.articleWordCount <= 5 ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="wordCountDec">
+            <text class="se-btn__g">−</text>
+          </view>
+          <view class="se-num"><text class="se-num__t">{{settings.articleWordCount}}</text></view>
+          <view class="se-btn {{settings.articleWordCount >= 20 ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="wordCountInc">
+            <text class="se-btn__g">+</text>
+          </view>
+        </view>
+      </view>
+      <view class="se-slider">
+        <view class="se-slider__fill" style="width: {{settings.articleWordCount / 20 * 100}}%"></view>
+      </view>
+      <view class="se-slider__labels">
+        <text class="se-slider__label">5</text>
+        <text class="se-slider__label">20</text>
+      </view>
+    </view>
+
+    <view class="se-divider"></view>
+
+    <view class="se-step">
+      <view class="se-step__head">
+        <text class="se-label">文章目标词数</text>
+        <view class="se-step__ctrl">
+          <view class="se-btn {{settings.articleLength <= 100 ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="lengthDec">
+            <text class="se-btn__g">−</text>
+          </view>
+          <view class="se-num se-num--wide"><text class="se-num__t">{{settings.articleLength}}</text></view>
+          <view class="se-btn {{settings.articleLength >= 500 ? 'is-off' : ''}}" hover-class="mg-hover" bindtap="lengthInc">
+            <text class="se-btn__g">+</text>
+          </view>
+        </view>
+      </view>
+      <view class="se-slider">
+        <view class="se-slider__fill" style="width: {{settings.articleLength / 500 * 100}}%"></view>
+      </view>
+      <view class="se-slider__labels">
+        <text class="se-slider__label">100</text>
+        <text class="se-slider__label">500</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 数据管理 ===== -->
+  <mg-section-header title="数据管理" icon="database-outline" />
+  <view class="se-card se-data">
+    <view class="se-data__item">
+      <mg-button title="立即云同步" variant="secondary" size="md" block icon="sync" bind:tap="syncNow" />
+      <text class="se-data__desc">同步本机与微信云数据</text>
+    </view>
+    <view class="se-data__item">
+      <mg-button title="词库初始化" variant="secondary" size="md" block icon="import" bind:tap="goSeed" />
+      <text class="se-data__desc">建集合 / 导入词库</text>
+    </view>
+  </view>
+
+  <!-- ===== 高级选项 ===== -->
+  <mg-section-header title="高级选项" icon="alert-outline" />
+  <view class="se-danger">
+    <mg-button title="重置所有设置" variant="danger" size="md" block icon="restore" bind:tap="resetDefaults" />
+    <mg-button title="清除所有数据" variant="danger" size="md" block icon="trash-can-outline" bind:tap="clearAll" />
+  </view>
+
+  <!-- ===== 版本信息 ===== -->
+  <view class="se-footer">
+    <mg-icon name="book-open-variant" size="40" color="#8A8E89" />
+    <text class="se-footer__text">版本 1.0.0</text>
+    <text class="se-footer__sub">考研单词 · 小程序版</text>
+    <text class="se-footer__sub">专注考研 · 科学背词</text>
   </view>
 </view>

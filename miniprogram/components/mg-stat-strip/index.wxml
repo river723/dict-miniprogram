@@ -1,0 +1,10 @@
+<view class="mg-stats {{compact ? 'mg-stats--compact' : ''}}">
+  <view wx:for="{{items}}" wx:key="index" class="mg-stats__cell">
+    <view class="mg-stats__value-row">
+      <text class="mg-stats__value" style="{{item.tint ? 'color:' + item.tint : ''}}">{{item.value}}</text>
+      <mg-icon wx:if="{{item.showTrend}}" name="{{item.trendIcon}}" size="28" color="{{item.trendColor}}" />
+    </view>
+    <text wx:if="{{item.trendValue}}" class="mg-stats__trend" style="color:{{item.trendColor}}">{{item.trendValue}}</text>
+    <text class="mg-stats__label">{{item.label}}</text>
+  </view>
+</view>

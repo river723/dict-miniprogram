@@ -1,31 +1,128 @@
-<view class="page" wx:if="{{word}}">
-  <view class="mg-card head">
-    <view class="w">{{word.word}}</view>
-    <view class="mg-text-tertiary meta">难度 {{word.difficulty}}/5 · 考频 {{word.frequency}}</view>
-    <view class="defs">
-      <view wx:for="{{word.definitions}}" wx:key="meaning" class="def">
-        <text class="pos">{{item.part_of_speech || item.pos}}</text>{{item.meaning}}
-      </view>
-    </view>
+<view class="mg-page wd">
+
+  <view wx:if="{{!word}}" class="wd__missing">
+    <mg-empty icon="alert-circle-outline" title="未找到该单词" description="它可能已被删除" action-label="返回" bind:action="goBack" />
   </view>
 
-  <view class="mg-card">
-    <view class="ai-head" bindtap="analyze">
-      <text>AI 解析（熟词僻义 / 词根 / 记忆）</text>
-      <text class="mg-text-tertiary">{{analyzing ? '生成中…' : (analysis ? '已生成' : '展开 ›')}}</text>
-    </view>
-    <block wx:if="{{analysis}}">
-      <view wx:if="{{analysis.root_analysis}}" class="ai-block"><text class="lb">词根</text>{{analysis.root_analysis}}</view>
-      <view wx:if="{{analysis.memory_tip}}" class="ai-block"><text class="lb">记忆</text>{{analysis.memory_tip}}</view>
-      <view wx:for="{{analysis.obscure_meanings || []}}" wx:key="obscure" class="ai-block">
-        <text class="lb">僻义</text>{{item.familiar}} → {{item.obscure}}：{{item.example}}
+  <block wx:else>
+    <!-- 单词头 -->
+    <view class="card">
+      <view class="wd__head">
+        <view class="wd__headinfo">
+          <text class="wd__word">{{word.word}}</text>
+          <view wx:if="{{word.pronunciation_uk || word.pronunciation_us}}" class="wd__ph">
+            <text wx:if="{{word.pronunciation_uk}}">UK {{word.pronunciation_uk}}</text>
+            <text wx:if="{{word.pronunciation_us}}">US {{word.pronunciation_us}}</text>
+          </view>
+        </view>
+        <view class="wd__audio" hover-class="mg-hover" bindtap="playAudio">
+          <mg-icon name="{{soundEnabled ? 'volume-high' : 'volume-off'}}" size="52" color="{{soundEnabled ? '#2E5E4E' : '#8A8E89'}}" />
+        </view>
       </view>
-      <view wx:for="{{analysis.definitions || []}}" wx:key="meaning" class="ai-block">
-        <text class="lb">{{item.pos}}</text>{{item.meaning}}
-      </view>
-      <view wx:if="{{analysis.raw}}" class="ai-block">{{analysis.raw}}</view>
-    </block>
-  </view>
 
-  <view class="mg-btn mg-btn-danger del" bindtap="remove">从生词本删除</view>
+      <view class="wd__meta">
+        <text class="wd__meta-item" style="color:{{diffColor}}">难度 {{stars}}</text>
+        <text class="wd__meta-item wd__meta-item--freq">考频 {{squares}}</text>
+      </view>
+    </view>
+
+    <!-- 释义 -->
+    <view class="card">
+      <text class="card__title">释义</text>
+      <view wx:for="{{word.definitions}}" wx:key="index" class="defitem">
+        <view class="defitem__head">
+          <text class="defitem__pos">{{item.part_of_speech}}</text>
+          <text wx:if="{{item.is_core}}" class="mg-tag mg-tag-core">核心</text>
+          <text wx:if="{{item.is_rare_sense}}" class="mg-tag mg-tag-rare">熟词僻义</text>
+        </view>
+        <text class="defitem__meaning">{{item.meaning || '暂无释义'}}</text>
+        <text wx:if="{{item.example}}" class="defitem__eg">例句：{{item.example}}</text>
+      </view>
+      <text wx:if="{{word.definitions.length === 0}}" class="card__empty">暂无释义，可点下方「AI 补全」</text>
+    </view>
+
+    <!-- 词根词缀 -->
+    <view wx:if="{{word.etymology}}" class="card">
+      <text class="card__title">词根词缀</text>
+      <text class="card__text">{{word.etymology}}</text>
+    </view>
+
+    <!-- 记忆口诀 -->
+    <view wx:if="{{word.memory_tip}}" class="card">
+      <text class="card__title">记忆口诀</text>
+      <text class="card__text">{{word.memory_tip}}</text>
+    </view>
+
+    <!-- 易混词 -->
+    <view wx:if="{{word.similar_words.length > 0}}" class="card">
+      <text class="card__title">易混词 / 相似词</text>
+      <view wx:for="{{word.similar_words}}" wx:key="index" class="similar">
+        <text class="similar__word">{{item.word}}（{{item.relation === 'spelling' ? '形近' : item.relation === 'meaning' ? '义近' : '同根'}}）</text>
+        <text class="similar__desc">{{item.description}}</text>
+      </view>
+    </view>
+
+    <!-- 补全中 -->
+    <view wx:if="{{enhancing}}" class="enhancing">
+      <mg-icon name="auto-fix" size="36" color="#2E5E4E" />
+      <text>AI 正在补全…</text>
+    </view>
+
+    <!-- 操作 -->
+    <view class="wd__actions">
+      <mg-button
+        wx:if="{{canEnhance}}"
+        title="{{enhancing ? 'AI 补全中…' : 'AI 补全词根、例句、近义词'}}"
+        variant="secondary"
+        block
+        icon="auto-fix"
+        loading="{{enhancing}}"
+        bind:tap="enhance"
+      />
+      <mg-button title="AI 解析（熟词僻义 / 记忆技巧）" variant="ghost" block icon="creation" loading="{{analyzing}}" bind:tap="analyze" />
+      <mg-button title="删除该单词" variant="ghost" block icon="delete-outline" bind:tap="askDelete" />
+      <mg-button title="返回" variant="primary" block icon="arrow-left" bind:tap="goBack" />
+    </view>
+  </block>
+
+  <!-- AI 解析结果 -->
+  <mg-modal
+    visible="{{showAnalysis}}"
+    title="AI 解析"
+    confirm-text="知道了"
+    show-cancel="{{false}}"
+    bind:confirm="closeAnalysis"
+    bind:close="closeAnalysis"
+  >
+    <view class="ai">
+      <view wx:for="{{analysis.definitions}}" wx:key="index" class="ai__def">
+        <text class="ai__pos">{{item.pos}}</text>
+        <text class="ai__meaning">{{item.meaning}}</text>
+      </view>
+      <view wx:if="{{analysis.root_analysis}}" class="ai__block">
+        <text class="ai__label">词根词缀</text>
+        <text class="ai__text">{{analysis.root_analysis}}</text>
+      </view>
+      <view wx:if="{{analysis.memory_tip}}" class="ai__block">
+        <text class="ai__label">记忆技巧</text>
+        <text class="ai__text">{{analysis.memory_tip}}</text>
+      </view>
+      <view wx:for="{{analysis.obscure_meanings}}" wx:key="index" class="ai__block">
+        <text class="ai__label">熟词僻义</text>
+        <text class="ai__text">{{item.familiar}} → {{item.obscure}}{{item.example ? '（' + item.example + '）' : ''}}</text>
+      </view>
+    </view>
+  </mg-modal>
+
+  <!-- 删除确认 -->
+  <mg-modal
+    visible="{{showDelete}}"
+    icon="delete-outline"
+    title="确认删除"
+    content="确定删除「{{word.word}}」吗？删除后将无法恢复。"
+    confirm-text="删除"
+    danger
+    bind:confirm="confirmDelete"
+    bind:cancel="cancelDelete"
+  />
 </view>

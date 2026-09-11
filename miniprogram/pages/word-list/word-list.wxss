@@ -1,0 +1,168 @@
+.wl { min-height: 100vh; }
+
+.wl__top { padding: 24rpx 32rpx 8rpx; }
+
+.wl__filters {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.chip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  height: 60rpx;
+  padding: 0 22rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-2);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: 999rpx;
+}
+
+.chip--on {
+  background: var(--mg-primary-container);
+  border-color: var(--mg-primary);
+  color: var(--mg-primary);
+  font-weight: 600;
+}
+
+.wl__count {
+  margin-left: auto;
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+}
+
+.ph { color: var(--mg-text-3); }
+
+/* ---------- 单词卡 ---------- */
+.wl__list { padding: 16rpx 32rpx 0; }
+
+.wordcard {
+  margin-bottom: 20rpx;
+  padding: 28rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+}
+
+.wordcard__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.wordcard__word {
+  flex: 1;
+  min-width: 0;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wordcard__stars { font-size: 22rpx; letter-spacing: 1rpx; }
+
+.wordcard__meaning {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  line-height: 42rpx;
+  color: var(--mg-text);
+}
+
+.wordcard__tags {
+  display: flex;
+  flex-direction: row;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.wordcard__ety {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-2);
+}
+
+.wordcard__ety .mg-ellipsis { flex: 1; min-width: 0; }
+
+.wordcard__foot {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+
+.wordcard__del {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--mg-danger);
+}
+
+.wordcard__freqwrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.wordcard__freqtext {
+  font-size: 20rpx;
+  letter-spacing: 2rpx;
+  color: var(--mg-text-3);
+}
+
+.wordcard__bar {
+  width: 160rpx;
+  height: 12rpx;
+  border-radius: 6rpx;
+  background: var(--mg-surface-alt);
+  overflow: hidden;
+}
+
+.wordcard__fill { height: 100%; border-radius: 6rpx; }
+
+.wl__bottomspace { height: 200rpx; }
+
+/* ---------- 排序/筛选弹层 ---------- */
+.picker {
+  width: 100%;
+  margin-top: 24rpx;
+}
+
+.picker__item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+  padding: 26rpx 8rpx;
+  font-size: 30rpx;
+  color: var(--mg-text);
+  border-bottom: 1rpx solid var(--mg-hairline);
+}
+
+.picker__item:last-child { border-bottom: none; }
+
+.picker__item--on {
+  color: var(--mg-primary);
+  font-weight: 700;
+}

@@ -1,0 +1,125 @@
+.eh {
+  min-height: 100vh;
+  padding: 24rpx 32rpx 0;
+  box-sizing: border-box;
+}
+
+/* ---------- 筛选 chips ---------- */
+.eh__chips {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.chip {
+  padding: 10rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--mg-text-2);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.chip--on {
+  background: var(--mg-primary);
+  border-color: var(--mg-primary);
+  color: #FFFFFF;
+}
+
+/* ---------- 记录卡 ---------- */
+.eh__card {
+  margin-bottom: 20rpx;
+  padding: 28rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-hairline);
+}
+
+.eh__row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.eh__left { flex: 1; min-width: 0; }
+
+.eh__date {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.eh__sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 34rpx;
+  color: var(--mg-text-2);
+}
+
+.eh__right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.eh__acc {
+  font-size: 44rpx;
+  line-height: 56rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+}
+.eh__acc--success { color: var(--mg-success); }
+.eh__acc--warning { color: var(--mg-warning); }
+.eh__acc--danger { color: var(--mg-danger); }
+
+.eh__score {
+  margin-top: 2rpx;
+  font-size: 22rpx;
+  color: var(--mg-text-2);
+}
+
+.eh__foot {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--mg-outline);
+}
+
+.eh__del {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+}
+
+.eh__del-text {
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}
+
+.eh__redo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--mg-primary);
+}
+
+.eh__more { margin-top: 24rpx; }
+
+.eh__bottomspace { height: 80rpx; }

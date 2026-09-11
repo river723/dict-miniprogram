@@ -1,0 +1,133 @@
+<view class="mg-page wl">
+
+  <!-- 搜索 -->
+  <view class="wl__top">
+    <view class="mg-search">
+      <mg-icon name="magnify" size="36" color="#8A8E89" />
+      <input
+        class="mg-search-input"
+        placeholder="搜索单词…"
+        placeholder-class="ph"
+        value="{{query}}"
+        confirm-type="search"
+        bindinput="onSearch"
+      />
+      <view wx:if="{{query}}" hover-class="mg-hover" bindtap="clearSearch">
+        <mg-icon name="close" size="32" color="#8A8E89" />
+      </view>
+    </view>
+
+    <view class="wl__filters">
+      <view class="chip" hover-class="mg-hover" bindtap="openSort">
+        <mg-icon name="sort" size="26" color="#5C605C" />
+        <text>{{sortLabel}}</text>
+      </view>
+      <view class="chip {{diffFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openDiff">
+        <mg-icon name="filter-variant" size="26" color="{{diffFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
+        <text>{{diffLabel}}</text>
+      </view>
+      <view class="chip {{freqFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openFreq">
+        <mg-icon name="filter-variant" size="26" color="{{freqFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
+        <text>{{freqLabel}}</text>
+      </view>
+      <text class="wl__count">共 {{total}} 词</text>
+    </view>
+  </view>
+
+  <!-- 列表 -->
+  <view wx:if="{{loading}}" class="mg-loading">
+    <mg-icon name="refresh" size="64" color="#2E5E4E" />
+    <text style="margin-top:24rpx">加载中…</text>
+  </view>
+
+  <mg-empty
+    wx:elif="{{list.length === 0}}"
+    icon="{{query ? 'magnify-close' : 'book-open-variant'}}"
+    title="{{query ? '没有找到匹配的单词' : '还没有添加单词'}}"
+    description="{{query ? '试试调整搜索条件' : '点右下角按钮添加你的第一个单词吧'}}"
+    action-label="{{query ? '' : '添加生词'}}"
+    bind:action="goAdd"
+  />
+
+  <view wx:else class="wl__list">
+    <view
+      wx:for="{{list}}"
+      wx:key="id"
+      class="wordcard"
+      hover-class="mg-hover-soft"
+      data-id="{{item.id}}"
+      bindtap="openWord"
+    >
+      <view class="wordcard__head">
+        <text class="wordcard__word">{{item.word}}</text>
+        <text class="wordcard__stars" style="color:{{item.diffColor}}">{{item.stars}}</text>
+      </view>
+
+      <text class="wordcard__meaning">{{item.meaning}}</text>
+
+      <view wx:if="{{item.isCore || item.isRare}}" class="wordcard__tags">
+        <text wx:if="{{item.isCore}}" class="mg-tag mg-tag-core">核心</text>
+        <text wx:if="{{item.isRare}}" class="mg-tag mg-tag-rare">熟词僻义</text>
+      </view>
+
+      <view wx:if="{{item.etymology}}" class="wordcard__ety">
+        <mg-icon name="magnify" size="24" color="#8A8E89" />
+        <text class="mg-ellipsis">{{item.etymology}}</text>
+      </view>
+
+      <view class="wordcard__foot">
+        <view class="wordcard__del" catchtap="askDelete" data-id="{{item.id}}">
+          <mg-icon name="delete-outline" size="36" color="#B5462E" />
+          <text>删除</text>
+        </view>
+        <view class="wordcard__freqwrap">
+          <text class="wordcard__freqtext">{{item.squares}}</text>
+          <view class="wordcard__bar">
+            <view class="wordcard__fill" style="width:{{item.freqPercent}}%;background:{{item.freqColor}}"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="wl__bottomspace"></view>
+  </view>
+
+  <!-- 悬浮添加 -->
+  <view class="mg-fab" hover-class="mg-hover-soft" bindtap="goAdd">
+    <mg-icon name="plus" size="56" color="#FFFFFF" />
+  </view>
+
+  <!-- 排序 / 筛选选择器 -->
+  <mg-modal
+    visible="{{showPicker}}"
+    title="{{pickerTitle}}"
+    show-actions="{{false}}"
+    bind:close="closePicker"
+    bind:cancel="closePicker"
+  >
+    <view class="picker">
+      <view
+        wx:for="{{pickerOptions}}"
+        wx:key="index"
+        class="picker__item {{item.value === pickerValue ? 'picker__item--on' : ''}}"
+        hover-class="mg-hover"
+        data-value="{{item.value}}"
+        bindtap="onPick"
+      >
+        <mg-icon wx:if="{{item.value === pickerValue}}" name="check" size="34" color="#2E5E4E" />
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+  </mg-modal>
+
+  <!-- 删除确认 -->
+  <mg-modal
+    visible="{{showDelete}}"
+    icon="delete-outline"
+    title="确认删除"
+    content="确定要删除单词「{{deleteWord.word}}」吗？删除后将无法恢复。"
+    confirm-text="删除"
+    danger
+    bind:confirm="confirmDelete"
+    bind:cancel="cancelDelete"
+  />
+</view>

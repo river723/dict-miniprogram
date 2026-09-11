@@ -1,4 +1,225 @@
-.page { padding: 32rpx; }
-.row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.sub { font-size: 24rpx; margin-top: 4rpx; }
-.picker { color: var(--mg-primary); font-weight: 600; }
+.se {
+  padding-bottom: 48rpx;
+}
+
+.se-card {
+  padding: 24rpx 32rpx;
+  margin-bottom: 32rpx;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.se-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: var(--mg-text);
+}
+
+/* ---------- 主题分段 ---------- */
+.se-seg {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.se-seg__item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 16rpx 0;
+  border-radius: var(--mg-radius-sm);
+  border: 1rpx solid var(--mg-outline);
+  background: var(--mg-surface);
+}
+
+.se-seg__item.is-on {
+  border-color: var(--mg-primary);
+  background: var(--mg-primary-container);
+}
+
+.se-seg__text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--mg-text-2);
+}
+
+.se-seg__item.is-on .se-seg__text {
+  color: var(--mg-primary);
+}
+
+/* ---------- 步进器 ---------- */
+.se-step {
+  padding: 4rpx 0;
+}
+
+.se-step__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.se-step__ctrl {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.se-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.se-btn.is-off {
+  opacity: 0.4;
+}
+
+.se-btn__g {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  line-height: 32rpx;
+}
+
+.se-num {
+  min-width: 88rpx;
+  height: 64rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.se-num--wide {
+  min-width: 120rpx;
+}
+
+.se-num__t {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+}
+
+.se-slider {
+  height: 10rpx;
+  border-radius: 5rpx;
+  background: var(--mg-surface-alt);
+  border: 1rpx solid var(--mg-outline);
+  overflow: hidden;
+}
+
+.se-slider__fill {
+  height: 100%;
+  background: var(--mg-primary);
+}
+
+.se-slider__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.se-slider__label {
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}
+
+.se-divider {
+  height: 1rpx;
+  background: var(--mg-outline);
+  margin: 20rpx 0;
+  opacity: 0.5;
+}
+
+/* ---------- 开关行 ---------- */
+.se-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 16rpx 0;
+}
+
+.se-toggle__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.se-toggle__label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: var(--mg-text);
+}
+
+.se-toggle__label.is-off {
+  color: var(--mg-text-3);
+}
+
+.se-toggle__sub {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+  line-height: 32rpx;
+}
+
+/* ---------- 数据管理 ---------- */
+.se-data {
+  display: flex;
+  gap: 24rpx;
+}
+
+.se-data__item {
+  flex: 1;
+  min-width: 0;
+}
+
+.se-data__desc {
+  display: block;
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}
+
+/* ---------- 高级选项 ---------- */
+.se-danger {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-bottom: 32rpx;
+}
+
+/* ---------- 版本信息 ---------- */
+.se-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 32rpx 0 16rpx;
+}
+
+.se-footer__text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--mg-text-2);
+}
+
+.se-footer__sub {
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+}

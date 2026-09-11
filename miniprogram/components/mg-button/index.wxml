@@ -1,0 +1,12 @@
+<view
+  class="mg-btn mg-btn-{{variant}} {{size === 'lg' ? 'mg-btn-lg' : size === 'sm' ? 'mg-btn-sm' : ''}} {{block ? 'mg-btn-block' : ''}} {{disabled || loading ? 'mg-btn--off' : ''}}"
+  hover-class="{{disabled || loading ? '' : 'mg-btn--hover'}}"
+  hover-stay-time="60"
+  bindtap="onTap"
+>
+  <view wx:if="{{loading}}" class="mg-spinner {{variant === 'secondary' || variant === 'ghost' ? 'mg-spinner--primary' : ''}}"></view>
+  <block wx:else>
+    <mg-icon wx:if="{{icon}}" name="{{icon}}" size="{{iconSize}}" color="{{iconColor}}" />
+    <text class="mg-btn__text">{{title}}</text>
+  </block>
+</view>

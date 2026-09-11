@@ -1,0 +1,101 @@
+<view class="mg-page dwd">
+
+  <view wx:if="{{loading}}" class="mg-loading">
+    <mg-icon name="refresh" size="64" color="#2E5E4E" />
+    <text style="margin-top:24rpx">加载词条…</text>
+  </view>
+
+  <mg-empty
+    wx:elif="{{notFound}}"
+    icon="book-search"
+    title="未找到该单词"
+    description="该词可能不在当前词库中"
+    action-label="返回"
+    bind:action="goBack"
+  />
+
+  <block wx:else>
+    <!-- 单词头 -->
+    <view class="card">
+      <view class="dwd__head">
+        <view class="dwd__info">
+          <text class="dwd__word">{{word.word}}</text>
+          <text wx:if="{{word.pronunciation_uk}}" class="dwd__ph">UK {{word.pronunciation_uk}}</text>
+          <text wx:if="{{word.pronunciation_us}}" class="dwd__ph">US {{word.pronunciation_us}}</text>
+        </view>
+        <view class="dwd__speak" hover-class="mg-hover" bindtap="playAudio">
+          <mg-icon name="{{soundEnabled ? 'volume-high' : 'volume-off'}}" size="52" color="#2E5E4E" />
+        </view>
+      </view>
+
+      <view class="dwd__meta">
+        <text class="dwd__meta-badge" style="color:{{diffColor}}">难度 {{stars}}</text>
+        <text class="dwd__meta-freq">考频 {{squares}}</text>
+      </view>
+    </view>
+
+    <!-- 释义 -->
+    <view class="card">
+      <text class="card__title">释义</text>
+      <view wx:for="{{definitions}}" wx:key="index" class="def">
+        <view class="def__head">
+          <text wx:if="{{item.part_of_speech}}" class="def__pos">{{item.part_of_speech}}</text>
+          <text wx:if="{{item.is_core}}" class="mg-tag mg-tag-core">核心</text>
+          <text wx:if="{{item.is_rare_sense}}" class="mg-tag mg-tag-rare">熟词僻义</text>
+        </view>
+        <text class="def__meaning">{{item.meaning}}</text>
+        <text wx:if="{{item.example}}" class="def__example">例句：{{item.example}}</text>
+      </view>
+      <text wx:if="{{definitions.length === 0}}" class="card__empty">暂无释义</text>
+    </view>
+
+    <!-- 词根词缀 -->
+    <view wx:if="{{word.etymology}}" class="card">
+      <text class="card__title">词根词缀</text>
+      <text class="card__text">{{word.etymology}}</text>
+    </view>
+
+    <!-- 记忆技巧 -->
+    <view wx:if="{{word.memory_tip}}" class="card">
+      <text class="card__title">记忆技巧</text>
+      <text class="card__text">{{word.memory_tip}}</text>
+    </view>
+
+    <!-- 易混词 / 相似词 -->
+    <view wx:if="{{word.similar.length > 0}}" class="card">
+      <text class="card__title">易混词 / 相似词</text>
+      <view wx:for="{{word.similar}}" wx:key="index" class="sim">
+        <text class="sim__word">{{item.word}}<text wx:if="{{item.relation}}"> ({{item.relation}})</text></text>
+        <text class="sim__desc">{{item.description}}</text>
+      </view>
+    </view>
+
+    <!-- 操作 -->
+    <view class="dwd__actions">
+      <mg-button
+        title="{{inWordbook ? '已在生词本' : '加入生词本'}}"
+        variant="{{inWordbook ? 'secondary' : 'primary'}}"
+        size="lg"
+        block
+        icon="{{inWordbook ? 'check' : 'book-plus'}}"
+        disabled="{{inWordbook}}"
+        loading="{{saving}}"
+        bind:tap="askAdd"
+      />
+      <view class="dwd__back" hover-class="mg-hover" bindtap="goBack">
+        <text>返回</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 加入确认 -->
+  <mg-modal
+    visible="{{showAdd}}"
+    icon="book-plus"
+    title="加入生词本？"
+    content="将「{{word.word}}」加入你的生词本"
+    confirm-text="加入"
+    bind:confirm="confirmAdd"
+    bind:cancel="cancelAdd"
+  />
+</view>

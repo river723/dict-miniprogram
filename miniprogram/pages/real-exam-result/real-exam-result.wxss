@@ -1,0 +1,238 @@
+.rer {
+  padding-bottom: 48rpx;
+}
+
+.rer-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  padding: 160rpx 64rpx;
+}
+
+.rer-center__text {
+  font-size: 30rpx;
+  color: var(--mg-text-3);
+}
+
+/* ---------- 得分卡 ---------- */
+.rer-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 32rpx;
+  margin-bottom: 24rpx;
+  border-radius: var(--mg-radius-xl);
+  background: var(--mg-surface);
+  box-shadow: var(--mg-shadow-card);
+}
+
+.rer-score__label {
+  font-size: 28rpx;
+  color: var(--mg-text-3);
+  margin-bottom: 16rpx;
+}
+
+.rer-score__num {
+  font-size: 96rpx;
+  line-height: 108rpx;
+  font-weight: 800;
+}
+
+.rer-score__num--ok { color: var(--mg-success); }
+.rer-score__num--no { color: var(--mg-danger); }
+
+.rer-score__pct {
+  margin-top: 12rpx;
+  font-size: 30rpx;
+  color: var(--mg-text-3);
+}
+
+/* ---------- 通用卡 ---------- */
+.rer-card {
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.rer-tip__text {
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+  line-height: 40rpx;
+}
+
+.rer-sect {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+  margin: 8rpx 0 16rpx;
+}
+
+/* ---------- 原文 & 译文 ---------- */
+.rer-bi__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rpx 0;
+}
+
+.rer-bi__title {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+}
+
+.rer-bi__toggle {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--mg-primary);
+}
+
+.rer-bi__para {
+  margin-top: 24rpx;
+}
+
+.rer-bi__no {
+  display: block;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  margin-bottom: 8rpx;
+}
+
+.rer-bi__en {
+  display: block;
+  font-size: 28rpx;
+  color: var(--mg-text);
+  line-height: 44rpx;
+  margin-bottom: 8rpx;
+}
+
+.rer-bi__zh {
+  display: block;
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+  line-height: 44rpx;
+}
+
+/* ---------- 逐题回顾 ---------- */
+.rer-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.rer-item__idx {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+}
+
+.rer-item__stem {
+  display: block;
+  font-size: 28rpx;
+  color: var(--mg-text);
+  line-height: 40rpx;
+  margin-bottom: 20rpx;
+}
+
+.rer-badge {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.rer-badge--ok { color: var(--mg-success); }
+.rer-badge--no { color: var(--mg-danger); }
+.rer-badge--muted { color: var(--mg-text-3); }
+
+.rer-opt {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  margin-bottom: 12rpx;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.rer-opt:last-of-type {
+  margin-bottom: 0;
+}
+
+.rer-opt.is-ok {
+  border-color: var(--mg-success);
+  background: var(--mg-primary-container);
+}
+
+.rer-opt.is-no {
+  border-color: var(--mg-danger);
+  background: var(--mg-danger-light);
+}
+
+.rer-opt__letter {
+  width: 40rpx;
+  flex: none;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--mg-text-3);
+}
+
+.rer-opt__letter.is-ok { color: var(--mg-success); }
+.rer-opt__letter.is-no { color: var(--mg-danger); }
+
+.rer-opt__text {
+  flex: 1;
+  font-size: 26rpx;
+  color: var(--mg-text);
+}
+
+.rer-opt__text.is-ok { color: var(--mg-success); font-weight: 500; }
+.rer-opt__text.is-no { color: var(--mg-danger); }
+
+.rer-mark {
+  margin-left: 8rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.rer-mark--ok { color: var(--mg-success); }
+.rer-mark--no { color: var(--mg-danger); }
+
+/* ---------- 解析 ---------- */
+.rer-exp {
+  margin-top: 16rpx;
+  padding: 20rpx;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-primary-container);
+}
+
+.rer-exp__label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  margin-bottom: 8rpx;
+}
+
+.rer-exp__text {
+  font-size: 26rpx;
+  color: var(--mg-text);
+  line-height: 40rpx;
+}
+
+/* ---------- 底部按钮 ---------- */
+.rer-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 32rpx;
+}
+
+.rer-actions > mg-button {
+  flex: 1;
+}

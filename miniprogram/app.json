@@ -1,25 +1,42 @@
 {
   "pages": [
-    "pages/study/study",
-    "pages/wordbook/wordbook",
+    "pages/home/home",
+    "pages/read/read",
     "pages/practice/practice",
     "pages/profile/profile",
-    "pages/review/review",
+    "pages/study/study",
+    "pages/word-list/word-list",
     "pages/word-detail/word-detail",
-    "pages/quiz/quiz",
+    "pages/add-word/add-word",
+    "pages/wordbank-picker/wordbank-picker",
+    "pages/dictionary/dictionary",
+    "pages/dictionary-browse/dictionary-browse",
+    "pages/dictionary-word-detail/dictionary-word-detail",
+    "pages/article-generate/article-generate",
+    "pages/article-read/article-read",
+    "pages/story-read/story-read",
+    "pages/review/review",
+    "pages/exam-setup/exam-setup",
+    "pages/exam-answer/exam-answer",
+    "pages/exam-result/exam-result",
+    "pages/exam-history/exam-history",
+    "pages/exam-set-bank/exam-set-bank",
+    "pages/exam-set-detail/exam-set-detail",
     "pages/wrong-questions/wrong-questions",
     "pages/exam-list/exam-list",
     "pages/exam-practice/exam-practice",
-    "pages/story-list/story-list",
-    "pages/story-read/story-read",
+    "pages/real-exam-result/real-exam-result",
+    "pages/real-exam-read/real-exam-read",
     "pages/stats/stats",
-    "pages/settings/settings"
+    "pages/settings/settings",
+    "pages/seed/seed"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#F4F0E8",
+    "navigationBarBackgroundColor": "#2E5E4E",
     "navigationBarTitleText": "MemoGrad 考研词汇",
-    "navigationBarTextStyle": "black",
-    "backgroundColor": "#F4F0E8"
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F4F0E8",
+    "backgroundTextStyle": "light"
   },
   "tabBar": {
     "color": "#8A8E89",
@@ -27,10 +44,30 @@
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/study/study", "text": "学习" },
-      { "pagePath": "pages/wordbook/wordbook", "text": "词库" },
-      { "pagePath": "pages/practice/practice", "text": "练习" },
-      { "pagePath": "pages/profile/profile", "text": "我的" }
+      {
+        "pagePath": "pages/home/home",
+        "text": "学习",
+        "iconPath": "assets/icons/tab-study.png",
+        "selectedIconPath": "assets/icons/tab-study-active.png"
+      },
+      {
+        "pagePath": "pages/read/read",
+        "text": "阅读",
+        "iconPath": "assets/icons/tab-read.png",
+        "selectedIconPath": "assets/icons/tab-read-active.png"
+      },
+      {
+        "pagePath": "pages/practice/practice",
+        "text": "练习",
+        "iconPath": "assets/icons/tab-practice.png",
+        "selectedIconPath": "assets/icons/tab-practice-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/icons/tab-profile.png",
+        "selectedIconPath": "assets/icons/tab-profile-active.png"
+      }
     ]
   },
   "sitemapLocation": "sitemap.json",

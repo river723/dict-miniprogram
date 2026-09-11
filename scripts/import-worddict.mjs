@@ -33,7 +33,7 @@ console.log(`共 ${entries.length} 个词条`);
 
 const BATCH = 100;
 const limit = args.limit ? Number(args.limit) : Infinity;
-let imported = 0, skipped = 0;
+let imported = 0, skipped = 0, failed = 0;
 
 for (let i = 0; i < entries.length && imported < limit; i += BATCH) {
   const slice = entries.slice(i, i + BATCH);
@@ -64,12 +64,37 @@ for (let i = 0; i < entries.length && imported < limit; i += BATCH) {
     todo.splice(Math.max(0, room));
   }
   if (todo.length > 0) {
-    await db.collection('worddict').add(todo);
-    imported += todo.length;
+    try {
+      await db.collection('worddict').add(todo);
+      imported += todo.length;
+    } catch (e) {
+      // 个别环境/SDK 版本不接受数组入参，回退逐条写入，保证导得进去
+      console.warn(`  批量写入失败，回退逐条写入：${e.message}`);
+      for (const doc of todo) {
+        try {
+          await db.collection('worddict').add(doc);
+          imported += 1;
+        } catch (e2) {
+          failed += 1;
+          console.warn(`  跳过 ${doc.word_id}：${e2.message}`);
+        }
+      }
+    }
   }
   skipped += docs.length - todo.length;
   console.log(`进度 ${Math.min(i + BATCH, entries.length)}/${entries.length}（新增 ${imported} / 跳过 ${skipped}）`);
 }
 
-console.log(`完成：新增 ${imported}，已存在跳过 ${skipped}`);
+console.log(`完成：新增 ${imported}，已存在跳过 ${skipped}，失败 ${failed}`);
+
+// 就地校验：写没写进去，直接用云端 count 说话
+try {
+  const { total } = await db.collection('worddict').count();
+  console.log(`云端校验：worddict 现有 ${total} 条`);
+  const one = await db.collection('worddict').limit(1).get();
+  console.log('样本：', JSON.stringify(one.data[0] || null).slice(0, 200));
+} catch (e) {
+  console.warn('校验失败：', e.message);
+}
+
 console.log('提醒：首次导入后请在云开发控制台为 worddict 集合建 prefix 索引，读权限设为「所有用户可读」。');

@@ -1,0 +1,164 @@
+<view class="mg-page">
+  <view class="home-content">
+
+    <view wx:if="{{loading}}" class="mg-loading">
+      <mg-icon name="refresh" size="64" color="#2E5E4E" />
+      <text style="margin-top:24rpx">加载中…</text>
+    </view>
+
+    <view wx:elif="{{isEmpty}}" class="home-empty">
+      <mg-empty
+        icon="book-open-page-variant"
+        title="添加你的第一个生词"
+        description="添加 → 学习 → 复习 → 掌握。按艾宾浩斯曲线自动安排复习，让记忆更牢固。"
+        action-label="添加生词"
+        bind:action="onSuggestionTap"
+      />
+      <view class="home-empty__actions">
+        <mg-button title="从词库选词" variant="secondary" block icon="book-multiple" bind:tap="goDictionary" />
+      </view>
+    </view>
+
+    <block wx:else>
+      <!-- Hero -->
+      <view class="hero">
+        <view class="hero__left">
+          <text class="hero__label">{{heroLabel}}</text>
+          <view class="hero__num-row">
+            <text class="hero__num">{{heroValue}}</text>
+            <text class="hero__unit">个词</text>
+          </view>
+          <text class="hero__desc">{{heroDesc}}</text>
+        </view>
+        <view class="hero__ring" style="{{ringStyle}}">
+          <view class="hero__ring-hole"></view>
+          <text class="hero__ring-text">{{progressPercentText}}</text>
+        </view>
+      </view>
+
+      <!-- 主 CTA -->
+      <view class="cta">
+        <mg-button
+          title="{{suggestion.actionLabel}}"
+          variant="primary"
+          size="lg"
+          block
+          icon="{{suggestion.icon}}"
+          bind:tap="onSuggestionTap"
+        />
+        <mg-button
+          wx:if="{{suggestion.actionLabel === '继续学习' && wrongCount > 0}}"
+          title="复习错题（{{wrongCount}}）"
+          variant="secondary"
+          block
+          icon="alert-circle-outline"
+          bind:tap="goWrong"
+        />
+        <mg-button
+          wx:if="{{canStartAnotherGroup}}"
+          title="学习新词"
+          variant="secondary"
+          block
+          icon="refresh"
+          loading="{{refilling}}"
+          bind:tap="onAnotherGroup"
+        />
+      </view>
+
+      <!-- 三指标 -->
+      <view class="block">
+        <mg-stat-strip metrics="{{metrics}}" />
+        <view class="thinbar">
+          <view class="thinbar__fill" style="width:{{progressPercentText}}"></view>
+        </view>
+      </view>
+
+      <!-- 待办 -->
+      <view wx:if="{{wrongCount > 0 || difficultCount > 0}}" class="block todos">
+        <view wx:if="{{wrongCount > 0}}" class="todo" hover-class="mg-hover" bindtap="goWrong">
+          <view class="todo__icon todo__icon--danger">
+            <mg-icon name="alert-circle-outline" size="40" color="#B5462E" />
+          </view>
+          <view class="todo__body">
+            <text class="todo__title">错题本</text>
+            <text class="todo__desc">{{wrongCount}} 道错题待复盘</text>
+          </view>
+          <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+        </view>
+
+        <view wx:if="{{difficultCount > 0}}" class="todo" hover-class="mg-hover" bindtap="goDifficult">
+          <view class="todo__icon todo__icon--warning">
+            <mg-icon name="refresh" size="40" color="#C2603A" />
+          </view>
+          <view class="todo__body">
+            <text class="todo__title">困难词</text>
+            <text class="todo__desc">{{difficultCount}} 个词历史正确率偏低</text>
+          </view>
+          <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+        </view>
+      </view>
+
+      <!-- 词库入口 -->
+      <view class="block">
+        <view class="todo" hover-class="mg-hover" bindtap="goDictionary">
+          <view class="todo__icon todo__icon--primary">
+            <mg-icon name="library" size="40" color="#2E5E4E" />
+          </view>
+          <view class="todo__body">
+            <text class="todo__title">词库</text>
+            <text class="todo__desc">浏览全部词库 · 按字母查询单词</text>
+          </view>
+          <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+        </view>
+      </view>
+
+      <!-- 最近添加 -->
+      <view wx:if="{{recentWords.length > 0}}" class="block">
+        <mg-section-header title="最近添加" action-label="查看生词本" bind:action="goWordList" />
+        <view class="card-list">
+          <view
+            wx:for="{{recentWords}}"
+            wx:key="id"
+            class="tl-row {{index < recentWords.length - 1 ? 'tl-row--line' : ''}}"
+            hover-class="mg-hover"
+            data-id="{{item.id}}"
+            bindtap="goWordDetail"
+          >
+            <view class="tl-dot"></view>
+            <view class="tl-body">
+              <text class="tl-word">{{item.word}}</text>
+              <text wx:if="{{item.pronunciation_uk || item.pronunciation_us}}" class="tl-phonetic">
+                {{item.pronunciation_uk || item.pronunciation_us}}
+              </text>
+            </view>
+            <mg-difficulty level="{{item.difficulty || 1}}" size="sm" />
+          </view>
+        </view>
+      </view>
+
+      <!-- 本周趋势 -->
+      <view wx:if="{{hasWeekly}}" class="block">
+        <view class="trend" hover-class="mg-hover" bindtap="goStats">
+          <view class="trend__col">
+            <text class="trend__label">本周学习</text>
+            <view class="trend__num-row">
+              <text class="trend__num">{{weeklyStudied}}</text>
+              <text class="trend__unit">次</text>
+            </view>
+          </view>
+          <view class="trend__col">
+            <text class="trend__label">日均次数</text>
+            <view class="trend__num-row">
+              <text class="trend__num">{{avgDaily}}</text>
+              <text class="trend__unit">次</text>
+            </view>
+          </view>
+          <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+        </view>
+      </view>
+
+      <view wx:if="{{error}}" class="err">部分数据加载失败，请稍后重试</view>
+      <view class="bottom-space"></view>
+    </block>
+  </view>
+</view>

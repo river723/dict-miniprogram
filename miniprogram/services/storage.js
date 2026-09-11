@@ -16,7 +16,15 @@ const K = {
   settings: 'mg_settings',
   fillDate: 'mg_autofill_date',
   ignored: 'mg_ignored_wordbank',
+  articles: 'mg_articles',
   dirty: 'mg_dirty_ids',
+  // 练习域（第二批）
+  exams: 'mg_exam_sessions',
+  examDraft: 'mg_exam_draft',
+  examResult: 'mg_exam_result',
+  realExams: 'mg_real_exam_sessions',
+  realWrong: 'mg_real_wrong',
+  realDraft: 'mg_real_exam_drafts',
 };
 
 const mem = {};
@@ -76,6 +84,9 @@ async function addWord(entry) {
     definitions: entry.definitions || [],
     pronunciation_uk: entry.pronunciation_uk || '',
     pronunciation_us: entry.pronunciation_us || '',
+    etymology: entry.etymology || '',
+    memory_tip: entry.memory_tip || '',
+    similar_words: entry.similar_words || [],
     frequency: entry.frequency || 0,
     difficulty: entry.difficulty || 3,
     created_at: now,
@@ -171,9 +182,17 @@ async function recordWrongCorrect(word_id) {
 }
 
 // ---------- Settings ----------
+/** 与 App SettingsScreen 的字段保持一致（缺字段会导致设置页控件初值为 undefined）。 */
 const DEFAULT_SETTINGS = {
-  dailyNewWords: 10,
+  theme: 'light',            // light | dark | system
+  dailyNewWords: 10,         // 1 - 50
   autoAddNewWords: true,
+  examQuestionCount: 10,     // 5 - 20
+  examAutoAdvance: true,     // 答对后 2.5s 自动下一题
+  soundEnabled: true,
+  autoPlaySound: true,       // soundEnabled 为 false 时强制 false
+  articleWordCount: 10,      // 5 - 20
+  articleLength: 200,        // 100 - 500，步长 50
   aiProvider: 'deepseek',
 };
 
@@ -181,8 +200,28 @@ const getSettings = () => ({ ...DEFAULT_SETTINGS, ...read(K.settings, {}) });
 
 async function saveSettings(patch) {
   const s = { ...getSettings(), ...patch };
+  // 关闭发音功能时，自动发音必须一起关掉（App 侧同规则）
+  if (s.soundEnabled === false) s.autoPlaySound = false;
   write(K.settings, s);
   pushDirty('settings', s, 'update');
+  return s;
+}
+
+/** 恢复默认设置（不动学习数据）。 */
+async function resetSettings() {
+  write(K.settings, { ...DEFAULT_SETTINGS });
+  pushDirty('settings', { ...DEFAULT_SETTINGS }, 'update');
+  return { ...DEFAULT_SETTINGS };
+}
+
+/** 清除所有本地数据 + 设置回到默认。 */
+async function clearAllData() {
+  const keys = Object.values(K).filter((k) => k !== K.dirty);
+  for (const k of keys) {
+    mem[k] = undefined;
+    try { wx.removeStorageSync(k); } catch {}
+  }
+  write(K.settings, { ...DEFAULT_SETTINGS });
 }
 
 // ---------- 自动配词守卫 ----------
@@ -190,6 +229,306 @@ const getAutoFillLastDate = () => read(K.fillDate, '');
 const setAutoFillLastDate = (d) => write(K.fillDate, d);
 
 const getIgnoredWordbankWords = () => read(K.ignored, []);
+const saveIgnoredWordbankWords = (list) => write(K.ignored, Array.isArray(list) ? list : []);
+
+// ---------- Articles（趣味文章，本地优先；生成后写本地缓存） ----------
+const getArticles = () => read(K.articles, []);
+
+const getArticleById = (id) => read(K.articles, []).find((a) => a.id === id) || null;
+
+async function updateArticle(id, patch) {
+  const list = read(K.articles, []);
+  const a = list.find((x) => x.id === id);
+  if (!a) return;
+  Object.assign(a, patch);
+  write(K.articles, list);
+}
+
+async function addArticle(entry) {
+  const now = formatDate();
+  const article = {
+    id: uuid(),
+    title: entry.title || '未命名文章',
+    content: entry.content || '',
+    translation: entry.translation || '',
+    words: entry.words || [],
+    word_ids: entry.word_ids || [],
+    theme: entry.theme || 'random',
+    read_count: 0,
+    created_at: now,
+  };
+  read(K.articles, []).unshift(article);
+  write(K.articles, read(K.articles, []));
+  return article;
+}
+
+async function markArticleRead(id) {
+  const list = read(K.articles, []);
+  const a = list.find((x) => x.id === id);
+  if (!a) return;
+  a.read_count = (a.read_count || 0) + 1;
+  write(K.articles, list);
+}
+
+async function deleteArticle(id) {
+  write(K.articles, read(K.articles, []).filter((a) => a.id !== id));
+}
+
+// ---------- 便捷查询 ----------
+const getWordById = (id) => read(K.words, []).find((w) => w.id === id && !w.deleted) || null;
+
+const getStudyRecordsByDate = (date) => read(K.records, []).filter((r) => r.study_date === date);
+
+// ---------- 练习会话 ExamSession（AI 出题） ----------
+const getExamSessions = () => read(K.exams, []).filter((s) => !s.deleted);
+
+/** 按 id 取单条练习记录（重做套题用）。 */
+const getExamSessionById = (id) => getExamSessions().find((s) => s.id === id) || null;
+
+async function saveExamSession(session) {
+  const rec = {
+    id: uuid(),
+    questions: session.questions || [],
+    answers: session.answers || [],
+    question_type: session.question_type,
+    accuracy: session.accuracy || 0,
+    origin_id: session.origin_id || null,
+    source: session.source || 'generation',
+    deleted: false,
+    created_at: session.created_at || formatDate(),
+  };
+  read(K.exams, []).unshift(rec);
+  write(K.exams, read(K.exams, []));
+  pushDirty('examSessions', rec, 'add');
+  return rec;
+}
+
+/** 软删除：同一套题（origin_id 相同）的记录会一起消失，保留在库中以便云端对账。 */
+async function deleteExamSession(id) {
+  const list = read(K.exams, []);
+  const s = list.find((x) => x.id === id);
+  if (s) { s.deleted = true; write(K.exams, list); pushDirty('examSessions', s, 'update'); }
+}
+
+async function deleteExamSet(rootId) {
+  const list = read(K.exams, []);
+  for (const s of list) {
+    if (s.id === rootId || s.origin_id === rootId) {
+      s.deleted = true;
+      pushDirty('examSessions', s, 'update');
+    }
+  }
+  write(K.exams, list);
+}
+
+// ---------- 练习草稿（整套一份，与 App 一致） ----------
+const getExamDraft = () => read(K.examDraft, null) || null;
+const saveExamDraft = (draft) => write(K.examDraft, draft);
+const clearExamDraft = () => write(K.examDraft, null);
+
+// 答题页 → 结果页的一次性交接载荷（本地，不上云）：结果页消费后清空
+const getExamResult = () => read(K.examResult, null) || null;
+const saveExamResult = (payload) => write(K.examResult, payload);
+const clearExamResult = () => write(K.examResult, null);
+
+// ---------- 单词错题本（App 版模型：带题面快照） ----------
+const getWrongQuestionByWord = (wordId) =>
+  read(K.wrong, []).find((x) => x.word_id === wordId && !x.mastered) || null;
+
+/**
+ * 记录一次作答（App 的 addOrUpdateWrongQuestion 等价物）。
+ * 答错：不存在则新建（wrong_count=1），存在则 wrong_count+1 并刷新用户答案；
+ * 答对：若已在错题本则 correct_count+1，累计满 3 次直接移出。
+ * @returns {{removed:boolean}} 是否因此被移出错题本
+ */
+async function addOrUpdateWrongQuestion(question, selectedAnswer, isCorrect) {
+  const list = read(K.wrong, []);
+  const key = question.word_id || question.word;
+  const idx = list.findIndex((x) => (x.word_id || x.word) === key);
+  const now = formatDate();
+
+  if (!isCorrect) {
+    if (idx >= 0) {
+      const wq = list[idx];
+      wq.wrong_count = (wq.wrong_count || 0) + 1;
+      wq.wrong_answer = selectedAnswer || '';
+      wq.last_attempt_at = now;
+      wq.mastered = false;
+      wq.updated_at = now;
+      write(K.wrong, list);
+      pushDirty('wrongQuestions', wq, 'update');
+    } else {
+      const wq = {
+        id: uuid(),
+        word_id: question.word_id || '',
+        word: question.word || question.target_word || '',
+        type: question.type || 'definition',
+        sentence: question.sentence || '',
+        options: question.options || [],
+        correct_answer: question.correct_definition || question.correct_answer || '',
+        chinese_translation: question.chinese_translation || '',
+        chinese_hint: question.chinese_hint || '',
+        target_word: question.target_word || '',
+        wrong_answer: selectedAnswer || '',
+        wrong_count: 1,
+        correct_count: 0,
+        mastered: false,
+        last_attempt_at: now,
+        created_at: now,
+      };
+      list.push(wq);
+      write(K.wrong, list);
+      pushDirty('wrongQuestions', wq, 'add');
+    }
+    return { removed: false };
+  }
+
+  if (idx < 0) return { removed: false };
+  const wq = list[idx];
+  wq.correct_count = (wq.correct_count || 0) + 1;
+  wq.last_attempt_at = now;
+  wq.updated_at = now;
+  if (wq.correct_count >= 3) {
+    list.splice(idx, 1);
+    write(K.wrong, list);
+    pushDirty('wrongQuestions', { ...wq, mastered: true }, 'delete');
+    return { removed: true };
+  }
+  write(K.wrong, list);
+  pushDirty('wrongQuestions', wq, 'update');
+  return { removed: false };
+}
+
+async function removeWrongQuestion(id) {
+  write(K.wrong, read(K.wrong, []).filter((x) => x.id !== id));
+}
+
+// ---------- 真题会话 RealExamSession ----------
+const getRealExamSessions = () => read(K.realExams, []).filter((s) => !s.deleted);
+
+async function saveRealExamSession(session) {
+  const rec = {
+    id: uuid(),
+    year: session.year,
+    mode: session.mode,            // reading | cloze | newtype
+    setId: session.setId || 'english1',
+    paperId: session.paperId,
+    answers: session.answers || [],
+    score: session.score || 0,
+    total: session.total || 0,
+    deleted: false,
+    createdAt: session.createdAt || formatDate(),
+  };
+  read(K.realExams, []).unshift(rec);
+  write(K.realExams, read(K.realExams, []));
+  pushDirty('realExamSessions', rec, 'add');
+  return rec;
+}
+
+async function deleteRealExamSession(id) {
+  const list = read(K.realExams, []);
+  const s = list.find((x) => x.id === id);
+  if (s) { s.deleted = true; write(K.realExams, list); pushDirty('realExamSessions', s, 'update'); }
+}
+
+// ---------- 真题错题本 RealExamWrongQuestion ----------
+const getRealExamWrongQuestions = () => read(K.realWrong, []);
+
+/** 从 paper 里按 questionId 找回题面，用于生成错题快照。 */
+function findRealExamQuestion(paper, questionId, mode) {
+  if (!paper) return null;
+  if (mode === 'reading') {
+    return (paper.questions || []).find((q) => q.id === questionId) || null;
+  }
+  if (mode === 'cloze') {
+    const m = /-b(\d+)$/.exec(questionId || '');
+    const index = m ? Number(m[1]) : null;
+    return (paper.blanks || []).find((b) => b.index === index) || null;
+  }
+  const m = /-p(\d+)$/.exec(questionId || '');
+  const index = m ? Number(m[1]) : null;
+  return (paper.questions || []).find((q) => q.index === index) || null;
+}
+
+/**
+ * 把一次真题作答写进真题错题本。
+ * 答错 → upsert（wrong_count+1，刷新用户答案）；答对 → 已在本中则 correct_count+1，满 3 次移出。
+ */
+async function addOrUpdateRealExamWrongQuestions(session, paper, setId) {
+  const list = read(K.realWrong, []);
+  const mode = session.mode;
+  const now = formatDate();
+  let removed = 0;
+
+  for (const ans of session.answers || []) {
+    const idx = list.findIndex((x) => x.questionId === ans.questionId && x.paperId === session.paperId);
+    if (ans.correct) {
+      if (idx >= 0) {
+        const w = list[idx];
+        w.correct_count = (w.correct_count || 0) + 1;
+        w.last_attempt_at = now;
+        if (w.correct_count >= 3) { list.splice(idx, 1); removed += 1; }
+      }
+      continue;
+    }
+    const q = findRealExamQuestion(paper, ans.questionId, mode);
+    if (!q && idx < 0) continue;
+    if (idx >= 0) {
+      const w = list[idx];
+      w.wrong_count = (w.wrong_count || 0) + 1;
+      w.userAnswer = ans.selected || null;
+      w.last_attempt_at = now;
+    } else {
+      list.push({
+        id: uuid(),
+        questionId: ans.questionId,
+        paperId: session.paperId,
+        mode,
+        year: session.year,
+        setId: setId || 'english1',
+        stem: q.stem || '',
+        options: q.options || [],
+        correctAnswer: q.answer,
+        userAnswer: ans.selected || null,
+        explanation: q.explanation || '',
+        blankIndex: mode === 'cloze' ? q.index : undefined,
+        questionIndex: mode === 'newtype' ? q.index : undefined,
+        subtype: mode === 'newtype' ? paper.subtype : undefined,
+        wrong_count: 1,
+        correct_count: 0,
+        last_attempt_at: now,
+      });
+    }
+  }
+  write(K.realWrong, list);
+  return { removed };
+}
+
+async function removeRealExamWrongQuestion(id) {
+  write(K.realWrong, read(K.realWrong, []).filter((x) => x.id !== id));
+}
+
+/** AI 解析生成后回写，避免下次重复生成。 */
+async function updateRealExamWrongExplanation(questionId, explanation) {
+  const list = read(K.realWrong, []);
+  const w = list.find((x) => x.questionId === questionId);
+  if (!w) return;
+  w.explanation = explanation;
+  write(K.realWrong, list);
+}
+
+// ---------- 真题草稿（按 paperId 分开存） ----------
+const getRealExamDraft = (paperId) => read(K.realDraft, {})[paperId] || null;
+const saveRealExamDraft = (paperId, selections) => {
+  const m = read(K.realDraft, {});
+  m[paperId] = selections;
+  write(K.realDraft, m);
+};
+const clearRealExamDraft = (paperId) => {
+  const m = read(K.realDraft, {});
+  delete m[paperId];
+  write(K.realDraft, m);
+};
 
 // ---------- 脏数据上推 ----------
 function pushDirty(collection, doc, op) {
@@ -219,11 +558,22 @@ async function flushDirty() {
 
 export default {
   pullAll, flushDirty,
-  getWords, addWord, updateWord, deleteWord, getWordbookKeysIncludingDeleted,
-  getStudyRecords, addStudyRecord,
+  getWords, getWordById, addWord, updateWord, deleteWord, getWordbookKeysIncludingDeleted,
+  getStudyRecords, getStudyRecordsByDate, addStudyRecord,
   getStudyPlans, addStudyPlan, completePlan,
-  getWrongQuestions, recordWrongAnswer, recordWrongCorrect,
-  getSettings, saveSettings,
+  getWrongQuestions, getWrongQuestionByWord, addOrUpdateWrongQuestion, removeWrongQuestion,
+  recordWrongAnswer, recordWrongCorrect,
+  getSettings, saveSettings, resetSettings, clearAllData, DEFAULT_SETTINGS,
   getAutoFillLastDate, setAutoFillLastDate,
-  getIgnoredWordbankWords,
+  getIgnoredWordbankWords, saveIgnoredWordbankWords,
+  getArticles, addArticle, getArticleById, updateArticle, markArticleRead, deleteArticle,
+  // 练习域
+  getExamSessions, saveExamSession, deleteExamSession, deleteExamSet,
+  getExamSessionById,
+  getExamDraft, saveExamDraft, clearExamDraft,
+  getExamResult, saveExamResult, clearExamResult,
+  getRealExamSessions, saveRealExamSession, deleteRealExamSession,
+  getRealExamWrongQuestions, addOrUpdateRealExamWrongQuestions,
+  removeRealExamWrongQuestion, updateRealExamWrongExplanation,
+  getRealExamDraft, saveRealExamDraft, clearRealExamDraft,
 };

@@ -1,0 +1,36 @@
+<view class="page">
+  <view class="mg-card">
+    <view class="mg-text-secondary">{{sourceText}}数据源 {{total}} 条 · 云端 {{countText}}</view>
+    <view class="bar">
+      <view class="bar-inner" style="width: {{progress}}%"></view>
+    </view>
+    <view class="mg-text-tertiary sub">剩余 {{remaining}} 条未导入</view>
+    <view wx:if="{{extra > 0}}" class="mg-text-secondary sub dup-warn">云端比数据源多 {{extra}} 条，可能有重复数据 —— 点下面「③ 清理重复」体检并清理</view>
+  </view>
+
+  <view class="row-btns">
+    <button class="mg-btn mg-btn-outline" loading="{{busy}}" disabled="{{busy}}" bindtap="onEnsureCollections">① 建集合</button>
+    <button class="mg-btn mg-btn-primary" loading="{{busy}}" disabled="{{busy}}" bindtap="onImport">② 一键导入词库</button>
+  </view>
+
+  <view class="row-btns">
+    <button class="mg-btn mg-btn-outline" disabled="{{busy}}" bindtap="onDedupe">③ 清理重复</button>
+    <button class="mg-btn mg-btn-outline" disabled="{{busy}}" bindtap="onRefreshTap">刷新状态</button>
+    <button class="mg-btn mg-btn-danger" disabled="{{busy || !canClear}}" bindtap="onClear">清空重导</button>
+  </view>
+
+  <view wx:if="{{error}}" class="mg-card err">{{error}}</view>
+
+  <view wx:if="{{log.length}}" class="mg-card">
+    <view class="mg-text-tertiary sub">执行日志</view>
+    <view wx:for="{{log}}" wx:key="*this" class="log-line">{{item}}</view>
+  </view>
+
+  <view class="mg-card tip">
+    <view class="mg-text-secondary">顺序：先点「① 建集合」（幂等，已存在会跳过），再点「② 一键导入词库」，进度条到 100% 即完成。</view>
+    <view class="mg-text-secondary">导入是全自动的：云函数默认只有 3 秒执行时间，所以每轮约写 2 秒、到点自己收手并紧接着跑下一轮，中途别退出页面。</view>
+    <view class="mg-text-secondary">导入是幂等的：云端已有的词会自动跳过，重复点「②」不会插出重复数据。</view>
+    <view class="mg-text-secondary">若「云端」比数据源条数多，点「③ 清理重复」体检并清理多余副本（每个词保留一条）。</view>
+    <view class="mg-text-secondary">导入完请彻底关闭小程序再进入，让学习页重新拉取词库。</view>
+  </view>
+</view>

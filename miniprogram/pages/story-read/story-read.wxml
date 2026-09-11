@@ -1,15 +1,106 @@
-<view class="page" wx:if="{{story}}">
-  <view class="mg-card">
-    <view class="title">{{story.title}}</view>
-    <view class="content" user-select>{{story.content}}</view>
-    <view wx:if="{{story.words && story.words.length}}" class="words">
-      <text wx:for="{{story.words}}" wx:key="*this" class="mg-tag w">{{item}}</text>
+<view class="mg-page sr">
+
+  <view wx:if="{{loading}}" class="mg-loading">
+    <mg-icon name="refresh" size="64" color="#2E5E4E" />
+    <text style="margin-top:24rpx">章节加载中…</text>
+  </view>
+
+  <mg-empty
+    wx:elif="{{missing}}"
+    icon="book-open-page-variant-outline"
+    title="章节不存在"
+    description="该章节暂未开放或加载失败"
+  />
+
+  <block wx:elif="{{chapter}}">
+    <!-- Hero -->
+    <view class="sr__hero">
+      <view class="sr__hero-text">
+        <text class="sr__eyebrow">第 {{chapter.id}} 章</text>
+        <text class="sr__title">{{chapter.title}}</text>
+        <text class="sr__meta">{{chapter.wordCount}} 词 · {{chapter.targetCount}} 个目标词</text>
+      </view>
+      <view class="sr__hero-right">
+        <view class="sr__hero-icon">
+          <mg-icon name="book-open-page-variant" size="48" color="#FFFFFF" />
+        </view>
+        <view wx:if="{{chapter.hasTranslation}}" class="sr__pill" hover-class="mg-hover" bindtap="toggleTranslation">
+          <mg-icon name="{{showTranslation ? 'eye-off' : 'eye'}}" size="28" color="#FFFFFF" />
+          <text class="sr__pill-text">{{showTranslation ? '隐藏译文' : '显示译文'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 目标词 -->
+    <view wx:if="{{words.length > 0}}" class="sr__tags">
+      <text wx:for="{{words}}" wx:key="*this" class="sr__tag">{{item}}</text>
+    </view>
+
+    <!-- 正文 -->
+    <view class="sr__card">
+      <view wx:for="{{paragraphs}}" wx:for-item="para" wx:key="index" class="sr__para">
+        <text wx:if="{{para.en}}" class="sr__en" user-select><text
+          wx:for="{{para.segs}}"
+          wx:key="index"
+          class="{{item.hit ? 'is-hit' : ''}}"
+          data-word="{{item.hit ? item.text : ''}}"
+          bindtap="tapWord"
+        >{{item.text}}</text></text>
+
+        <text wx:if="{{showTranslation && para.zh}}" class="sr__zh">{{para.zh}}</text>
+      </view>
+
+      <view wx:if="{{chapter.hasTranslation}}" class="sr__toggle-wrap">
+        <view class="sr__toggle" hover-class="mg-hover" bindtap="toggleTranslation">
+          <mg-icon name="{{showTranslation ? 'eye-off' : 'eye'}}" size="32" color="#2E5E4E" />
+          <text class="sr__toggle-text">{{showTranslation ? '隐藏译文' : '显示译文'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <text class="sr__hint">点击文中<text class="sr__hint-hl">墨绿高亮</text>生词可查看释义</text>
+
+    <view class="sr__bottomspace"></view>
+  </block>
+
+  <!-- 底部章节导航 -->
+  <view wx:if="{{chapter}}" class="sr__bar">
+    <view class="sr__bar-flex">
+      <mg-button
+        title="上一章"
+        variant="secondary"
+        size="lg"
+        block
+        icon="chevron-left"
+        disabled="{{!hasPrev}}"
+        bind:tap="goPrev"
+      />
+    </view>
+    <view class="sr__bar-flex">
+      <mg-button
+        title="下一章"
+        variant="secondary"
+        size="lg"
+        block
+        icon="chevron-right"
+        disabled="{{!hasNext}}"
+        bind:tap="goNext"
+      />
     </view>
   </view>
-  <view class="mg-btn mg-btn-outline" bindtap="toggleTranslation">
-    {{showTranslation ? '隐藏' : '查看'}}全文翻译
-  </view>
-  <view wx:if="{{showTranslation && story.translation}}" class="mg-card trans">
-    {{story.translation}}
-  </view>
+
+  <!-- 单词释义 -->
+  <mg-modal visible="{{showWord}}" show-actions="{{false}}" bind:close="closeWord" bind:cancel="closeWord">
+    <view class="wm">
+      <view class="wm__head">
+        <text class="wm__word">{{modalWord.word}}</text>
+        <text wx:if="{{modalWord.phonetic}}" class="wm__ph">{{modalWord.phonetic}}</text>
+      </view>
+      <text class="wm__meaning">{{modalWord.meaning}}</text>
+      <text wx:if="{{modalWord.example}}" class="wm__example">例句：{{modalWord.example}}</text>
+      <text wx:if="{{modalWord.etymology}}" class="wm__ety">词根：{{modalWord.etymology}}</text>
+      <text wx:if="{{modalWord.memoryTip}}" class="wm__tip">记忆：{{modalWord.memoryTip}}</text>
+      <text wx:if="{{modalWord.fromCloud}}" class="wm__src">释义来自云端词库</text>
+    </view>
+  </mg-modal>
 </view>

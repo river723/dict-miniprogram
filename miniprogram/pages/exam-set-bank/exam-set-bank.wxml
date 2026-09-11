@@ -1,0 +1,59 @@
+<view class="mg-page esb">
+
+  <mg-empty
+    wx:if="{{sets.length === 0}}"
+    icon="library"
+    title="AI 题库还是空的"
+    description="用 AI 从你的生词生成练习题，每套题都会保存在这里，可随时重做。"
+    action-label="去出一套题"
+    bind:action="goSetup"
+  />
+
+  <block wx:else>
+    <view class="esb__hint">
+      <text>按套题聚合，共 {{sets.length}} 套。点击查看题目与答案，可整组删除。</text>
+    </view>
+
+    <view
+      wx:for="{{sets}}"
+      wx:key="rootId"
+      class="esb__card"
+      hover-class="mg-hover-soft"
+      data-id="{{item.rootId}}"
+      bindtap="openSet"
+    >
+      <view class="esb__main">
+        <view class="esb__tagrow">
+          <view class="tag tag--{{item.type}}">
+            <text class="tag__text tag__text--{{item.type}}">{{item.typeLabel}}</text>
+          </view>
+          <text class="esb__meta">{{item.total}} 题 · 出题 {{item.createdText}}</text>
+        </view>
+        <text class="esb__sub">上次练习 {{item.lastText}} · 已练 {{item.memberCount}} 次</text>
+      </view>
+
+      <view class="esb__right">
+        <text class="esb__acc esb__acc--{{item.accuracyCls}}">{{item.accuracyText}}</text>
+        <view class="esb__link">
+          <text>查看题目</text>
+          <mg-icon name="chevron-right" size="28" color="#2E5E4E" />
+        </view>
+      </view>
+
+      <view
+        class="esb__del"
+        hover-class="mg-hover"
+        data-id="{{item.rootId}}"
+        catchtap="removeSet"
+      >
+        <mg-icon name="delete-outline" size="34" color="#8A8E89" />
+      </view>
+    </view>
+
+    <view class="esb__more">
+      <mg-button title="再出一套题" variant="secondary" size="lg" block icon="plus" bind:tap="goSetup" />
+    </view>
+  </block>
+
+  <view class="esb__bottomspace"></view>
+</view>

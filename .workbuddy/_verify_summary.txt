@@ -1,0 +1,23 @@
+{
+ "codepoint_range": "U+E000 - U+E0A5",
+ "ttf_bytes": 20020,
+ "wxss_bytes": 27212,
+ "verify_ok": false,
+ "counts": {
+  "bad_cmap": 0,
+  "outline_diff": 162,
+  "blank": 0
+ },
+ "samples": {
+  "bad_cmap": [],
+  "outline_diff": [
+   "react",
+   "web",
+   "wrap",
+   "book-open-page-variant",
+   "chevron-right",
+   "text"
+  ],
+  "blank": []
+ }
+}

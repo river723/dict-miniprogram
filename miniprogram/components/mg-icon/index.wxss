@@ -1,0 +1,13 @@
+/* 字体本体（@font-face）在 theme/icons.wxss，由 app.wxss 全局引入。 */
+.mg-icon {
+  font-family: 'mgIcons';
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-align: center;
+  speak: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mg-icon--disabled { opacity: 0.35; }

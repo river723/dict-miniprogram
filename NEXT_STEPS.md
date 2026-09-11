@@ -19,6 +19,15 @@
 | 离线写入被覆盖丢失 | `miniprogram/services/storage.js` | `pullAll()` 先 `await flushDirty()`，再按 id 合并；仍在脏队列里的文档以本地为准，避免东西没上推就被云端全量冲掉 |
 | 词库 1000 条静默截断 | `cloudfunctions/worddict/index.js` + `services/worddict.js` + `pages/wordbook` | `byLetter` 分页取全量（5000 上限保护并返回 `truncated`）；有 keyword 走服务端正则 `search`；UI 给出「结果过多已截断 / 未找到」提示 |
 | 词库导入逐条插入太慢 | `scripts/import-worddict.mjs` | 改为每批 `add(docs)` 批量插入，5000+ 词的写入次数从 5000 降到 ~50 |
+| WXML 编译报错（`'ABCD'[index]`） | `pages/exam-practice` + `pages/quiz` | 新增 `miniprogram/utils/tools.wxs` 提供 `optionLabel(i)`，两个模板经 `wxs module="tools"` 调用 |
+| quiz 模板逻辑错位 | `pages/quiz/quiz.wxml` + `quiz.js` | 原先用 `questions[index].answer` 且 `wx:for` 的 index 与题目下标同名冲突（选中的永远是第 0 项）。改为渲染独立的 `current` 字段 + `wx:for-index="oi"`；顺带修了错题传的是词文本而非 `word_id` |
+| 云端读不到词库数据 | `cloudfunctions/seed/index.js` + `scripts/build-seed-data.mjs` | 报 `ENOENT ... scandir '/var/user/data'`：云端包里有 `data/`，运行时目录却没有（子目录未落地）。改为**内联** `seed-data.js`（与 index.js 同级，gzip+base64，1.4MB），加载顺序 内联 → `data/` 分片 → 根目录拍平分片；新增 `{"action":"diag"}` 打印 `__dirname` 与目录实况 |
+| 部署首次必失败 | `scripts/deploy-cloudfunctions.mjs` | 首次创建函数后立刻传代码会撞 `FailedOperation.UpdateFunctionCode：当前函数处于Creating状态`。改为自动等 5s 重试（最多 4 次）；另 `--port` 不再硬编码 3799（IDE 服务端口随机），改由 CLI 自动发现 |
+| 重复点导入就插重 | `cloudfunctions/seed/index.js` | `importWorddict` 写入前先分页读回云端已有 `word_id` 建 Set 跳过（返回 `skipped`）；新增 `dedupeWorddict` 去重体检/清理（保留最早一条，不在词库中的文档只报不删） |
+| 云函数 3 秒超时 | `cloudfunctions/seed/index.js` + `pages/seed` | 报 `-504003 Invoking task timed out after 3 seconds`。导入/去重/清空全改成「时间预算内干一段 → 返回 `done`/`next`/`left` → 页面续跑」；删除并发从 1000 降到 20（高并发反而被限流） |
+| 词库整包回传超限 | `cloudfunctions/worddict/index.js` + `services/worddict.js` + `services/autoWord.js` | 自动配词原来 `action:'all'` 把 4801 条（约 1.7~3.4MB）拉回小程序，超过**小程序链路 1MB 响应上限**必失败。改为服务端 `pick`（考频降序 + 日期种子确定性洗牌 + 排除生词本/忽略词），只回传选中的 10 条（约 4KB）；`all` 保留仅作云端测试，超限时明确报错 |
+
+> 教训：WXML 数据绑定不支持方法调用和动态下标，用到一律写 WXS 或在 JS 侧算好字段。
 
 新增约定：**多了一个 `content_files` 集合**（云存储路径 → fileID 映射，权限保持默认，云函数以服务端权限访问）。
 
@@ -27,10 +36,16 @@
 | # | 动作 | 验证标准 |
 |---|---|---|
 | 1 | ~~开通云开发、填 appid~~ **已完成**（环境 `cloud1-d6gfdnelqf7478e85` 已写入代码） | — |
-| 2 | 建 **7** 个集合：`words` `study_records` `study_plans` `wrong_questions` `user_settings`（仅创建者可读写）、`worddict`（所有用户可读 + `prefix` 索引）、`content_files`（默认权限即可） | 云控制台 7 个集合就位 |
-| 3 | 部署 4 个云函数（右键 → 上传并部署：云端安装依赖）；`ai` 配环境变量 `DEEPSEEK_API_KEY`（沿用主仓 `.env` 的 key，模型 `deepseek-v4-flash`） | 4 项显示已部署 |
-| 4 | `npm i` → `import-worddict.mjs --env=cloud1-d6gfdnelqf7478e85`（可先 `--limit=50` 试跑）→ `upload-content.mjs` | worddict 有 ~5000+ 条；`content_files` 有映射记录；存储有 content/exams、content/stories |
+| 2 | ~~部署 6 个云函数~~ **已完成**（助手经开发者工具 CLI 部署，`words`/`worddict`/`content`/`ai`/`setup`/`seed` 均 Active）。以后自己部署：`npm run deploy:cf`，前提是 IDE 已开「设置 → 安全设置 → 服务端口」 | 云函数列表 6 项 Active |
+| 3 | **一键灌库**（免密钥）：小程序「我的 → 设置 → 数据初始化」→「① 建集合」→「② 一键导入词库」，进度到 100%。若报 `ENOENT /var/user/data`，说明 seed 是旧版本，先 `npm run deploy:cf -- seed` | worddict 4801 条 |
+| 3b | 若「云端」条数**多于** 4801（历史重复写入），点「③ 清理重复」：先体检出报告，确认后删掉多余副本，每个词保留一条 | 云端回到 4801 条 |
+| 3c | **去云开发控制台把云函数超时改大**（云函数 → 选函数 → 配置 → 超时时间）：`ai` 60s、`content` 20s、`seed` 60s、其余 20s。默认只有 3 秒，`ai` 调大模型必超时 | `ai` 能正常返回；seed 导入从多轮变成一两轮 |
+| 4 | `ai` 云函数配环境变量 `DEEPSEEK_API_KEY`（沿用主仓 `.env` 的 key，模型 `deepseek-v4-flash`），否则 AI 出题/短文不可用 | AI 页能返回结果 |
 | 5 | 跑主链路：自动配词 → 卡片背诵 → 复习 → 统计 | 学习页出词、能打卡、统计有柱 |
+
+> 顺序别颠倒：灌库必须在云函数部署之后。若中途改了 `worddict` / `content` / `seed` 的代码，记得 `npm run deploy:cf` 重新部署一次。
+
+<details><summary>备选：本地脚本灌库（需腾讯云密钥，会比一键导入快些）</summary>
 
 ```bash
 npm install
@@ -39,13 +54,50 @@ TCB_SECRET_ID=xxx TCB_SECRET_KEY=xxx node scripts/import-worddict.mjs --env=clou
 TCB_SECRET_ID=xxx TCB_SECRET_KEY=xxx node scripts/upload-content.mjs --env=cloud1-d6gfdnelqf7478e85
 ```
 
-## 3. 仍未处理 / 后续排期
+</details>
 
-- **AI 短文能力没人用**：`cloudfunctions/ai/index.js` 有 `story`，前端零调用 → 在「练习」页补入口，或删掉
-- **支付/订阅**：新建 `payment` 云函数 + 订阅页（若商业化，提审前必做，注意付费内容规范）
-- **真题多题型**：原 App 有完形 / 阅读 / 新题型 / 翻译 / 写作，现只有单个 `exam-practice`
-- **错题重练**：现有 `wrong-questions` 只有列表，缺「重做—移出」入口
-- **统计详情**：`stats.js` 仅 21 行，缺下钻
+<details><summary>兜底：控制台一次导入（不需密钥，但需手动操作）</summary>
+
+`npm run export:single` 生成 `import-data/worddict-all.json`（3.59MB，4801 条，JSON Lines，单文件远低于控制台 50MB 上限），
+在云开发控制台 `worddict` 集合点一次「导入」，冲突处理选 Insert（重复导入会产生重复数据）。
+
+</details>
+
+## 3. 第二批移植（2026-09-11 已完成）
+
+第二批目标：把原 App 的「练习 Tab + 真题模块 + 我的 Tab」1:1 搬进小程序。共 30 个页面，
+全部通过 `.workbuddy/check_syntax.cjs`（JS 语法 / JSON / WXML / WXSS / 页面四件套 /
+跳转目标注册 / 图标名 全量校验，报告见 `.workbuddy/_check_report.json`）。
+
+| 原 App Screen | 小程序页面 | 说明 |
+|---|---|---|
+| PracticeHub | `pages/practice` | Hero（练习次数 / 平均正确率 / 待复习）+ 双 CTA + AI 题库 / 错题本入口 + 最近练习 5 条 |
+| ExamSetup | `pages/exam-setup` | 题数步进器 + 题型分段 + 选词模式 + 词云（覆盖徽标 / 换词）+ 草稿恢复弹窗 |
+| ExamAnswer | `pages/exam-answer` | 单题作答，答完自动跳结果 |
+| ExamResult | `pages/exam-result` | 得分环 + 逐题回顾 + 错题入库 |
+| WrongQuestionReview | `pages/wrong-questions` | 单词 / 真题双 Tab，AI 解析，掌握后自动移出 |
+| ExamHistory | `pages/exam-history` | 按来源筛选、删除、重做、真题归档回顾 |
+| ExamSetBank | `pages/exam-set-bank` | 按 `origin_id` 分组的套题列表 |
+| ExamSetDetail | `pages/exam-set-detail` | 套题内逐题，点目标词跳生词详情 |
+| RealExamList | `pages/exam-list` | 年份卡懒加载 × 卷别筛选 × 条目状态（上次得分 / 待复习） |
+| RealExamReading / Cloze / NewType | `pages/exam-practice` | 三合一答题壳，新题型提交后原地揭晓 |
+| RealExamResult | `pages/real-exam-result` | 得分卡 + 原文&译文对照 + 逐题回顾（支持练习历史归档回顾） |
+| RealExamTranslation / Writing | `pages/real-exam-read` | 主观题阅览，参考译文 / 范文默认折叠 |
+| StatsScreen | `pages/profile` | 掌握度 Hero（进度环）+ 三指标 + 设置预览 |
+| StatsDetail | `pages/stats` | 7 天折线图 + 困难词 Top5（sparkline）+ 里程碑 |
+| Settings | `pages/settings` | 外观 / 学习 / 文章生成 / 数据管理 / 高级选项 |
+| StoryDetail | `pages/story-read` | 中英对照章节，点高亮词查释义（生词本 → 云端词库回落） |
+
+配套新增：`services/exam.js`、`services/realExam.js`、`utils/story.js`、`utils/wordNav.js`；
+`cloudfunctions/ai` 增加 `definition_questions` / `cloze_questions` / `real_exam_explanation` 三个 action。
+
+清理：删除冗余的 `pages/quiz`、`pages/story-list`、`pages/wordbook`（功能已由
+`exam-answer` + `exam-practice`、`read`、`word-list` + `dictionary-browse` 覆盖）。
+
+## 3b. 仍未处理 / 后续排期
+
+- **支付/订阅**：按约定跳过；若商业化需新建 `payment` 云函数 + 订阅页，提审前必做
 - **增量同步**：当前全量拉取 + 脏队列，数据量上来后改 `updated_at` 游标
-- **深色模式**：token 已具备，未做主题切换
+- **深色模式**：token 与设置项已具备，未做全量主题切换（设置页可切换，尚未全局生效）
+- **云函数超时验收**：`ai` 需 60s、`content` 20s、`seed` 60s（见上表第 3c 项）
 - **提审**：类目/ICP、隐私指引、`project.private.config.json` 建议加入 `.gitignore`、`git tag v0.1.0` + CI 传体验版

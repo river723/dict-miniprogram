@@ -1,12 +1,176 @@
-<view class="page">
-  <view wx:for="{{list}}" wx:key="id" class="mg-card item">
-    <view class="head">
-      <text class="w">{{item.wordText}}</text>
-      <text class="mg-tag count">错 {{item.wrong_count}} 次 · 对 {{item.mastery_count}}/3</text>
-    </view>
-    <view class="mg-text-secondary q" wx:if="{{item.question}}">{{item.question}}</view>
-    <view class="mg-text-secondary def">{{item.definition}}</view>
-    <view class="ok-btn" data-idx="{{index}}" bindtap="markCorrect">✓ 这次做对了</view>
+<view class="mg-page wq">
+
+  <!-- Tab 切换 -->
+  <view class="wq__tabs">
+    <view
+      class="wq__tab {{tab === 'word' ? 'wq__tab--on' : ''}}"
+      hover-class="mg-hover-soft"
+      data-tab="word"
+      bindtap="switchTab"
+    >单词错题 ({{wordTotal}})</view>
+    <view
+      class="wq__tab {{tab === 'real' ? 'wq__tab--on' : ''}}"
+      hover-class="mg-hover-soft"
+      data-tab="real"
+      bindtap="switchTab"
+    >真题错题 ({{realTotal}})</view>
   </view>
-  <view wx:if="{{list.length === 0}}" class="empty mg-text-tertiary">错题本是空的，去练习吧</view>
+
+  <!-- ===================== 单词错题 ===================== -->
+  <block wx:if="{{tab === 'word'}}">
+    <view class="wq__summary">
+      <text class="wq__summary-title">单词错题 · 共 {{wordTotal}} 题</text>
+      <text class="wq__summary-desc">释义单选 {{wordDef}} · 完形选词 {{wordCloze}} · 掌握 {{threshold}} 次后自动移除</text>
+    </view>
+
+    <mg-empty
+      wx:if="{{wordTotal === 0}}"
+      icon="party-popper"
+      title="太棒了！没有错题"
+      description="继续保持，多做练习巩固。"
+      action-label="去做一组练习"
+      bind:action="goSetup"
+    />
+
+    <block wx:else>
+      <view class="wq__filters">
+        <view class="seg3">
+          <view
+            wx:for="{{typeFilters}}"
+            wx:key="key"
+            class="seg3__item {{typeFilter === item.key ? 'seg3__item--on' : ''}}"
+            hover-class="mg-hover-soft"
+            data-key="{{item.key}}"
+            bindtap="setTypeFilter"
+          >{{item.label}}</view>
+        </view>
+        <view class="seg3">
+          <view
+            wx:for="{{countFilters}}"
+            wx:key="key"
+            class="seg3__item {{wrongCountFilter === item.key ? 'seg3__item--on' : ''}}"
+            hover-class="mg-hover-soft"
+            data-key="{{item.key}}"
+            bindtap="setCountFilter"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <view class="wq__redo">
+        <mg-button
+          title="重做（{{filtered.length}} 题）"
+          variant="primary"
+          size="lg"
+          block
+          icon="play-circle"
+          disabled="{{filtered.length === 0}}"
+          bind:tap="startReview"
+        />
+      </view>
+
+      <view wx:for="{{filtered}}" wx:key="id" class="wq__card">
+        <view class="wq__card-head">
+          <view class="tag tag--{{item.type}}">
+            <text class="tag__text tag__text--{{item.type}}">{{item.typeLabel}}</text>
+          </view>
+          <view class="wq__counts">
+            <text class="wq__wrong-count">错 {{item.wrongCount}} 次</text>
+            <text wx:if="{{item.hasCorrect}}" class="wq__correct-count">对 {{item.correctCount}}/{{threshold}}</text>
+          </view>
+        </view>
+
+        <view class="wq__divider"></view>
+
+        <text class="wq__sentence">{{item.sentence}}</text>
+        <text wx:if="{{item.translation}}" class="wq__translation">题干译文：{{item.translation}}</text>
+        <text wx:if="{{item.hint}}" class="wq__hint">💡 {{item.hint}}</text>
+
+        <view
+          class="wq__wordtag"
+          hover-class="mg-hover"
+          data-id="{{item.wordId}}"
+          data-word="{{item.word}}"
+          bindtap="openWord"
+        >
+          <text class="wq__wordtag-text">目标词：{{item.word}}</text>
+        </view>
+
+        <text class="wq__correct">✓ {{item.correct}}</text>
+        <text class="wq__wrong">✗ 你的选择：{{item.wrongAnswer}}</text>
+      </view>
+    </block>
+  </block>
+
+  <!-- ===================== 真题错题 ===================== -->
+  <block wx:else>
+    <view class="wq__summary">
+      <text class="wq__summary-title">真题错题 · 共 {{realTotal}} 题</text>
+      <text class="wq__summary-desc">阅读 {{realReading}} · 完形 {{realCloze}} · 掌握 {{threshold}} 次后自动移除</text>
+    </view>
+
+    <mg-empty
+      wx:if="{{realTotal === 0}}"
+      icon="party-popper"
+      title="没有真题错题"
+      description="去真题练习做一套试试。"
+      action-label="去做真题"
+      bind:action="goRealList"
+    />
+
+    <block wx:else>
+      <view wx:for="{{realList}}" wx:key="id" class="wq__card">
+        <view class="wq__card-head">
+          <view class="wq__meta">
+            <view class="tag tag--{{item.tagCls}}">
+              <text class="tag__text tag__text--{{item.tagCls}}">{{item.modeLabel}}</text>
+            </view>
+            <text class="wq__meta-text">{{item.metaText}}</text>
+          </view>
+          <view class="wq__del" hover-class="mg-hover" data-id="{{item.id}}" bindtap="removeReal">
+            <mg-icon name="delete-outline" size="32" color="#8A8E89" />
+          </view>
+        </view>
+
+        <text wx:if="{{item.stem}}" class="wq__stem">{{item.stem}}</text>
+
+        <view class="wq__options">
+          <view
+            wx:for="{{item.options}}"
+            wx:for-item="opt"
+            wx:key="letter"
+            class="ropt {{opt.isCorrect ? 'ropt--correct' : ''}} {{opt.isSelected && !opt.isCorrect ? 'ropt--wrong' : ''}}"
+          >
+            <text class="ropt__letter">{{opt.letter}}</text>
+            <text class="ropt__text">{{opt.text}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{item.explanation}}" class="wq__expl">
+          <text class="wq__expl-label">解析</text>
+          <text class="wq__expl-text">{{item.explanation}}</text>
+        </view>
+        <view
+          wx:else
+          class="wq__expl-btn {{item.explaining ? 'wq__expl-btn--busy' : ''}}"
+          hover-class="mg-hover"
+          data-id="{{item.id}}"
+          bindtap="explainReal"
+        >
+          <mg-icon name="lightbulb-outline" size="30" color="#2E5E4E" />
+          <text class="wq__expl-btn-text">{{item.explaining ? '生成中…' : 'AI 解析'}}</text>
+        </view>
+
+        <view class="wq__foot">
+          <text class="wq__wrong-count">错 {{item.wrongCount}} 次</text>
+          <text wx:if="{{item.hasCorrect}}" class="wq__correct-count">对 {{item.correctCount}}/{{threshold}}</text>
+          <view class="wq__review-link" hover-class="mg-hover" data-id="{{item.id}}" bindtap="openPaper">
+            <text>点击重做本套</text>
+            <mg-icon name="chevron-right" size="28" color="#2E5E4E" />
+          </view>
+        </view>
+      </view>
+    </block>
+  </block>
+
+  <view class="wq__bottomspace"></view>
 </view>

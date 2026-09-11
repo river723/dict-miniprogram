@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index"
+  },
+  "navigationBarTitleText": "答题"
+}

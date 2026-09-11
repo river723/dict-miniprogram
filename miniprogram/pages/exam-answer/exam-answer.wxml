@@ -1,0 +1,86 @@
+<view class="mg-page ea">
+
+  <!-- 无题可答 -->
+  <view wx:if="{{empty}}" class="ea__empty">
+    <mg-icon name="alert-circle-outline" size="72" color="#C7C4BA" />
+    <text class="ea__empty-text">没有题目</text>
+    <view class="ea__empty-btn">
+      <mg-button title="返回" variant="primary" block bind:tap="goBack" />
+    </view>
+  </view>
+
+  <block wx:elif="{{ready}}">
+    <!-- 顶部进度 -->
+    <view class="ea__bar">
+      <view class="ea__bar-head">
+        <text class="ea__bar-index">{{indexText}}</text>
+        <text class="ea__bar-acc">{{accuracyText}}</text>
+      </view>
+      <view class="ea__bar-track">
+        <view class="ea__bar-fill" style="width:{{progressPercent}}"></view>
+      </view>
+    </view>
+
+    <!-- 题目区 -->
+    <scroll-view wx:if="{{current}}" class="ea__scroll" scroll-y scroll-top="{{0}}">
+      <view class="ea__card">
+        <view class="ea__tag ea__tag--{{current.type}}">
+          <text class="ea__tag-text ea__tag-text--{{current.type}}">{{current.typeLabel}}</text>
+        </view>
+
+        <!-- 释义单选：句中划线目标词 -->
+        <block wx:if="{{current.isDefinition}}">
+          <view class="ea__sentbox ea__sentbox--primary">
+            <text class="ea__sentence mg-serif"><text wx:for="{{current.sentenceParts}}" wx:key="index" class="{{item.isWord ? 'ea__word' : ''}}">{{item.text}}</text></text>
+          </view>
+        </block>
+        <!-- 完形选词：空白处 -->
+        <block wx:else>
+          <view class="ea__sentbox ea__sentbox--warning">
+            <text class="ea__sentence mg-serif">{{current.blankBefore}}<text class="ea__blank">______</text>{{current.blankAfter}}</text>
+          </view>
+        </block>
+
+        <text class="ea__prompt">{{current.prompt}}</text>
+
+        <view class="ea__options">
+          <view
+            wx:for="{{current.options}}"
+            wx:key="letter"
+            class="opt {{item.cls}}"
+            hover-class="{{revealed ? '' : 'mg-hover'}}"
+            data-option="{{item.text}}"
+            bindtap="select"
+          >
+            <text class="opt__letter">{{item.letter}}</text>
+            <text class="opt__text">{{item.text}}</text>
+            <mg-icon wx:if="{{item.mark === 'check'}}" name="check" size="36" color="#3F7A5C" />
+            <mg-icon wx:elif="{{item.mark === 'close'}}" name="close" size="36" color="#B5462E" />
+          </view>
+        </view>
+      </view>
+
+      <view class="ea__scroll-space"></view>
+    </scroll-view>
+
+    <!-- 底部操作条 -->
+    <view class="ea__bottom">
+      <block wx:if="{{revealed}}">
+        <text class="ea__verdict ea__verdict--{{verdictCls}}">{{verdict}}</text>
+        <view class="ea__actions">
+          <text class="ea__skip" hover-class="mg-hover" bindtap="skip">跳过</text>
+          <mg-button
+            title="{{isLast ? '查看结果' : '下一题'}}"
+            variant="primary"
+            icon="{{isLast ? 'check-circle' : 'arrow-right'}}"
+            bind:tap="next"
+          />
+        </view>
+      </block>
+      <block wx:else>
+        <text class="ea__hint">请选择一个选项</text>
+        <text class="ea__skip" hover-class="mg-hover" bindtap="skip">跳过</text>
+      </block>
+    </view>
+  </block>
+</view>

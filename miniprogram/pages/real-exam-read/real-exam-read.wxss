@@ -1,0 +1,146 @@
+.rex {
+  padding-bottom: 48rpx;
+}
+
+.rex-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  padding: 160rpx 64rpx;
+}
+
+.rex-center__text {
+  font-size: 30rpx;
+  color: var(--mg-text-3);
+}
+
+.rex-card {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  border-radius: var(--mg-radius-lg);
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+}
+
+.rex-tag {
+  display: inline-block;
+  padding: 6rpx 20rpx;
+  margin-bottom: 20rpx;
+  border-radius: var(--mg-radius-pill);
+  background: var(--mg-primary-container);
+}
+
+.rex-tag__text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--mg-primary);
+}
+
+.rex-dir {
+  display: block;
+  font-size: 26rpx;
+  color: var(--mg-text-3);
+  line-height: 40rpx;
+}
+
+.rex-hint {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+  line-height: 36rpx;
+}
+
+.rex-hint--top {
+  margin: 0 0 24rpx;
+}
+
+.rex-passage {
+  font-size: 30rpx;
+  color: var(--mg-text);
+  line-height: 50rpx;
+}
+
+.rex-sect {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+  margin: 4rpx 0 16rpx;
+}
+
+.rex-item__idx {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  margin-bottom: 12rpx;
+}
+
+.rex-item__en {
+  display: block;
+  font-size: 28rpx;
+  color: var(--mg-text);
+  line-height: 44rpx;
+  margin-bottom: 20rpx;
+}
+
+.rex-reveal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0;
+}
+
+.rex-reveal__label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--mg-text);
+}
+
+.rex-reveal__toggle {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--mg-primary);
+}
+
+.rex-box {
+  margin-top: 12rpx;
+  padding: 24rpx;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-primary-container);
+}
+
+.rex-box__text {
+  display: block;
+  font-size: 28rpx;
+  color: var(--mg-text);
+  line-height: 48rpx;
+}
+
+.rex-box__label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--mg-primary);
+  margin-bottom: 12rpx;
+}
+
+.rex-box__note {
+  display: block;
+  font-size: 26rpx;
+  color: var(--mg-text-2);
+  line-height: 44rpx;
+}
+
+.rex-divider {
+  height: 1rpx;
+  background: var(--mg-outline);
+  margin: 24rpx 0;
+  opacity: 0.5;
+}
+
+.rex-actions {
+  margin-top: 12rpx;
+}

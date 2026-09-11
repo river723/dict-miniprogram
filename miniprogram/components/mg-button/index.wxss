@@ -1,0 +1,58 @@
+.mg-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  height: 80rpx;
+  padding: 0 32rpx;
+  border-radius: 24rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 0.4rpx;
+}
+
+.mg-btn-lg { height: 96rpx; font-size: 32rpx; padding: 0 48rpx; }
+.mg-btn-sm { height: 64rpx; font-size: 26rpx; padding: 0 24rpx; }
+.mg-btn-block { width: 100%; }
+
+.mg-btn-primary { background: var(--mg-primary); color: var(--mg-on-primary); }
+.mg-btn-secondary {
+  background: var(--mg-surface);
+  color: var(--mg-primary);
+  border: 2rpx solid var(--mg-primary);
+}
+.mg-btn-ghost { background: transparent; color: var(--mg-primary); }
+.mg-btn-danger { background: var(--mg-danger); color: var(--mg-on-primary); }
+.mg-btn-success { background: var(--mg-success); color: var(--mg-on-primary); }
+.mg-btn-warning { background: var(--mg-warning); color: var(--mg-on-primary); }
+
+.mg-btn--hover { opacity: 0.85; }
+.mg-btn--off { opacity: 0.4; }
+
+.mg-btn__text {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 加载指示器（纯 CSS 圆环） */
+.mg-spinner {
+  width: 30rpx;
+  height: 30rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: mg-spin 0.7s linear infinite;
+}
+.mg-spinner--primary {
+  border-color: rgba(46, 94, 78, 0.25);
+  border-top-color: var(--mg-primary);
+}
+
+@keyframes mg-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

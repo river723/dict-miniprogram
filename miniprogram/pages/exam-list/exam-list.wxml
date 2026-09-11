@@ -1,7 +1,82 @@
-<view class="page">
-  <view wx:if="{{loading}}" class="empty mg-text-tertiary">加载中…</view>
-  <view wx:for="{{list}}" wx:key="id" class="mg-card item" data-id="{{item.id}}" bindtap="go">
-    <text class="title">{{item.title}}</text>
-    <text class="mg-text-tertiary">›</text>
+<view class="mg-page rel-page">
+
+  <view wx:if="{{loading}}" class="rel-loading">
+    <text class="rel-loading-text">真题加载中…</text>
   </view>
+
+  <block wx:if="{{!loading && empty}}">
+    <mg-empty
+      icon="book-open-page-variant"
+      title="暂无真题数据"
+      description="后续版本将逐步补充历年真题，敬请期待。"
+    />
+  </block>
+
+  <block wx:if="{{!loading && !empty}}">
+    <!-- 卷别筛选 -->
+    <view class="rel-seg">
+      <view
+        wx:for="{{filters}}"
+        wx:key="key"
+        class="rel-seg__item {{filter === item.key ? 'is-on' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="setFilter"
+      >{{item.label}}</view>
+    </view>
+
+    <view class="rel-tip">共 {{years.length}} 年真题 · 一次一篇 · 客观题自动评分</view>
+
+    <!-- 年份卡 -->
+    <view wx:for="{{years}}" wx:key="year" class="rel-year">
+      <view class="rel-year__head" hover-class="mg-hover" data-year="{{item.year}}" bindtap="toggleYear">
+        <view class="rel-year__titles">
+          <text class="rel-year__title">{{item.year}} 年</text>
+          <text class="rel-year__sub">考研英语一 / 英语二</text>
+        </view>
+        <mg-icon name="{{item.expanded ? 'chevron-up' : 'chevron-down'}}" size="40" color="#2E5E4E" />
+      </view>
+
+      <view wx:if="{{item.expanded}}" class="rel-year__body">
+        <view
+          wx:for="{{item.sets}}"
+          wx:for-item="set"
+          wx:key="setId"
+          class="rel-set"
+          wx:if="{{filter === 'all' || filter === set.setId}}"
+        >
+          <text class="rel-set__title">{{set.label}}</text>
+
+          <view wx:if="{{set.state === 'error'}}" class="rel-set__hint">该卷加载失败，可稍后重试</view>
+          <view wx:elif="{{set.state === 'missing'}}" class="rel-set__hint">暂无该卷内容</view>
+
+          <view wx:else class="rel-list">
+            <view
+              wx:for="{{set.entries}}"
+              wx:for-item="entry"
+              wx:key="paperId"
+              class="rel-entry"
+              hover-class="mg-hover"
+              data-mode="{{entry.mode}}"
+              data-pid="{{entry.paperId}}"
+              data-year="{{entry.year}}"
+              data-set="{{entry.setCode}}"
+              bindtap="onEntryTap"
+            >
+              <mg-icon name="{{entry.icon}}" size="36" color="#2E5E4E" />
+              <view class="rel-entry__main">
+                <text class="rel-entry__title">{{entry.title}}{{entry.countText}}{{entry.badge ? ' · ' + entry.badge : ''}}</text>
+                <text wx:if="{{entry.subLabel}}" class="rel-entry__sub">{{entry.subLabel}}</text>
+                <text wx:if="{{entry.statusText}}" class="rel-entry__status rel-entry__status--{{entry.statusCls}}">{{entry.statusText}}</text>
+              </view>
+              <mg-icon name="chevron-right" size="36" color="#8A8E89" />
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{item.loaded === false}}" class="rel-set__hint">真题加载中…</view>
+      </view>
+    </view>
+
+    <view class="rel-foot">全部真题均为客观题自动评分，翻译与写作为阅览模式。</view>
+  </block>
 </view>

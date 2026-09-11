@@ -1,0 +1,197 @@
+<view class="mg-page aw">
+  <view class="aw__inner">
+
+    <!-- 页头 -->
+    <view class="aw__header">
+      <text class="aw__title">添加生词</text>
+      <text class="aw__sub">从本地增强词库快速选择，或手工录入并用 AI 补全释义</text>
+    </view>
+
+    <!-- 步骤指示器 -->
+    <view class="steps">
+      <view class="steps__dot steps__dot--on">1</view>
+      <text class="steps__label steps__label--on">选词</text>
+      <view class="steps__line"></view>
+      <view class="steps__dot {{tab === 'manual' ? 'steps__dot--on' : ''}}">2</view>
+      <text class="steps__label {{tab === 'manual' ? 'steps__label--on' : ''}}">录入</text>
+      <view class="steps__line"></view>
+      <view class="steps__dot">3</view>
+      <text class="steps__label">确认</text>
+    </view>
+
+    <!-- Tab -->
+    <view class="tabs">
+      <view class="tabs__item {{tab === 'wordbank' ? 'tabs__item--on' : ''}}" data-tab="wordbank" bindtap="onTab">
+        <mg-icon name="book-search" size="30" color="{{tab === 'wordbank' ? '#FFFFFF' : '#5C605C'}}" />
+        <text>本地词库</text>
+      </view>
+      <view class="tabs__item {{tab === 'manual' ? 'tabs__item--on' : ''}}" data-tab="manual" bindtap="onTab">
+        <mg-icon name="pencil-plus" size="30" color="{{tab === 'manual' ? '#FFFFFF' : '#5C605C'}}" />
+        <text>手工添加</text>
+      </view>
+    </view>
+
+    <!-- ============ 本地词库分支 ============ -->
+    <view wx:if="{{tab === 'wordbank'}}" class="card">
+      <view class="entry">
+        <mg-icon name="book-multiple" size="80" color="#2E5E4E" />
+        <view class="entry__body">
+          <text class="entry__title">从本地词库选词</text>
+          <text class="entry__desc">考研词库已含词根、例句和易混词，勾选即可加入生词本</text>
+        </view>
+      </view>
+      <view class="entry__actions">
+        <mg-button title="打开本地词库" variant="primary" block icon="book-search" bind:tap="goPicker" />
+        <mg-button title="按字母浏览词库" variant="secondary" block icon="library" bind:tap="goDictionary" />
+      </view>
+    </view>
+
+    <!-- ============ 手工添加分支 ============ -->
+    <block wx:else>
+      <view class="card">
+        <text class="card__title">手工添加新单词</text>
+        <text class="card__helper">输入 1-30 个单词，用空格、换行或标点符号分隔</text>
+        <textarea
+          class="textarea"
+          placeholder="例如: abandon persist diligent&#10;或者: abandon,persist,diligent"
+          placeholder-class="ph"
+          value="{{input}}"
+          maxlength="2000"
+          bindinput="onInput"
+        />
+
+        <!-- 解析预览 -->
+        <view wx:if="{{wordCount > 0}}" class="preview">
+          <view class="preview__head">
+            <text class="preview__title">解析结果</text>
+            <text class="preview__count">{{wordCount}} 个单词</text>
+          </view>
+          <text class="preview__words">{{parsedWords}}</text>
+          <text wx:if="{{overflow}}" class="preview__warn">超过 30 个限制，只会处理前 30 个</text>
+        </view>
+
+        <!-- 音标（仅单单词） -->
+        <view wx:if="{{wordCount === 1}}" class="field">
+          <text class="field__label">音标（可选）</text>
+          <input
+            class="input"
+            placeholder="例如: [əˈbændən]"
+            placeholder-class="ph"
+            value="{{pronunciation}}"
+            bindinput="onPron"
+          />
+        </view>
+
+        <mg-button
+          title="{{analyzing ? progressText || '分析中…' : '本地词库 / AI 分析 (' + wordCount + ')'}}"
+          variant="primary"
+          block
+          icon="auto-fix"
+          loading="{{analyzing}}"
+          disabled="{{wordCount === 0}}"
+          bind:tap="analyze"
+        />
+      </view>
+
+      <!-- 分析中 -->
+      <view wx:if="{{analyzing}}" class="card">
+        <view class="loadingbox">
+          <mg-icon name="auto-fix" size="64" color="#2E5E4E" />
+          <text>{{progressText || '正在查找本地词库，必要时调用 AI…'}}</text>
+        </view>
+      </view>
+
+      <!-- 单词分析结果 -->
+      <view wx:if="{{single && single.source !== 'none'}}" class="card">
+        <view class="res__head">
+          <text class="card__title">{{single.sourceLabel}}（{{single.word}}）</text>
+        </view>
+        <view class="diffrow">
+          <text class="diffrow__label">难度</text>
+          <mg-difficulty level="{{single.difficulty}}" />
+          <text class="diffrow__text">{{single.difficultyLabel}}</text>
+        </view>
+
+        <view class="sec">
+          <text class="sec__title">考研释义</text>
+          <view wx:for="{{single.definitions}}" wx:key="index" class="defitem">
+            <view class="defitem__head">
+              <text class="defitem__pos">{{item.part_of_speech}}</text>
+              <text wx:if="{{item.is_core}}" class="mg-tag mg-tag-core">核心</text>
+              <text wx:if="{{item.is_rare_sense}}" class="mg-tag mg-tag-rare">熟词僻义</text>
+            </view>
+            <text class="defitem__meaning">{{item.meaning}}</text>
+            <text wx:if="{{item.example}}" class="defitem__eg">例句：{{item.example}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{single.etymology}}" class="sec">
+          <text class="sec__title">词根词缀</text>
+          <text class="sec__text">{{single.etymology}}</text>
+        </view>
+
+        <view wx:if="{{single.memory_tip}}" class="sec">
+          <text class="sec__title">记忆口诀</text>
+          <text class="sec__text">{{single.memory_tip}}</text>
+        </view>
+      </view>
+
+      <!-- 批量分析结果 -->
+      <view wx:if="{{results.length > 1}}" class="card">
+        <text class="card__title">分析结果（{{results.length}} 个单词）</text>
+        <view wx:for="{{results}}" wx:key="word" class="batchitem">
+          <view class="batchitem__head">
+            <text class="batchitem__word">{{item.word}}</text>
+            <text class="batchitem__src">{{item.sourceLabel}}</text>
+          </view>
+          <block wx:if="{{item.definitions.length > 0}}">
+            <text wx:for="{{item.definitions}}" wx:for-item="d" wx:key="index" class="batchitem__def">
+              <text class="batchitem__pos">{{d.part_of_speech}}</text>{{d.meaning}}
+            </text>
+          </block>
+          <text wx:else class="batchitem__empty">暂无分析结果</text>
+        </view>
+      </view>
+
+      <!-- 手动释义（仅单单词且未分析） -->
+      <view wx:if="{{wordCount === 1 && results.length === 0}}" class="card">
+        <text class="card__title">手动添加释义</text>
+        <textarea
+          class="textarea textarea--short"
+          placeholder="请输入单词的中文释义、例句等…"
+          placeholder-class="ph"
+          value="{{customDefinitions}}"
+          bindinput="onCustomDef"
+        />
+      </view>
+
+      <!-- 保存 -->
+      <view class="aw__save">
+        <mg-button
+          title="保存 ({{wordCount}} 个单词)"
+          variant="primary"
+          size="lg"
+          block
+          icon="content-save"
+          disabled="{{!canSave}}"
+          bind:tap="save"
+        />
+      </view>
+    </block>
+
+    <view class="aw__bottom"></view>
+  </view>
+
+  <!-- 覆盖确认 -->
+  <mg-modal
+    visible="{{showOverwrite}}"
+    icon="alert-circle-outline"
+    icon-tone="warning"
+    title="单词已存在"
+    content="「{{overwriteWord}}」已在生词本中，是否用最新内容覆盖？覆盖会更新释义、词根、难度，不影响学习记录。"
+    confirm-text="覆盖"
+    danger
+    bind:confirm="confirmOverwrite"
+    bind:cancel="cancelOverwrite"
+  />
+</view>

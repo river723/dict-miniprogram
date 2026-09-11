@@ -1,3 +1,9 @@
 {
-  "navigationBarTitleText": "我的"
+  "navigationBarTitleText": "我的",
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-section-header": "/components/mg-section-header/index",
+    "mg-stat-strip": "/components/mg-stat-strip/index"
+  }
 }

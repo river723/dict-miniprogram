@@ -1,0 +1,13 @@
+{
+  "usingComponents": {
+    "mg-icon": "/components/mg-icon/index",
+    "mg-button": "/components/mg-button/index",
+    "mg-empty": "/components/mg-empty/index",
+    "mg-stat-strip": "/components/mg-stat-strip/index",
+    "mg-section-header": "/components/mg-section-header/index",
+    "mg-difficulty": "/components/mg-difficulty/index"
+  },
+  "navigationBarTitleText": "学习",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
+}

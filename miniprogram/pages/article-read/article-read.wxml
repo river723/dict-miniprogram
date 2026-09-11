@@ -1,0 +1,113 @@
+<view class="mg-page ar">
+
+  <view wx:if="{{loading}}" class="mg-loading">
+    <mg-icon name="refresh" size="64" color="#2E5E4E" />
+    <text style="margin-top:24rpx">加载中…</text>
+  </view>
+
+  <mg-empty
+    wx:elif="{{!article}}"
+    icon="file-document-outline"
+    title="文章不存在"
+    description="它可能已被删除"
+  />
+
+  <block wx:else>
+    <!-- Hero -->
+    <view class="ar__hero">
+      <view class="ar__hero-text">
+        <view class="ar__hero-top">
+          <text class="ar__themepill">{{article.themeLabel}}</text>
+          <text class="ar__opencount">打开 {{article.readCount}} 次</text>
+        </view>
+        <text class="ar__title">{{article.title}}</text>
+      </view>
+      <view class="ar__hero-icon">
+        <mg-icon name="file-document" size="52" color="#FFFFFF" />
+      </view>
+    </view>
+
+    <!-- 生词标签 -->
+    <view class="ar__tags">
+      <text wx:for="{{wordTags}}" wx:key="*this" class="ar__tag">{{item}}</text>
+    </view>
+
+    <!-- 正文 -->
+    <view class="ar__card">
+      <view wx:if="{{regenerating}}" class="ar__regen">
+        <mg-icon name="refresh" size="64" color="#2E5E4E" />
+        <text class="ar__regen-text">正在重新生成文章…</text>
+      </view>
+
+      <block wx:else>
+        <view wx:for="{{pairs}}" wx:for-item="para" wx:key="index" class="ar__para">
+          <text class="ar__en"><text
+            wx:for="{{para.segs}}"
+            wx:key="index"
+            class="{{item.hit ? 'hit' : ''}}"
+            data-word="{{item.hit ? item.text : ''}}"
+            bindtap="tapWord"
+          >{{item.text}}</text></text>
+
+          <text wx:if="{{showTranslation && para.zh}}" class="ar__zh">{{para.zh}}</text>
+        </view>
+
+        <view wx:if="{{article.translation}}" class="ar__toggle-wrap">
+          <view class="ar__toggle" hover-class="mg-hover" bindtap="toggleTranslation">
+            <mg-icon name="{{showTranslation ? 'eye-off' : 'eye'}}" size="30" color="#2E5E4E" />
+            <text>{{showTranslation ? '隐藏译文' : '显示译文'}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <text class="ar__hint">点击文中<text class="ar__hint-hl">蓝色高亮</text>生词可查看释义</text>
+
+    <view class="ar__bottomspace"></view>
+
+    <!-- 底部操作 -->
+    <view class="ar__bar">
+      <view class="ar__bar-flex">
+        <mg-button
+          title="重新生成"
+          variant="secondary"
+          size="lg"
+          block
+          icon="refresh"
+          loading="{{regenerating}}"
+          disabled="{{regenerating}}"
+          bind:tap="regenerate"
+        />
+      </view>
+      <view class="ar__bar-flex">
+        <mg-button title="删除" variant="danger" size="lg" block icon="delete-outline" bind:tap="askDelete" />
+      </view>
+    </view>
+  </block>
+
+  <!-- 单词释义 -->
+  <mg-modal visible="{{showWord}}" show-actions="{{false}}" bind:close="closeWord" bind:cancel="closeWord">
+    <view class="wm">
+      <view class="wm__head">
+        <text class="wm__word">{{modalWord.word}}</text>
+        <text wx:if="{{modalWord.phonetic}}" class="wm__ph">{{modalWord.phonetic}}</text>
+      </view>
+      <text class="wm__meaning">{{modalWord.meaning}}</text>
+      <text wx:if="{{modalWord.example}}" class="wm__example">例句：{{modalWord.example}}</text>
+      <text wx:if="{{modalWord.etymology}}" class="wm__ety">词根：{{modalWord.etymology}}</text>
+      <text wx:if="{{modalWord.memoryTip}}" class="wm__tip">记忆：{{modalWord.memoryTip}}</text>
+    </view>
+  </mg-modal>
+
+  <!-- 删除确认 -->
+  <mg-modal
+    visible="{{showDelete}}"
+    icon="delete-outline"
+    title="确认删除"
+    content="确定要删除这篇文章吗？删除后无法恢复。"
+    confirm-text="删除"
+    danger
+    bind:confirm="confirmDelete"
+    bind:cancel="cancelDelete"
+  />
+</view>

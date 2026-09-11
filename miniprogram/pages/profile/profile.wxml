@@ -1,13 +1,83 @@
-<view class="page" wx:if="{{stats}}">
-  <view class="mg-card head">
-    <view class="avatar">M</view>
-    <view class="nums">
-      <text>生词本 {{stats.totalWords}}</text>
-      <text>已学 {{stats.learnedWords}}</text>
-      <text>已掌握 {{stats.masteredWords}}</text>
+<view class="mg-page pf" wx:if="{{ready}}">
+
+  <!-- Hero：掌握进度 -->
+  <view class="pf-hero">
+    <view class="pf-hero__text">
+      <text class="pf-hero__eyebrow">我的学习</text>
+      <view class="pf-hero__numrow">
+        <text class="pf-hero__num">{{masteryPercent}}</text>
+        <text class="pf-hero__unit">% 已掌握</text>
+      </view>
+      <text class="pf-hero__summary">{{summaryText}}</text>
+    </view>
+
+    <!-- 进度环（纯 border 拼，与 App 一致） -->
+    <view class="pf-ring">
+      <view class="pf-ring__track"></view>
+      <view
+        class="pf-ring__prog"
+        style="border-top-color: {{ringTop}}; border-right-color: {{ringRight}}; border-bottom-color: {{ringBottom}}; border-left-color: {{ringLeft}};"
+      ></view>
+      <text class="pf-ring__text">{{masteryPercent}}%</text>
     </view>
   </view>
-  <view class="mg-card row" bindtap="goStats"><text>学习统计</text><text class="mg-text-tertiary">›</text></view>
-  <view class="mg-card row" bindtap="goSettings"><text>学习设置</text><text class="mg-text-tertiary">›</text></view>
-  <view class="mg-card row" bindtap="syncNow"><text>立即云同步</text><text class="mg-text-tertiary">›</text></view>
+
+  <!-- 主 CTA -->
+  <view class="pf-cta">
+    <mg-button title="查看完整统计" variant="primary" size="lg" block icon="chart-line" bind:tap="goStats" />
+  </view>
+
+  <!-- 三指标 -->
+  <view class="pf-strip">
+    <mg-stat-strip metrics="{{metrics}}" />
+  </view>
+
+  <!-- 本地账号卡 -->
+  <view class="pf-card pf-account">
+    <view class="pf-avatar">
+      <mg-icon name="laptop" size="44" color="#2E5E4E" />
+    </view>
+    <view class="pf-account__main">
+      <text class="pf-account__name">本地用户</text>
+      <text class="pf-account__sub">小程序版 · 数据保存在本机与微信云，AI 由云端统一提供</text>
+    </view>
+  </view>
+
+  <!-- 应用设置预览 -->
+  <mg-section-header title="应用设置" icon="cog" action-label="进入设置" bind:action="goSettings" />
+  <view class="pf-card pf-settings">
+    <view
+      wx:for="{{previewRows}}"
+      wx:key="label"
+      class="pf-setting {{index === previewRows.length - 1 ? 'is-last' : ''}}"
+      hover-class="mg-hover"
+      bindtap="goSettings"
+    >
+      <mg-icon name="{{item.icon}}" size="36" color="#5C605C" />
+      <text class="pf-setting__label">{{item.label}}</text>
+      <text class="pf-setting__value">{{item.value}}</text>
+      <mg-icon name="chevron-right" size="36" color="#8A8E89" />
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <mg-section-header title="学习数据" icon="clipboard-text-multiple" />
+  <view class="pf-card pf-settings">
+    <view class="pf-setting is-last" hover-class="mg-hover" bindtap="goHistory">
+      <mg-icon name="history" size="36" color="#5C605C" />
+      <text class="pf-setting__label">练习历史</text>
+      <mg-icon name="chevron-right" size="36" color="#8A8E89" />
+    </view>
+  </view>
+
+  <view class="pf-sync">
+    <mg-button title="立即云同步" variant="secondary" size="md" block icon="sync" bind:tap="syncNow" />
+  </view>
+
+  <!-- 版本信息 -->
+  <view class="pf-footer">
+    <mg-icon name="book-open-variant" size="40" color="#8A8E89" />
+    <text class="pf-footer__name">考研单词 · 小程序版</text>
+    <text class="pf-footer__meta">v1.0.0 · 专注考研 · 科学背词</text>
+  </view>
 </view>

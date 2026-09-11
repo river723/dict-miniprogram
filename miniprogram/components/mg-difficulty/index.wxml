@@ -1,0 +1,9 @@
+<view class="mg-diff">
+  <view
+    wx:for="{{dots}}"
+    wx:key="index"
+    class="mg-diff__dot"
+    style="width:{{dotSize}}rpx;height:{{dotSize}}rpx;background:{{item}};margin-right:{{index < 4 ? gap : 0}}rpx"
+  ></view>
+  <text wx:if="{{showNumber}}" class="mg-diff__num" style="color:{{color}};font-size:{{fontSize}}rpx">{{safeLevel}}</text>
+</view>

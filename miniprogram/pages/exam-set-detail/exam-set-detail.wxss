@@ -1,0 +1,196 @@
+.esd {
+  min-height: 100vh;
+  padding: 24rpx 32rpx 0;
+  box-sizing: border-box;
+}
+
+/* ---------- 概览 ---------- */
+.esd__summary {
+  padding: 28rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-hairline);
+}
+
+.esd__tagrow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.esd__meta {
+  font-size: 22rpx;
+  color: var(--mg-text-2);
+}
+
+.esd__statrow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+
+.esd__dates {
+  flex: 1;
+  min-width: 0;
+  font-size: 22rpx;
+  line-height: 34rpx;
+  color: var(--mg-text-3);
+}
+
+.esd__acc {
+  flex-shrink: 0;
+  font-size: 34rpx;
+  font-weight: 800;
+  letter-spacing: -0.6rpx;
+}
+.esd__acc--success { color: var(--mg-success); }
+.esd__acc--warning { color: var(--mg-warning); }
+.esd__acc--danger { color: var(--mg-danger); }
+
+/* ---------- 题目列表 ---------- */
+.esd__section { margin: 40rpx 0 20rpx; }
+
+.esd__section-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--mg-text);
+}
+
+.esd__card {
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  background: var(--mg-surface);
+  border: 1rpx solid var(--mg-outline);
+  border-radius: var(--mg-radius-lg);
+  box-shadow: var(--mg-shadow-hairline);
+}
+
+.esd__qidx {
+  display: block;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.esd__qidx--definition { color: var(--mg-primary); }
+.esd__qidx--cloze { color: var(--mg-warning); }
+
+.esd__sentbox {
+  padding: 22rpx;
+  border-radius: var(--mg-radius-sm);
+  background: var(--mg-bg);
+  border-left: 8rpx solid var(--mg-primary);
+  margin-bottom: 16rpx;
+}
+.esd__sentbox--warning { border-left-color: var(--mg-warning); }
+
+.esd__sentence {
+  font-size: 32rpx;
+  line-height: 52rpx;
+  color: var(--mg-text);
+}
+
+.esd__word {
+  color: var(--mg-primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.esd__blank {
+  color: var(--mg-warning);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.esd__translation {
+  display: block;
+  margin-bottom: 16rpx;
+  font-size: 25rpx;
+  line-height: 38rpx;
+  color: var(--mg-primary);
+}
+
+.esd__wordline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.esd__prompt {
+  font-size: 26rpx;
+  line-height: 40rpx;
+  color: var(--mg-text-2);
+}
+
+/* 选项 */
+.orow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 12rpx;
+  border-radius: var(--mg-radius-sm);
+  border: 2rpx solid var(--mg-outline);
+}
+
+.orow:last-child { margin-bottom: 0; }
+
+.orow__letter {
+  flex-shrink: 0;
+  width: 34rpx;
+  text-align: center;
+  font-size: 25rpx;
+  font-weight: 700;
+  color: var(--mg-text-3);
+}
+
+.orow__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 26rpx;
+  line-height: 40rpx;
+  color: var(--mg-text);
+}
+
+.orow--correct {
+  border-color: var(--mg-success);
+  background: var(--mg-success-light);
+}
+.orow--correct .orow__letter,
+.orow--correct .orow__text {
+  color: var(--mg-success);
+  font-weight: 600;
+}
+
+/* ---------- 底部重做 ---------- */
+.esd__bottomspace { height: 200rpx; }
+
+.esd__footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: var(--mg-surface);
+  border-top: 1rpx solid var(--mg-outline);
+}
+
+/* 标签（与题库页共用同一套命名） */
+.tag {
+  flex-shrink: 0;
+  padding: 6rpx 16rpx;
+  border-radius: 12rpx;
+}
+.tag--definition { background: var(--mg-primary-container); }
+.tag--cloze { background: var(--mg-warning-light); }
+
+.tag__text { font-size: 21rpx; font-weight: 600; }
+.tag__text--definition { color: var(--mg-primary); }
+.tag__text--cloze { color: var(--mg-warning); }
