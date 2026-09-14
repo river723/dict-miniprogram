@@ -20,8 +20,13 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
   案例：`utils/story.js#buildSegments` 漏返回 `en` → `wx:if` 恒假 → 英文原文永不渲染。
 - **文本切段再拼回时，叶子 `<text>` 必须加 `space="nbsp"`**：多行内元素拼回的文本，
   元素边界的空白可能在渲染层被折叠，导致高亮词与前一单词粘连。
-  同时给 seg 基类显式声明 `display:inline` / `letter-spacing:normal` / `white-space:pre-wrap`。
+  同时给 seg 基类显式声明 `display:inline` / `letter-spacing:normal`，**`white-space` 用 `normal`**。
   案例：`.sr__seg` / `.ar__seg`。
+- **绝对不要在 WXML 多行标签的 `<text>` 上设 `white-space: pre-wrap`**：标签内部的源码换行
+  （属性各占一行产生的 `\n`）会被当**真实换行**渲染，导致正文向右溢出。
+  词间空格交给 `space="nbsp"`，不需要 `pre-wrap`。
+- **行内元素拼文本的溢出兜底**：段落容器加 `word-break:break-word` +
+  `overflow-wrap:break-word` + `overflow:hidden`。
 
 ## 数据导入（零密钥路线）
 - 云函数内联数据 + 断点续跑，避免依赖 secretId/secretKey。

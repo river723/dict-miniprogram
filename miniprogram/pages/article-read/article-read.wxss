@@ -101,16 +101,30 @@
   color: var(--mg-text);
 }
 
+.ar__en {
+  display: block;
+  font-size: 31rpx;
+  line-height: 54rpx;
+  color: var(--mg-text);
+  /* 同 .sr__en：正常换行 + 限制在卡片内，避免长段向右溢出 */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+}
+
 .ar__seg {
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-  /* 同 .sr__seg：显式行内 + normal 字距，保证词间空格不被吃掉 */
+  /* 同 .sr__seg：显式行内 + normal 字距，保证词间空格不被吃掉。
+     注意 white-space 必须是 normal —— pre-wrap 会把 WXML 标签内部的
+     换行缩进当真实换行渲染，导致正文向右溢出。 */
   display: inline;
   font-style: normal;
   font-weight: normal;
   letter-spacing: normal;
-  white-space: pre-wrap;
+  white-space: normal;
 }
 
 .ar__en .hit {

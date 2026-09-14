@@ -119,6 +119,11 @@
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
+  /* 段落容器必须允许正常换行、并限制在卡片内，避免长段向右溢出 */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
 }
 
 .sr__seg {
@@ -126,12 +131,15 @@
   line-height: 54rpx;
   color: var(--mg-text);
   /* 每个 seg 是独立行内元素，显式声明 inline 家族与 normal 字距，
-     避免被其它规则意外改成 flex/block 或加字距而吃掉词间空格 */
+     避免被其它规则意外改成 flex/block 或加字距而吃掉词间空格。
+     注意：这里必须是 white-space: normal —— 用 pre-wrap 会把 WXML 标签
+     内部的多行缩进换行当真实换行渲染，导致整段向右溢出。
+     词间空格由 text 的 space="nbsp" 负责，不依赖 pre-wrap。 */
   display: inline;
   font-style: normal;
   font-weight: normal;
   letter-spacing: normal;
-  white-space: pre-wrap;
+  white-space: normal;
 }
 
 .sr__en .is-hit {
