@@ -112,38 +112,19 @@
 .sr__para { margin-bottom: 28rpx; }
 .sr__para:last-of-type { margin-bottom: 0; }
 
-/* 英文段落：外层 view + 内层叶子 text（不要 text 包 text）。 */
+/* 英文段落：整段一个外层 <text>（内部嵌套 <text> 做高亮）。
+   单一文本流 —— 空格与断行都由它统一处理，
+   不会出现元素边界空白折叠（粘连 / 后换行 / 填不满）。 */
 .sr__en {
   display: block;
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-  white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-/* 词间空格：独立 text 节点承载，内容为 nbsp。
-   是独立元素 → 空格一定渲染（不触发元素边界折叠）；
-   断行发生在空格节点与文本节点之间 → 不会被锁死。 */
-.sr__sp {
-  display: inline;
-  font-size: 31rpx;
-  line-height: 54rpx;
-}
-
-/* 文本片段：行内元素，内部不含首尾空格（已由数据层剥离）。 */
-.sr__seg {
-  display: inline;
-  font-size: 31rpx;
-  line-height: 54rpx;
-  color: var(--mg-text);
-  font-style: normal;
-  font-weight: normal;
-  letter-spacing: normal;
-  white-space: normal;
-}
-
+/* 嵌套的命中词：行内 text，可单独绑 tap 取词。 */
 .sr__en .is-hit {
   color: var(--mg-primary);
   font-weight: 800;

@@ -41,7 +41,9 @@
 
       <block wx:else>
         <view wx:for="{{pairs}}" wx:for-item="para" wx:key="index" class="ar__para">
-          <view class="ar__en"><block wx:for="{{para.segs}}" wx:key="index"><text wx:if="{{item.spaceBefore > 0}}" class="ar__sp"> </text><text class="ar__seg {{item.hit ? 'hit' : ''}}" data-word="{{item.hit ? item.text : ''}}" bindtap="tapWord" user-select>{{item.text}}</text><text wx:if="{{item.spaceAfter > 0}}" class="ar__sp"> </text></block></view>
+          <!-- 整段一个外层 text，内部 wx:for 生成「纯文本 + 嵌套 text」（官方支持 text 嵌套 text）。
+               单一文本流 → 空格不被元素边界折叠、断行统一处理。命中词单独绑 tap 取词。 -->
+          <text class="ar__en"><block wx:for="{{para.segs}}" wx:key="index"><text wx:if="{{item.hit}}" class="hit" data-word="{{item.text}}" bindtap="tapWord">{{item.text}}</text><block wx:else>{{item.text}}</block></block></text>
 
           <text wx:if="{{showTranslation && para.zh}}" class="ar__zh">{{para.zh}}</text>
         </view>

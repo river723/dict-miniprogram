@@ -56,15 +56,10 @@ export function parseArticle(content, words = []) {
 /**
  * 未加 ** 标记时的兜底：按目标词把纯文本切成交替片段。
  *
- * 空白处理（关键，踩过多轮坑）：
- *   CSS 会折叠「元素边界的空白」—— 片段末尾的空格（跨元素边界）被吃掉；
- *   片段开头的空格（元素内容起始处）也被吃掉。
- *   因此这里把空格从片段文本里**剥离**，改为给片段附上 `spaceBefore` 标记，
- *   由 WXML 用独立的空格节点（&nbsp;）渲染。
- *   之所以 nbsp 可用：空格节点是**独立元素**，断行发生在元素之间（行内元素边界），
- *   nbsp 只保证自身不被拆开，不会像之前那样把整句锁成一个不可断的长串。
+ * 渲染走「整段一个外层 <text> + 内部嵌套 <text>」的单一文本流结构，
+ * 空格直接保留在片段文本里即可（不会被元素边界折叠）。
  *
- * @returns {Array<{text: string, hit: boolean, spaceBefore: number}>}
+ * @returns {Array<{text: string, hit: boolean}>}
  */
 export function markWords(plain, words = []) {
   const text = String(plain == null ? '' : plain);
@@ -72,50 +67,19 @@ export function markWords(plain, words = []) {
     .filter(Boolean)
     .map((w) => String(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .sort((a, b) => b.length - a.length);
-  if (list.length === 0 || !text) return [{ text, hit: false, spaceBefore: 0 }];
+  if (list.length === 0 || !text) return [{ text, hit: false }];
   const re = new RegExp(`\\b(${list.join('|')})\\b`, 'gi');
-  const raw = [];
+  const out = [];
   let last = 0;
   let m = re.exec(text);
   while (m) {
-    if (m.index > last) raw.push({ text: text.slice(last, m.index), hit: false });
-    raw.push({ text: m[0], hit: true });
+    if (m.index > last) out.push({ text: text.slice(last, m.index), hit: false });
+    out.push({ text: m[0], hit: true });
     last = m.index + m[0].length;
     m = re.exec(text);
   }
-  if (last < text.length) raw.push({ text: text.slice(last), hit: false });
-
-  // 把每个片段「首尾的空格」都剥出来，记到 spaceBefore / spaceAfter，
-  // 交给 WXML 用独立空格节点渲染，彻底避开元素边界空白折叠。
-  const out = raw.map((s) => {
-    let t = s.text;
-    let before = 0;
-    let after = 0;
-    const lead = t.match(/^[ \t]+/);
-    if (lead) {
-      before = lead[0].length;
-      t = t.slice(lead[0].length);
-    }
-    const tail = t.match(/[ \t]+$/);
-    if (tail) {
-      after = tail[0].length;
-      t = t.slice(0, t.length - tail[0].length);
-    }
-    return { text: t, hit: s.hit, spaceBefore: before, spaceAfter: after };
-  });
-
-  // 相邻片段的 spaceAfter + 下一个的 spaceBefore 合并为下一个的 spaceBefore
-  const merged = [];
-  for (const s of out) {
-    if (merged.length && merged[merged.length - 1].spaceAfter > 0) {
-      // 上一段尾随空格：如果本轮还有前导空格，取较大值（通常都是 1）
-      s.spaceBefore = Math.max(s.spaceBefore, merged[merged.length - 1].spaceAfter);
-      merged[merged.length - 1].spaceAfter = 0;
-    }
-    merged.push(s);
-  }
-  // 末尾残留的 spaceAfter（段落收尾空格）无意义，丢弃
-  return merged.filter((s) => s.text);
+  if (last < text.length) out.push({ text: text.slice(last), hit: false });
+  return out.filter((s) => s.text);
 }
 
 /** 智能推荐选词：优先「文章覆盖次数少」→「历史正确率低」。 */

@@ -93,36 +93,18 @@
 .ar__para { margin-bottom: 28rpx; }
 .ar__para:last-of-type { margin-bottom: 0; }
 
-/* 英文段落：外层 view + 内层叶子 text（同 .sr__en）。 */
+/* 英文段落：整段一个外层 <text>（内部嵌套 <text> 做高亮），同 .sr__en。
+   单一文本流 —— 空格与断行统一处理，避免元素边界空白折叠。 */
 .ar__en {
   display: block;
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-  white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-/* 词间空格节点（同 .sr__sp）。 */
-.ar__sp {
-  display: inline;
-  font-size: 31rpx;
-  line-height: 54rpx;
-}
-
-/* 文本片段：行内元素，内部不含首尾空格（已由数据层剥离）。 */
-.ar__seg {
-  display: inline;
-  font-size: 31rpx;
-  line-height: 54rpx;
-  color: var(--mg-text);
-  font-style: normal;
-  font-weight: normal;
-  letter-spacing: normal;
-  white-space: normal;
-}
-
+/* 嵌套的命中词：行内 text，可单独绑 tap 取词。 */
 .ar__en .hit {
   color: var(--mg-primary);
   font-weight: 800;
