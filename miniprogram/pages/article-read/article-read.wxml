@@ -41,8 +41,7 @@
 
       <block wx:else>
         <view wx:for="{{pairs}}" wx:for-item="para" wx:key="index" class="ar__para">
-          <!-- 叶子 text 的内容紧贴标签，避免片段首尾空格被源码缩进折叠 -->
-          <view class="ar__en"><text wx:for="{{para.segs}}" wx:key="index" class="ar__seg {{item.hit ? 'hit' : ''}}" data-word="{{item.hit ? item.text : ''}}" bindtap="tapWord" user-select>{{item.text}}</text></view>
+          <view class="ar__en"><block wx:for="{{para.segs}}" wx:key="index"><text wx:if="{{item.spaceBefore > 0}}" class="ar__sp"> </text><text class="ar__seg {{item.hit ? 'hit' : ''}}" data-word="{{item.hit ? item.text : ''}}" bindtap="tapWord" user-select>{{item.text}}</text><text wx:if="{{item.spaceAfter > 0}}" class="ar__sp"> </text></block></view>
 
           <text wx:if="{{showTranslation && para.zh}}" class="ar__zh">{{para.zh}}</text>
         </view>

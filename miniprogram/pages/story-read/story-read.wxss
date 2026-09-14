@@ -112,32 +112,32 @@
 .sr__para { margin-bottom: 28rpx; }
 .sr__para:last-of-type { margin-bottom: 0; }
 
-/* 英文段落：外层用 view（可自由设 block），内层 text 只作叶子节点，
-   彻底避开「text 嵌套 text + wx:for」在部分基础库下丢文本的问题。 */
+/* 英文段落：外层 view + 内层叶子 text（不要 text 包 text）。 */
 .sr__en {
   display: block;
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-  /* 段落容器必须允许正常换行、并限制在卡片内，避免长段向右溢出 */
   white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
-  overflow: hidden;
 }
 
+/* 词间空格：独立 text 节点承载，内容为 nbsp。
+   是独立元素 → 空格一定渲染（不触发元素边界折叠）；
+   断行发生在空格节点与文本节点之间 → 不会被锁死。 */
+.sr__sp {
+  display: inline;
+  font-size: 31rpx;
+  line-height: 54rpx;
+}
+
+/* 文本片段：行内元素，内部不含首尾空格（已由数据层剥离）。 */
 .sr__seg {
+  display: inline;
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-  /* 每个 seg 是独立行内元素，显式声明 inline 家族与 normal 字距，
-     避免被其它规则意外改成 flex/block 或加字距而吃掉词间空格。
-     - white-space 必须 normal：pre-wrap 会把 WXML 标签内部的多行缩进
-       当真实换行渲染 → 整段向右溢出。
-     - 不要给 text 加 space="nbsp"：不换行空格会锁住断点，
-       导致长句只能等到普通空格才断行 → 出现「有的行填不满」，
-       且高亮词会与前一单词视觉粘连。空格交给普通空格即可。 */
-  display: inline;
   font-style: normal;
   font-weight: normal;
   letter-spacing: normal;
@@ -148,8 +148,6 @@
   color: var(--mg-primary);
   font-weight: 800;
   text-decoration: underline;
-  /* 覆盖 .sr__seg 的 font-weight: normal / letter-spacing: normal */
-  letter-spacing: normal;
 }
 
 .sr__zh {

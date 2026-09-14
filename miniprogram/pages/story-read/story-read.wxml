@@ -36,12 +36,13 @@
       <text wx:for="{{words}}" wx:key="*this" class="sr__tag">{{item}}</text>
     </view>
 
-    <!-- 正文 -->
+    <!-- 正文：每个片段一个叶子 text。片段内的空格由 spaceBefore/spaceAfter 控制，
+         用 <text class="sr__sp"> 独立承载（内容为 nbsp）——
+         空格节点是独立元素，断行发生在元素之间，不会被锁死；
+         同时 nbsp 保证空格一定渲染，不会被元素边界折叠吃掉。 -->
     <view class="sr__card">
       <view wx:for="{{paragraphs}}" wx:for-item="para" wx:key="index" class="sr__para">
-        <!-- 叶子 text 的内容必须紧贴标签、不换行：片段首尾的空格若被源码缩进包围，
-             会在 white-space:normal 下被折叠掉。 -->
-        <view wx:if="{{para.en}}" class="sr__en"><text wx:for="{{para.segs}}" wx:key="index" class="sr__seg {{item.hit ? 'is-hit' : ''}}" data-word="{{item.hit ? item.text : ''}}" bindtap="tapWord" user-select>{{item.text}}</text></view>
+        <view wx:if="{{para.en}}" class="sr__en"><block wx:for="{{para.segs}}" wx:key="index"><text wx:if="{{item.spaceBefore > 0}}" class="sr__sp"> </text><text class="sr__seg {{item.hit ? 'is-hit' : ''}}" data-word="{{item.hit ? item.text : ''}}" bindtap="tapWord" user-select>{{item.text}}</text><text wx:if="{{item.spaceAfter > 0}}" class="sr__sp"> </text></block></view>
 
         <text wx:if="{{showTranslation && para.zh}}" class="sr__zh">{{para.zh}}</text>
       </view>

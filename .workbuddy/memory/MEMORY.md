@@ -18,16 +18,28 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
 - **构建函数返回的对象字段要和 WXML 的 `wx:if` 对齐**：`wx:if="{{para.en}}"` 要求构建函数确实产出
   `en` 字段。排查"某块内容不显示"时，**先打印该字段的实际值，再怀疑 CSS/结构**。
   案例：`utils/story.js#buildSegments` 漏返回 `en` → `wx:if` 恒假 → 英文原文永不渲染。
-- **文本切段再拼回（本项目标准写法，三条禁令）**：
-  - 外层容器用 **`<view>`**（`white-space:normal` + `word-break:break-word` +
-    `overflow-wrap:break-word`），内层叶子用 **`<text>`**，**不要 text 包 text**。
-  - 叶子 `<text>` 的 `{{变量}}` **要紧贴标签写**（`...>{{item.text}}</text>`）。
-  - **空白必须归并到前一个片段的末尾**（`markWords` 里已实现）：元素内容**起始处**的空白
-    会被折叠，末尾/中部的不会。任何片段**不得以空白开头**，否则出现"目标词后换行"。
-  - 禁令一：**不用 `space="nbsp"`** —— 不换行空格锁住断点 → 粘连 + 有的行填不满。
-  - 禁令二：**不用 `white-space: pre-wrap`** —— 会把 WXML 源码换行当真实换行 → 向右溢出。
-  - 禁令三：**不让片段以空白开头** —— 起始处空白被折叠 → 目标词后换行。
-  - class 不要留空串，段样式写在与 class 同名的基类上（如 `.sr__seg` / `.ar__seg`）。
+- **文本切段再拼回（最终方案：独立空格节点）**：
+  > **核心原理：多元素拼文本时，元素边界的空白一定会被渲染层折叠（CSS 规范级）。
+  > 唯一可靠的解法是让空格由「独立元素」承载，而不是塞进片段文本的首尾。**
+
+  实现要点：
+  - 数据层 `markWords` 返回 `[{ text, hit, spaceBefore, spaceAfter }]` ——
+    把片段**首尾空格全部剥离**，只留计数（相邻片段的前后空格合并）。
+  - WXML：`<text class="sr__sp"> </text>`（空格节点，内容 nbsp，按 spaceBefore/After 条件渲染）
+    + `<text class="sr__seg">{{item.text}}</text>`。空格节点是**独立元素** →
+    断行发生在元素边界（不锁死），空格在元素内部（不被折叠）。
+  - WXSS：`.sr__sp` / `.sr__seg` 均 `display:inline`；外层 `.sr__en` /
+    `.ar__en` 用 `white-space:normal` + `word-break:break-word`。
+  - **不用 `space="nbsp"` 属性**（会把空格并入文本、锁住断点）；
+    **不用 `white-space:pre-wrap`**（渲染源码换行 → 溢出）；
+    **不用 `display:inline-block`**（行尾空白仍 collapse，且排版会乱）。
+  - **不用 `rich-text`**：它**屏蔽内部所有节点事件**，无法点击取词。
+  - 不要 text 包 text；class 不要留空串。
+
+- **微信渲染层调试方法论**：不要靠推理猜 CSS 行为 ——
+  写脚本复刻渲染结构生成 HTML，**用无头 Chrome 截图**做视觉验证
+  （`.workbuddy/_render_check.cjs` + `_render_preview.{html,png}` 已可复用），
+  一轮就能看清全部症状，比反复改代码让用户试快得多。
 
 ## 数据导入（零密钥路线）
 - 云函数内联数据 + 断点续跑，避免依赖 secretId/secretKey。

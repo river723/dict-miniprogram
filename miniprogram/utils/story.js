@@ -82,7 +82,13 @@ export function buildBilingualPairs(content, translation) {
   return pairs;
 }
 
-/** 把每段英文切成「普通文本 / 目标词」交替片段，供渲染高亮。 */
+/**
+ * 把每段英文切成「普通文本 / 目标词」交替片段，供渲染高亮。
+ *
+ * 渲染走多个同级叶子 <text>。空白由 markWords 统一归并到片段「末尾」，
+ * 配合 .sr__seg / .ar__seg 的 display:inline-block —— 空格处于元素【内部】，
+ * 不会被行内元素边界空白折叠规则吃掉，折行点也依然有效。
+ */
 export function buildSegments(pairs, words) {
   return pairs.map((p) => ({
     // en 必须带上：WXML 用 wx:if="{{para.en}}" 判断是否渲染英文段落

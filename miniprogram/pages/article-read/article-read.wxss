@@ -93,34 +93,30 @@
 .ar__para { margin-bottom: 28rpx; }
 .ar__para:last-of-type { margin-bottom: 0; }
 
-/* 英文段落：外层用 view，内层 text 只作叶子节点（避免 text 嵌套丢文本）。 */
+/* 英文段落：外层 view + 内层叶子 text（同 .sr__en）。 */
 .ar__en {
   display: block;
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-}
-
-.ar__en {
-  display: block;
-  font-size: 31rpx;
-  line-height: 54rpx;
-  color: var(--mg-text);
-  /* 同 .sr__en：正常换行 + 限制在卡片内，避免长段向右溢出 */
   white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
-  overflow: hidden;
 }
 
+/* 词间空格节点（同 .sr__sp）。 */
+.ar__sp {
+  display: inline;
+  font-size: 31rpx;
+  line-height: 54rpx;
+}
+
+/* 文本片段：行内元素，内部不含首尾空格（已由数据层剥离）。 */
 .ar__seg {
+  display: inline;
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-  /* 同 .sr__seg：显式行内 + normal 字距。
-     white-space 用 normal（pre-wrap 会渲染 WXML 源码换行导致溢出）；
-     不加 space="nbsp"（不换行空格会锁住断点，导致行填不满、高亮词粘连）。 */
-  display: inline;
   font-style: normal;
   font-weight: normal;
   letter-spacing: normal;
@@ -131,7 +127,6 @@
   color: var(--mg-primary);
   font-weight: 800;
   text-decoration: underline;
-  letter-spacing: normal;
 }
 
 .ar__zh {
