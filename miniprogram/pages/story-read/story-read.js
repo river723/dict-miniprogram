@@ -73,7 +73,6 @@ Page({
           targetCount: words.length,
           hasTranslation: !!chapter.translation,
         },
-        words,
         paragraphs,
         hasPrev: adjacent.prev !== undefined,
         hasNext: adjacent.next !== undefined,

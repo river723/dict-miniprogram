@@ -31,11 +31,6 @@
       </view>
     </view>
 
-    <!-- 目标词 -->
-    <view wx:if="{{words.length > 0}}" class="sr__tags">
-      <text wx:for="{{words}}" wx:key="*this" class="sr__tag">{{item}}</text>
-    </view>
-
     <!-- 正文：整段用一个外层 <text>，内部 wx:for 生成「纯文本 + 嵌套 <text>」。
          官方支持 text 嵌套 text（<text> foo <text>bar</text> </text>），
          整段是【单一文本流】—— 空格作为文本流的一部分不会被元素边界折叠，
