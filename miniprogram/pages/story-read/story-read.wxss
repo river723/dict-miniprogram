@@ -125,12 +125,21 @@
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
+  /* 每个 seg 是独立行内元素，显式声明 inline 家族与 normal 字距，
+     避免被其它规则意外改成 flex/block 或加字距而吃掉词间空格 */
+  display: inline;
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  white-space: pre-wrap;
 }
 
 .sr__en .is-hit {
   color: var(--mg-primary);
   font-weight: 800;
   text-decoration: underline;
+  /* 覆盖 .sr__seg 的 font-weight: normal / letter-spacing: normal */
+  letter-spacing: normal;
 }
 
 .sr__zh {

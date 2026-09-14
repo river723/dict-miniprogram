@@ -105,12 +105,19 @@
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
+  /* 同 .sr__seg：显式行内 + normal 字距，保证词间空格不被吃掉 */
+  display: inline;
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  white-space: pre-wrap;
 }
 
 .ar__en .hit {
   color: var(--mg-primary);
   font-weight: 800;
   text-decoration: underline;
+  letter-spacing: normal;
 }
 
 .ar__zh {

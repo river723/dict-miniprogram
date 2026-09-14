@@ -18,6 +18,10 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
 - **构建函数返回的对象字段要和 WXML 的 `wx:if` 对齐**：`wx:if="{{para.en}}"` 要求构建函数确实产出
   `en` 字段。排查"某块内容不显示"时，**先打印该字段的实际值，再怀疑 CSS/结构**。
   案例：`utils/story.js#buildSegments` 漏返回 `en` → `wx:if` 恒假 → 英文原文永不渲染。
+- **文本切段再拼回时，叶子 `<text>` 必须加 `space="nbsp"`**：多行内元素拼回的文本，
+  元素边界的空白可能在渲染层被折叠，导致高亮词与前一单词粘连。
+  同时给 seg 基类显式声明 `display:inline` / `letter-spacing:normal` / `white-space:pre-wrap`。
+  案例：`.sr__seg` / `.ar__seg`。
 
 ## 数据导入（零密钥路线）
 - 云函数内联数据 + 断点续跑，避免依赖 secretId/secretKey。

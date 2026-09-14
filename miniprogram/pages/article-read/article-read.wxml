@@ -48,6 +48,7 @@
             data-word="{{item.hit ? item.text : ''}}"
             bindtap="tapWord"
             user-select
+            space="nbsp"
           >{{item.text}}</text></view>
 
           <text wx:if="{{showTranslation && para.zh}}" class="ar__zh">{{para.zh}}</text>
