@@ -18,15 +18,15 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
 - **构建函数返回的对象字段要和 WXML 的 `wx:if` 对齐**：`wx:if="{{para.en}}"` 要求构建函数确实产出
   `en` 字段。排查"某块内容不显示"时，**先打印该字段的实际值，再怀疑 CSS/结构**。
   案例：`utils/story.js#buildSegments` 漏返回 `en` → `wx:if` 恒假 → 英文原文永不渲染。
-- **文本切段再拼回时，叶子 `<text>` 必须加 `space="nbsp"`**：多行内元素拼回的文本，
-  元素边界的空白可能在渲染层被折叠，导致高亮词与前一单词粘连。
-  同时给 seg 基类显式声明 `display:inline` / `letter-spacing:normal`，**`white-space` 用 `normal`**。
-  案例：`.sr__seg` / `.ar__seg`。
-- **绝对不要在 WXML 多行标签的 `<text>` 上设 `white-space: pre-wrap`**：标签内部的源码换行
-  （属性各占一行产生的 `\n`）会被当**真实换行**渲染，导致正文向右溢出。
-  词间空格交给 `space="nbsp"`，不需要 `pre-wrap`。
-- **行内元素拼文本的溢出兜底**：段落容器加 `word-break:break-word` +
-  `overflow-wrap:break-word` + `overflow:hidden`。
+- **文本切段再拼回（本项目标准写法）**：
+  - 外层容器用 **`<view>`**（`white-space:normal` + `word-break:break-word` +
+    `overflow-wrap:break-word`），内层叶子用 **`<text>`**，**不要 text 包 text**。
+  - 叶子 `<text>` 的 `{{变量}}` **要紧贴标签写**（`...>{{item.text}}</text>`）——
+    内容被源码换行缩进包围时，首尾空格会被折叠。
+  - **绝对不要加 `space="nbsp"`**：不换行空格锁住断点 → 粘连 + 有的行填不满。
+    微信 `<text>` 默认就保留单个空格且可正常折行。
+  - 不要给 `<text>` 设 `white-space: pre-wrap`：会把 WXML 源码换行当真实换行 → 向右溢出。
+  - class 不要留空串，段样式写在与 class 同名的基类上（如 `.sr__seg` / `.ar__seg`）。
 
 ## 数据导入（零密钥路线）
 - 云函数内联数据 + 断点续跑，避免依赖 secretId/secretKey。

@@ -117,9 +117,9 @@
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
-  /* 同 .sr__seg：显式行内 + normal 字距，保证词间空格不被吃掉。
-     注意 white-space 必须是 normal —— pre-wrap 会把 WXML 标签内部的
-     换行缩进当真实换行渲染，导致正文向右溢出。 */
+  /* 同 .sr__seg：显式行内 + normal 字距。
+     white-space 用 normal（pre-wrap 会渲染 WXML 源码换行导致溢出）；
+     不加 space="nbsp"（不换行空格会锁住断点，导致行填不满、高亮词粘连）。 */
   display: inline;
   font-style: normal;
   font-weight: normal;

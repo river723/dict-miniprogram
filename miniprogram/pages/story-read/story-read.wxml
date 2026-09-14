@@ -39,15 +39,9 @@
     <!-- 正文 -->
     <view class="sr__card">
       <view wx:for="{{paragraphs}}" wx:for-item="para" wx:key="index" class="sr__para">
-        <view wx:if="{{para.en}}" class="sr__en"><text
-          wx:for="{{para.segs}}"
-          wx:key="index"
-          class="sr__seg {{item.hit ? 'is-hit' : ''}}"
-          data-word="{{item.hit ? item.text : ''}}"
-          bindtap="tapWord"
-          user-select
-          space="nbsp"
-        >{{item.text}}</text></view>
+        <!-- 叶子 text 的内容必须紧贴标签、不换行：片段首尾的空格若被源码缩进包围，
+             会在 white-space:normal 下被折叠掉。 -->
+        <view wx:if="{{para.en}}" class="sr__en"><text wx:for="{{para.segs}}" wx:key="index" class="sr__seg {{item.hit ? 'is-hit' : ''}}" data-word="{{item.hit ? item.text : ''}}" bindtap="tapWord" user-select>{{item.text}}</text></view>
 
         <text wx:if="{{showTranslation && para.zh}}" class="sr__zh">{{para.zh}}</text>
       </view>
