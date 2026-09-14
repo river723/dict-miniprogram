@@ -53,7 +53,14 @@ export function parseArticle(content, words = []) {
   };
 }
 
-/** 未加 ** 标记时的兜底：按目标词把纯文本切成交替片段。 */
+/**
+ * 未加 ** 标记时的兜底：按目标词把纯文本切成交替片段。
+ *
+ * 空白处理是关键：切割后空白可能落在片段**首部**（如 ` in the ...`），
+ * 而元素内容起始处的空白会被渲染层折叠掉 —— 表现为"目标词后换行"。
+ * 这里统一把空白**归并到前一个片段的末尾**（元素内容中部的空白不会被折叠），
+ * 且保持普通空格，以便正常折行。
+ */
 export function markWords(plain, words = []) {
   const text = String(plain == null ? '' : plain);
   const list = words
@@ -72,7 +79,15 @@ export function markWords(plain, words = []) {
     m = re.exec(text);
   }
   if (last < text.length) out.push({ text: text.slice(last), hit: false });
-  return out;
+
+  // 把每个片段首部的空白搬到前一个片段的末尾
+  for (let i = 1; i < out.length; i += 1) {
+    const lead = out[i].text.match(/^[ \t]+/);
+    if (!lead) continue;
+    out[i].text = out[i].text.slice(lead[0].length);
+    out[i - 1].text += lead[0];
+  }
+  return out.filter((s) => s.text);
 }
 
 /** 智能推荐选词：优先「文章覆盖次数少」→「历史正确率低」。 */
