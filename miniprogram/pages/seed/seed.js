@@ -59,6 +59,11 @@ Page({
     canClear: false,
     log: [],
     error: '',
+    // ---- 内容数据（真题 / 故事），来自 contentseed 云函数 ----
+    contentTotal: 0,
+    contentIndexed: -1,
+    contentRemaining: 0,
+    contentProgress: 0,
   },
 
   onShow() {
@@ -88,22 +93,42 @@ Page({
     if (info.loadError) {
       // 数据文件没随代码上去，后面的导入必然失败，先把话说清楚
       this.setData({ loaded: true, countText: '数据缺失', error: `数据未随代码上传：${info.loadError}` });
-      return;
+    } else {
+      const countable = info.cloudCount >= 0;
+      const extra = countable && info.total > 0 ? Math.max(0, info.cloudCount - info.total) : 0;
+      this.setData({
+        loaded: true,
+        total: info.total,
+        sourceText: SOURCE_TEXT[info.source] || '内置',
+        cloudCount: info.cloudCount,
+        remaining: countable ? Math.max(0, info.total - info.cloudCount) : info.total,
+        extra,
+        countText: countable ? `${info.cloudCount} 条` : '集合不存在',
+        canClear: countable && info.cloudCount > 0,
+        progress: countable && info.total > 0 ? Math.min(100, Math.round((info.cloudCount / info.total) * 100)) : 0,
+        error: countable ? '' : `worddict 集合不可访问${info.countError ? `：${info.countError}` : '，请先点「① 建集合」'}`,
+      });
     }
-    const countable = info.cloudCount >= 0;
-    const extra = countable && info.total > 0 ? Math.max(0, info.cloudCount - info.total) : 0;
-    this.setData({
-      loaded: true,
-      total: info.total,
-      sourceText: SOURCE_TEXT[info.source] || '内置',
-      cloudCount: info.cloudCount,
-      remaining: countable ? Math.max(0, info.total - info.cloudCount) : info.total,
-      extra,
-      countText: countable ? `${info.cloudCount} 条` : '集合不存在',
-      canClear: countable && info.cloudCount > 0,
-      progress: countable && info.total > 0 ? Math.min(100, Math.round((info.cloudCount / info.total) * 100)) : 0,
-      error: countable ? '' : `worddict 集合不可访问${info.countError ? `：${info.countError}` : '，请先点「① 建集合」'}`,
-    });
+    await this.refreshContent();
+  },
+
+  /** 内容数据状态（真题 / 故事）—— 与词库相互独立，失败不影响词库区块。 */
+  async refreshContent() {
+    try {
+      const info = await callCloud('contentseed', { action: 'info' });
+      const countable = info.indexed >= 0;
+      this.setData({
+        contentTotal: info.total || 0,
+        contentIndexed: info.indexed,
+        contentRemaining: countable ? Math.max(0, (info.total || 0) - info.indexed) : (info.total || 0),
+        contentProgress:
+          countable && info.total > 0 ? Math.min(100, Math.round((info.indexed / info.total) * 100)) : 0,
+      });
+      if (info.loadError) this.pushLog(`✗ 内容数据未随代码上传：${info.loadError}`);
+    } catch (e) {
+      // contentseed 还没部署：只提示，不打断词库流程
+      this.pushLog(`✗ 内容数据检测失败（${shortErr(e)}）—— 若未部署请先执行 npm run deploy:cf -- contentseed`);
+    }
   },
 
   onRefreshTap() {
@@ -228,6 +253,95 @@ Page({
         }
       }
       await this.refresh();
+    });
+  },
+
+  // ==================== 内容数据（真题 / 故事） ====================
+
+  onEnsureContentCollection() {
+    this.withBusy(async () => {
+      const res = await callCloud('contentseed', { action: 'ensureCollection' });
+      const created = res.report.filter((r) => r.status === 'created').length;
+      const failed = res.report.filter((r) => r.status === 'failed');
+      this.pushLog(`✓ 内容集合已就位（新建 ${created} 个）`);
+      if (failed.length) {
+        failed.forEach((f) => this.pushLog(`✗ ${f.name}: ${f.msg}`));
+        this.setData({ error: `建内容集合失败：${failed.map((f) => f.name).join('、')}` });
+      }
+      await this.refreshContent();
+    });
+  },
+
+  onImportContent() {
+    this.withBusy(async () => {
+      let from = 0;
+      let stalls = 0;
+      for (let round = 1; round <= MAX_ROUNDS; round += 1) {
+        let res;
+        try {
+          res = await callCloud('contentseed', {
+            action: 'import',
+            from,
+            timeBudgetMs: 2500,
+          });
+        } catch (e) {
+          stalls += 1;
+          this.pushLog(`第 ${round} 轮中断（${shortErr(e)}），重试 ${stalls}/6`);
+          if (stalls >= 6) throw e;
+          await sleep(600);
+          continue;
+        }
+        stalls = 0;
+        this.pushLog(
+          `第 ${round} 轮：上传 ${res.uploaded} 个${res.failed ? `，失败 ${res.failed} 个` : ''}，用时 ${(res.elapsedMs / 1000).toFixed(1)}s`
+        );
+        if (res.failed > 0) res.errors.forEach((e) => this.pushLog(`  ✗ ${e.path}: ${e.msg}`));
+        this.setData({
+          contentIndexed: res.next,
+          contentRemaining: Math.max(0, res.total - res.next),
+          contentProgress: res.total > 0 ? Math.round((res.next / res.total) * 100) : 0,
+        });
+        if (res.done) {
+          this.pushLog(`✓ 内容全部导入完成，共 ${res.total} 个文件`);
+          break;
+        }
+        from = res.next;
+      }
+      await this.refreshContent();
+    });
+  },
+
+  onVerifyContent() {
+    this.withBusy(async () => {
+      const res = await callCloud('contentseed', { action: 'verify', count: 6 });
+      this.pushLog(`抽查 ${res.checked} 个：成功 ${res.ok}，失败 ${res.failed}`);
+      res.results.forEach((r) => {
+        this.pushLog(r.ok ? `  ✓ ${r.path}（${(r.bytes / 1024).toFixed(1)}KB）` : `  ✗ ${r.path}: ${r.msg}`);
+      });
+      if (res.failed > 0) this.setData({ error: '有内容文件读不出来，建议重新执行「⑤ 导入真题 / 故事」' });
+    });
+  },
+
+  onClearContent() {
+    this.withBusy(async () => {
+      const ok = await new Promise((r) => wx.showModal({
+        title: '清空内容数据',
+        content: `将删除 content_files 索引与对应云存储文件（${this.data.contentIndexed} 条），之后可重新导入。确认？`,
+        success: (res) => r(res.confirm),
+        fail: () => r(false),
+      }));
+      if (!ok) return;
+      let total = 0;
+      for (let round = 1; round <= MAX_ROUNDS; round += 1) {
+        const res = await callCloud('contentseed', { action: 'clear', confirm: true, timeBudgetMs: 2500 });
+        total += res.removed;
+        this.pushLog(`第 ${round} 轮：删除 ${res.removed} 个，剩余 ${res.left < 0 ? '未知' : res.left}`);
+        if (res.done) {
+          this.pushLog(`✓ 已清空内容，共删除 ${total} 个`);
+          break;
+        }
+      }
+      await this.refreshContent();
     });
   },
 });

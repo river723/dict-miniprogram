@@ -85,6 +85,8 @@ export function buildBilingualPairs(content, translation) {
 /** 把每段英文切成「普通文本 / 目标词」交替片段，供渲染高亮。 */
 export function buildSegments(pairs, words) {
   return pairs.map((p) => ({
+    // en 必须带上：WXML 用 wx:if="{{para.en}}" 判断是否渲染英文段落
+    en: p.en || '',
     segs: markWords(p.en, words || []).map((s) => ({
       text: s.text,
       hit: s.hit,

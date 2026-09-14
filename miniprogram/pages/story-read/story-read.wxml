@@ -39,13 +39,14 @@
     <!-- 正文 -->
     <view class="sr__card">
       <view wx:for="{{paragraphs}}" wx:for-item="para" wx:key="index" class="sr__para">
-        <text wx:if="{{para.en}}" class="sr__en" user-select><text
+        <view wx:if="{{para.en}}" class="sr__en"><text
           wx:for="{{para.segs}}"
           wx:key="index"
-          class="{{item.hit ? 'is-hit' : ''}}"
+          class="sr__seg {{item.hit ? 'is-hit' : ''}}"
           data-word="{{item.hit ? item.text : ''}}"
           bindtap="tapWord"
-        >{{item.text}}</text></text>
+          user-select
+        >{{item.text}}</text></view>
 
         <text wx:if="{{showTranslation && para.zh}}" class="sr__zh">{{para.zh}}</text>
       </view>

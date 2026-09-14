@@ -22,7 +22,7 @@ function buildPairs(content, translation, words) {
   const zh = String(translation || '').split(/\n+/).map((s) => s.trim()).filter(Boolean);
   return en.map((line, i) => {
     const segs = markWords(line, words);
-    return { segs, zh: zh[i] || (en.length === 1 ? zh.join(' ') : '') };
+    return { en: line, segs, zh: zh[i] || (en.length === 1 ? zh.join(' ') : '') };
   });
 }
 
@@ -55,6 +55,8 @@ Page({
 
     const words = a.words || [];
     const pairs = buildPairs(a.content, a.translation, words).map((p) => ({
+      // en 必须带上：WXML 用 wx:if="{{para.en}}" 判断是否渲染英文段落
+      en: p.en || '',
       segs: p.segs.map((s) => ({ text: s.text, hit: s.hit })),
       zh: p.zh,
     }));

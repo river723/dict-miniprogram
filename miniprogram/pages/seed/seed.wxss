@@ -8,3 +8,5 @@
 .dup-warn { color: #B8860B; line-height: 1.5; }
 .log-line { font-size: 24rpx; color: var(--mg-text-2); margin-top: 8rpx; word-break: break-all; }
 .tip { font-size: 24rpx; }
+.sec-title { font-size: 30rpx; font-weight: 500; color: var(--mg-text-1); margin-bottom: 8rpx; }
+.sec-title + .mg-text-secondary { font-size: 24rpx; }

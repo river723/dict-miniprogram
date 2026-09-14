@@ -33,4 +33,30 @@
     <view class="mg-text-secondary">若「云端」比数据源条数多，点「③ 清理重复」体检并清理多余副本（每个词保留一条）。</view>
     <view class="mg-text-secondary">导入完请彻底关闭小程序再进入，让学习页重新拉取词库。</view>
   </view>
+
+  <!-- ============ 内容数据（真题 / 故事） ============ -->
+  <view class="mg-card">
+    <view class="sec-title">内容数据（真题 / 故事）</view>
+    <view class="mg-text-secondary">{{contentTotal > 0 ? '数据源 ' + contentTotal + ' 个文件' : '数据源未就绪'}} · 云端已登记 {{contentIndexed >= 0 ? contentIndexed + ' 条' : '集合不存在'}}</view>
+    <view class="bar">
+      <view class="bar-inner" style="width: {{contentProgress}}%"></view>
+    </view>
+    <view class="mg-text-tertiary sub">剩余 {{contentRemaining}} 个未导入</view>
+  </view>
+
+  <view class="row-btns">
+    <button class="mg-btn mg-btn-outline" loading="{{busy}}" disabled="{{busy}}" bindtap="onEnsureContentCollection">④ 建内容集合</button>
+    <button class="mg-btn mg-btn-primary" loading="{{busy}}" disabled="{{busy}}" bindtap="onImportContent">⑤ 导入真题 / 故事</button>
+  </view>
+
+  <view class="row-btns">
+    <button class="mg-btn mg-btn-outline" disabled="{{busy}}" bindtap="onVerifyContent">抽查内容</button>
+    <button class="mg-btn mg-btn-danger" disabled="{{busy || contentIndexed <= 0}}" bindtap="onClearContent">清空内容</button>
+  </view>
+
+  <view class="mg-card tip">
+    <view class="mg-text-secondary">真题与故事按「一篇一文件」存云存储，并登记到 content_files 集合供云函数按路径取用。</view>
+    <view class="mg-text-secondary">顺序：先「④ 建内容集合」，再「⑤ 导入真题 / 故事」。共 {{contentTotal}} 个文件，同样会自动分轮跑完。</view>
+    <view class="mg-text-secondary">导入完进「练习 → 真题练习」应能看到 2010 年起的年份列表；「阅读 → 故事」应能看到 20 章。</view>
+  </view>
 </view>

@@ -1,0 +1,9 @@
+{
+  "name": "contentseed",
+  "version": "1.0.0",
+  "description": "真题 / 故事内容播种：把内置数据写入云存储并登记 content_files 索引",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

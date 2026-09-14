@@ -10,6 +10,7 @@
     "export:jsonl": "node scripts/export-jsonl.mjs",
     "export:single": "node scripts/export-single.mjs",
     "seed:build": "node scripts/build-seed-data.mjs",
+    "content:build": "node scripts/build-content-data.mjs",
     "deploy:cf": "node scripts/deploy-cloudfunctions.mjs"
   },
   "devDependencies": {

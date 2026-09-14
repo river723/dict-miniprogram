@@ -112,8 +112,16 @@
 .sr__para { margin-bottom: 28rpx; }
 .sr__para:last-of-type { margin-bottom: 0; }
 
+/* 英文段落：外层用 view（可自由设 block），内层 text 只作叶子节点，
+   彻底避开「text 嵌套 text + wx:for」在部分基础库下丢文本的问题。 */
 .sr__en {
   display: block;
+  font-size: 31rpx;
+  line-height: 54rpx;
+  color: var(--mg-text);
+}
+
+.sr__seg {
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);

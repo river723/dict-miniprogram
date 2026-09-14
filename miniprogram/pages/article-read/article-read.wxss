@@ -93,8 +93,15 @@
 .ar__para { margin-bottom: 28rpx; }
 .ar__para:last-of-type { margin-bottom: 0; }
 
+/* 英文段落：外层用 view，内层 text 只作叶子节点（避免 text 嵌套丢文本）。 */
 .ar__en {
   display: block;
+  font-size: 31rpx;
+  line-height: 54rpx;
+  color: var(--mg-text);
+}
+
+.ar__seg {
   font-size: 31rpx;
   line-height: 54rpx;
   color: var(--mg-text);
