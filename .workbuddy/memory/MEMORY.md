@@ -16,6 +16,17 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
   **换厂商＝改这几个环境变量，不用改代码**（各家都是 OpenAI 兼容协议）。
   改完需重新部署云函数才生效。
 - 自定义组件事件统一 `bind:tap`，原生 view 用 `bindtap`。
+- **主题（深色）：受控三档 light/dark/system，禁用 `prefers-color-scheme` 媒体查询。**
+  - 深色变量是作用域类 **`.mg-theme-dark`**（`theme/theme.wxss`），由 `utils/theme.js#applyTheme`
+    按「设置档位 + `getSystemInfoSync().theme`」挂到**页面根 view** 上。
+  - 页面接线：根 view `class="mg-page {{themeClass}}"`，`onShow` 里 `applyTheme(this)`；
+    新增页面请用脚本 `.workbuddy/_theme_wire.cjs --apply` 批量接（或直接照抄现有页面）。
+  - **⚠️ 不要改回 `@media (prefers-color-scheme: dark)`**：媒体查询只看系统、不看 App 内设置，
+    真机系统深色会无条件命中 → "设置浅色却显示深色"，且开发者工具不模拟深色 → 表现为
+    "工具正常、真机变深"。`app.json` 不开 `darkmode` 也会中招。
+  - **根 view 必须自带背景**（用 `.mg-page`）：深色变量挂在根 view 上，`page` 元素背景仍是浅色，
+    根节点没背景会露出浅底深字。
+  - tabBar 深色**做不到**（微信限制，只能 `darkmode`+`theme.json` 跟随系统，会破坏"设置浅色"）→ 已知瑕疵。
 - **文本按关键词切段再拼回**：外层容器一律用 `<view>`，内层叶子用 `<text>`（`wx:for` 挂叶子 text 上），
   **不要 text 包 text**；class 不要留空串，样式写在与 class 同名的基类上（如 `.sr__seg`）。
 - **`<text>` 一律不要设 `display:block`**；需要块级效果就外面套 `<view>`。

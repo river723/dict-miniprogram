@@ -115,6 +115,7 @@ TCB_SECRET_ID=xxx TCB_SECRET_KEY=xxx node scripts/upload-content.mjs --env=cloud
   但按商业化方案的节奏建议**排在最后** —— 先免费攒口碑 → 再用额度限制测转化 → 最后接支付。
   真正要动工时需新建 `payment` 云函数 + 商品页，前置条件是**服务类目含「工具」+ 已认证 + ICP 备案**
 - **增量同步**：当前全量拉取 + 脏队列，数据量上来后改 `updated_at` 游标
-- **深色模式**：token 与设置项已具备，未做全量主题切换（设置页可切换，尚未全局生效）
+- **深色模式**：✅ 已完成受控三档切换（09-18）。剩余：`tabBar` 深色做不到（微信限制，只能靠
+  `darkmode`+`theme.json` 跟随系统，会破坏"设置浅色"→ 不开），深色下 tabBar 白底属已知瑕疵
 - **云函数超时验收**：`ai` 需 60s、`content` 20s、`seed` 60s（见上表第 3c 项）
 - **提审**：类目/ICP、隐私指引、`project.private.config.json` 建议加入 `.gitignore`、`git tag v0.1.0` + CI 传体验版
