@@ -33,18 +33,26 @@ Page({
   },
 
   onLoad(options) {
-    // run: { questions, questionType, answers, currentIndex, source, originId, createdAt }
-    const run = this.resolveRun(options || {});
-    if (!run || !run.questions.length) {
+    // 整页内容都挂在 wx:elif="{{ready}}" 上，这里一旦抛异常就会白屏 —— 必须兜住。
+    try {
+      // run: { questions, questionType, answers, currentIndex, source, originId, createdAt }
+      const run = this.resolveRun(options || {});
+      if (!run || !run.questions.length) {
+        this.setData({ ready: true, empty: true });
+        return;
+      }
+      this.run = run;
+      // getSettings 是**同步**的（storage.js 里读本地缓存），不能当 Promise 用
+      this.setData({
+        ready: true,
+        autoAdvance: StorageService.getSettings().examAutoAdvance !== false,
+      });
+      this.render(run.currentIndex, run.answers, run.answers);
+    } catch (e) {
+      console.error('[exam-answer] 初始化失败', e);
       this.setData({ ready: true, empty: true });
-      return;
+      wx.showToast({ title: '题目加载失败', icon: 'none' });
     }
-    this.run = run;
-    StorageService.getSettings()
-      .then((s) => this.setData({ autoAdvance: s.examAutoAdvance !== false }))
-      .catch(() => {});
-    this.setData({ ready: true });
-    this.render(run.currentIndex, run.answers, run.answers);
   },
 
   onUnload() {
@@ -103,6 +111,11 @@ Page({
   render(index, answers, allAnswers) {
     const { questions } = this.run;
     const q = questions[index];
+    if (!q) {
+      // 草稿被污染 / 下标越界时不要崩在半路
+      this.setData({ ready: true, empty: true });
+      return;
+    }
     const answeredCount = allAnswers.length;
     const correctCount = allAnswers.filter((a) => a.is_correct).length;
     const total = questions.length;
