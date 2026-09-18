@@ -27,6 +27,19 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
   - **根 view 必须自带背景**（用 `.mg-page`）：深色变量挂在根 view 上，`page` 元素背景仍是浅色，
     根节点没背景会露出浅底深字。
   - tabBar 深色**做不到**（微信限制，只能 `darkmode`+`theme.json` 跟随系统，会破坏"设置浅色"）→ 已知瑕疵。
+- **警惕"假开关"（已踩三次）**：设置项 UI 有开关 → `saveSettings` 存进去了 → **但没有消费者**。
+  案例：`theme`（只存不读）、`autoPlaySound`（消费者 `maybeAutoPlay()` 是空函数）。
+  用户看到的永远是"设置已保存、界面无变化"，开发者工具极难发现。
+  **排查脚本思路**：取 `DEFAULT_SETTINGS` 全部 key → 全项目扫描每个 key 的出现文件 →
+  **只出现在 `services/storage.js` + `pages/settings/*` 的即为疑似假开关**
+  （注意 Windows 反斜杠：路径分隔符要先统一，否则过滤失效）。
+- 🔴 **发音音频域名（上线阻塞项）**：`study.js`/`word-detail.js`/`dictionary-word-detail.js`
+  三处发音走 `https://dict.youdao.com/dictvoice`。小程序音频需在后台配置合法域名，
+  **第三方域名要往对方服务器放校验文件 → 做不到**
+  → 开发版能响（工具可勾"不校验合法域名"）、**体验版/正式版必然失败**。
+  方案：新建 `tts` 云函数拉音频 → 转存云存储（按 word 缓存）→
+  前端 `wx.cloud.downloadFile` 取本地临时路径再播（云存储是微信自家域名，无需配置）。
+  详见 `NEXT_STEPS.md`。
 - **文本按关键词切段再拼回**：外层容器一律用 `<view>`，内层叶子用 `<text>`（`wx:for` 挂叶子 text 上），
   **不要 text 包 text**；class 不要留空串，样式写在与 class 同名的基类上（如 `.sr__seg`）。
 - **`<text>` 一律不要设 `display:block`**；需要块级效果就外面套 `<view>`。

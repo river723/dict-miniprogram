@@ -117,5 +117,12 @@ TCB_SECRET_ID=xxx TCB_SECRET_KEY=xxx node scripts/upload-content.mjs --env=cloud
 - **增量同步**：当前全量拉取 + 脏队列，数据量上来后改 `updated_at` 游标
 - **深色模式**：✅ 已完成受控三档切换（09-18）。剩余：`tabBar` 深色做不到（微信限制，只能靠
   `darkmode`+`theme.json` 跟随系统，会破坏"设置浅色"→ 不开），深色下 tabBar 白底属已知瑕疵
+- 🔴 **发音音频域名（上线阻塞项，务必在提审前解决）**：发音走 `https://dict.youdao.com/dictvoice`，
+  属**第三方域名**。小程序后台配置合法域名需要往该域名根目录放校验文件 —— **我们无法操作有道服务器**，
+  所以**开发版能响（开发者工具可勾"不校验合法域名"）、体验版/正式版必然失败**。
+  推荐方案：新建 `tts` 云函数拉有道音频 → 转存云存储（按 word 缓存）→ 前端用
+  `wx.cloud.downloadFile` 取本地临时路径再交给 `InnerAudioContext`（云存储是微信自家域名，
+  无需配置合法域名；且本地路径可规避 iOS 直接播网络 URL 的坑）。
+  涉及 `study.js` / `word-detail.js` / `dictionary-word-detail.js` 三处播放逻辑。
 - **云函数超时验收**：`ai` 需 60s、`content` 20s、`seed` 60s（见上表第 3c 项）
 - **提审**：类目/ICP、隐私指引、`project.private.config.json` 建议加入 `.gitignore`、`git tag v0.1.0` + CI 传体验版
