@@ -14,9 +14,31 @@ const https = require('https');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
-const BASE_URL = 'api.deepseek.com';
-const MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
+const BASE_URL = process.env.AI_BASE_URL || 'api.deepseek.com';
+const MODEL = process.env.AI_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash';
 const TIMEOUT = 120000;
+
+/**
+ * 思考模式开关。DeepSeek V4.1-Flash 官方默认「开启思考 + effort=high」，
+ * 思维链经 reasoning_content 返回并计入输出 token 计费。
+ * 本函数 6 个 action 全部是「给定输入 → 固定格式输出」，不需要多步推理，
+ * 显式关闭可省下可观比例的输出 token，并显著降低响应延迟。
+ */
+const THINKING = process.env.AI_THINKING || 'disabled';
+
+/**
+ * 各 action 的输出上限（token）。按 .workbuddy/cost_estimate.cjs 的实测输出规模留 2~3 倍余量。
+ * 不设上限时模型最大可输出 384K token —— 单次跑满高峰约 ¥3.07，是典型值的近千倍。
+ */
+const MAX_TOKENS = {
+  analyze: 900,
+  quiz: 3000,
+  story: 1400,
+  definition_questions: 7000,
+  cloze_questions: 5000,
+  real_exam_explanation: 500,
+};
+const DEFAULT_MAX_TOKENS = 2000;
 
 exports.main = async (event) => {
   const key = process.env.DEEPSEEK_API_KEY;
@@ -45,7 +67,7 @@ exports.main = async (event) => {
       default:
         return { ok: false, error: `unknown action: ${event.action}` };
     }
-    const content = await chat(key, prompt);
+    const content = await chat(key, prompt, event.action);
     return { ok: true, content };
   } catch (e) {
     console.error('[ai]', e);
@@ -167,7 +189,16 @@ function buildStoryPrompt(words, theme, length, withTitle) {
   ].filter(Boolean).join('\n');
 }
 
-function chat(apiKey, prompt) {
+function chat(apiKey, prompt, action) {
+  const body = {
+    model: MODEL,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    max_tokens: MAX_TOKENS[action] || DEFAULT_MAX_TOKENS,
+  };
+  // 厂商默认即思考模式时，可设 AI_THINKING=default 交由厂商决定
+  if (THINKING !== 'default') body.thinking = { type: THINKING };
+
   return new Promise((resolve, reject) => {
     const req = https.request({
       hostname: BASE_URL,
@@ -179,13 +210,18 @@ function chat(apiKey, prompt) {
       },
       timeout: TIMEOUT,
     }, (res) => {
-      let body = '';
-      res.on('data', (c) => { body += c; });
+      let raw = '';
+      res.on('data', (c) => { raw += c; });
       res.on('end', () => {
         try {
-          const json = JSON.parse(body);
+          const json = JSON.parse(raw);
           if (json.error) return reject(new Error(json.error.message || 'AI 服务错误'));
-          resolve(json.choices[0].message.content);
+          const choice = json.choices && json.choices[0];
+          if (!choice) return reject(new Error('AI 响应结构异常'));
+          if (choice.finish_reason === 'length') {
+            console.warn(`[ai] ${action} 输出被 max_tokens=${body.max_tokens} 截断`);
+          }
+          resolve(choice.message.content);
         } catch (e) {
           reject(new Error('AI 响应解析失败'));
         }
@@ -193,11 +229,7 @@ function chat(apiKey, prompt) {
     });
     req.on('error', reject);
     req.on('timeout', () => { req.destroy(); reject(new Error('AI 请求超时')); });
-    req.write(JSON.stringify({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-    }));
+    req.write(JSON.stringify(body));
     req.end();
   });
 }

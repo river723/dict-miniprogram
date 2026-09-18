@@ -55,7 +55,8 @@ scripts/              数据打包/导入脚本（数据源 ../memo-grad/src/dat
    > `content` 20s（要下载云存储文件）、`seed` 60s、其余 20s。
    > 不改进代码也能跑：`seed` 的导入/去重/清空全部做成了「时间预算内干一段、返回断点、页面自动续跑」。
 
-   然后给 `ai` 函数配环境变量 `DEEPSEEK_API_KEY`（可选 `DEEPSEEK_MODEL`，模型 `deepseek-v4-flash`）
+   然后给 `ai` 函数配环境变量 `DEEPSEEK_API_KEY`（可选：`AI_MODEL` 模型名，默认
+   `deepseek-flash`；`AI_BASE_URL` 换厂商；`AI_THINKING` 思考模式，默认 `disabled`）
 5. 灌词库 —— **推荐方式：零密钥、点在板上**
 
    `seed` 云函数把 4801 条词库随代码一起带上云端（`seed-data.js` 内联 gzip+base64，约 1.4MB；

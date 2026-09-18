@@ -7,7 +7,7 @@ export const AI_PROVIDERS = {
     id: 'deepseek',
     name: 'DeepSeek',
     baseUrl: 'https://api.deepseek.com/v1',
-    defaultModel: 'deepseek-v4-flash',
+    defaultModel: 'deepseek-flash',
   },
 };
 
