@@ -1,4 +1,4 @@
-<view class="mg-page dwd">
+<view class="mg-page dwd {{themeClass}}">
 
   <view wx:if="{{loading}}" class="mg-loading">
     <mg-icon name="refresh" size="64" color="#2E5E4E" />

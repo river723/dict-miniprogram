@@ -5,6 +5,7 @@
  */
 import StorageService from '../../services/storage';
 import { searchWorddict } from '../../services/worddict';
+import { applyTheme } from '../../utils/theme';
 
 const DIFF_COLORS = ['#3F7A5C', '#7AA85F', '#D4A93A', '#C2603A', '#B5462E'];
 
@@ -34,6 +35,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     if (this.data.word) this.refreshFlags();
   },
 

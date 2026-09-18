@@ -14,6 +14,7 @@ import { fillTodayIfNeeded } from '../../services/autoWord';
 import { callCloud } from '../../services/cloud';
 import { formatDate, addDays } from '../../utils/util';
 import { REVIEW_INTERVALS } from '../../theme/tokens';
+import { applyTheme } from '../../utils/theme';
 
 const MODES = [
   { key: 'flashcard', label: '单词卡', icon: 'book-open-page-variant' },
@@ -43,6 +44,9 @@ function wordFontSize(word) {
 }
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     modes: MODES,
     mode: 'flashcard',

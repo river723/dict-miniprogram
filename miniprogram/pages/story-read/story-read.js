@@ -10,6 +10,7 @@
 import { getStoryChapter, getAdjacentChapterIds, buildBilingualPairs, buildSegments } from '../../utils/story';
 import StorageService from '../../services/storage';
 import { searchWorddict } from '../../services/worddict';
+import { applyTheme } from '../../utils/theme';
 
 const THEME_LABELS = {
   adventure: '冒险',
@@ -23,6 +24,9 @@ const THEME_LABELS = {
 };
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     loading: true,
     missing: false,

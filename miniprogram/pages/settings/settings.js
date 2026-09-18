@@ -12,6 +12,7 @@ import StorageService from '../../services/storage';
 import { DEFAULT_SETTINGS } from '../../services/storage';
 import { DAILY_NEW_WORDS_LIMIT } from '../../theme/tokens';
 import { THEME_OPTIONS } from '../../constants/index';
+import { applyTheme, invalidateTheme } from '../../utils/theme';
 
 const save = (patch) => StorageService.saveSettings(patch);
 
@@ -23,6 +24,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.refresh();
   },
 
@@ -33,6 +36,9 @@ Page({
   // ---------- 外观 ----------
   async onThemeChange(e) {
     await save({ theme: e.currentTarget.dataset.value });
+    // 立刻生效：清掉窗口色缓存再应用到当前页，否则要等返回页面走 onShow 才变
+    invalidateTheme();
+    applyTheme(this);
     this.refresh();
     wx.showToast({ title: '已切换', icon: 'none' });
   },

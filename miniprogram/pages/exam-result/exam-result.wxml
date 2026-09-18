@@ -1,4 +1,4 @@
-<view class="mg-page er">
+<view class="mg-page er {{themeClass}}">
 
   <mg-empty
     wx:if="{{empty}}"

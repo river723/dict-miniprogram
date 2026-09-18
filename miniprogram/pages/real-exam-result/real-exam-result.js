@@ -13,6 +13,7 @@
  */
 import StorageService from '../../services/storage';
 import { getExamSet, findPaper, stripLetterPrefix } from '../../services/realExam';
+import { applyTheme } from '../../utils/theme';
 
 const SET_CODE = { english1: 'e1', english2: 'e2' };
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -29,6 +30,9 @@ const BILINGUAL_TITLE = {
 };
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     loading: true,
     missing: false,

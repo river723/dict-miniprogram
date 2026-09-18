@@ -1,4 +1,4 @@
-<view class="mg-page eh">
+<view class="mg-page eh {{themeClass}}">
 
   <!-- 来源筛选 -->
   <view class="eh__chips">

@@ -1,4 +1,4 @@
-<view class="mg-page">
+<view class="mg-page {{themeClass}}">
   <view class="pr-content">
 
     <!-- Hero 统计 -->

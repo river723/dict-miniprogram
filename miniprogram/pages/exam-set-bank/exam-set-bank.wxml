@@ -1,4 +1,4 @@
-<view class="mg-page esb">
+<view class="mg-page esb {{themeClass}}">
 
   <mg-empty
     wx:if="{{sets.length === 0}}"

@@ -1,4 +1,4 @@
-<view class="mg-page wp">
+<view class="mg-page wp {{themeClass}}">
 
   <!-- 顶部：搜索 + 统计 + 工具条 -->
   <view class="wp__top">

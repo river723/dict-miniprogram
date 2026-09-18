@@ -1,4 +1,4 @@
-<view class="mg-page pf" wx:if="{{ready}}">
+<view class="mg-page pf {{themeClass}}" wx:if="{{ready}}">
 
   <!-- Hero：掌握进度 -->
   <view class="pf-hero">

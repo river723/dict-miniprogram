@@ -9,6 +9,7 @@
 import StorageService from '../../services/storage';
 import { callCloud } from '../../services/cloud';
 import { parseArticle, markWords, recommendWords } from '../../utils/article';
+import { applyTheme } from '../../utils/theme';
 
 const THEMES = [
   { key: 'random', label: '随机', icon: 'shuffle' },
@@ -43,6 +44,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     // 只在首次进入时按设置/生词本初始化；返回本页时不覆盖用户已调整的选词
     this.load(!this.inited);
     this.inited = true;

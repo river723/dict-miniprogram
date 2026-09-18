@@ -11,6 +11,7 @@ import StorageService from '../../services/storage';
 import { getMasteryStats, getWeeklyTrend } from '../../services/studyPlan';
 import { THEME_LABELS } from '../../constants/index';
 import { formatDate } from '../../utils/util';
+import { applyTheme } from '../../utils/theme';
 
 const RING_ON = '#FFFFFF';
 const RING_OFF = 'rgba(255,255,255,0.22)';
@@ -29,6 +30,8 @@ Page({
   },
 
   async onShow() {
+
+    applyTheme(this);
     this.load();
   },
 

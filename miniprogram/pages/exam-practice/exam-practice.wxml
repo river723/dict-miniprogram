@@ -1,4 +1,4 @@
-<view class="rep">
+<view class="rep {{themeClass}}">
 
   <view wx:if="{{loading}}" class="rep-center">
     <text class="rep-center__text">真题加载中…</text>

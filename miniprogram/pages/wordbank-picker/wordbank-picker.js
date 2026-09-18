@@ -7,6 +7,7 @@
  */
 import StorageService from '../../services/storage';
 import { pickWorddict, searchWorddict } from '../../services/worddict';
+import { applyTheme } from '../../utils/theme';
 
 const PAGE_SIZE = 10;
 const DIFF_COLORS = { 1: '#3F7A5C', 2: '#C2603A', 3: '#C2603A', 4: '#B5462E', 5: '#B5462E' };
@@ -75,6 +76,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.refreshCounts();
   },
 

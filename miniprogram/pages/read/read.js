@@ -5,6 +5,7 @@
  */
 import { callCloud } from '../../services/cloud';
 import StorageService from '../../services/storage';
+import { applyTheme } from '../../utils/theme';
 
 const THEME_LABELS = {
   adventure: '冒险',
@@ -52,6 +53,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.loadArticles();
   },
 

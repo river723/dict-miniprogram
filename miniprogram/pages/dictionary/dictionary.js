@@ -4,6 +4,7 @@
  * 词条数由云函数 pick 的 candidates 实时得出（加载前显示「? 词」）。
  */
 import { pickWorddict } from '../../services/worddict';
+import { applyTheme } from '../../utils/theme';
 
 const DICTIONARIES = [
   {
@@ -22,6 +23,9 @@ function group(n) {
 }
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     dicts: DICTIONARIES.map((d) => ({ ...d, countText: '? 词' })),
     loading: true,

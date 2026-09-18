@@ -1,4 +1,5 @@
-.page { padding: 32rpx; }
+/* 根节点自己兜住背景：深色变量挂在根 view 上，不带背景会露出 page 元素的浅底 */
+.page { padding: 32rpx; min-height: 100vh; box-sizing: border-box; background: var(--mg-bg); color: var(--mg-text); }
 .sub { font-size: 24rpx; margin-top: 8rpx; }
 .bar { height: 16rpx; background: #E8E4DA; border-radius: 8rpx; margin: 16rpx 0 8rpx; overflow: hidden; }
 .bar-inner { height: 100%; background: var(--mg-primary); transition: width .2s; }

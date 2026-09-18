@@ -15,6 +15,7 @@
  */
 import StorageService from '../../services/storage';
 import { getExamSet, findPaper, stripLetterPrefix, SUBTYPE_LABEL } from '../../services/realExam';
+import { applyTheme } from '../../utils/theme';
 
 const SET_OF = { e1: 'english1', e2: 'english2' };
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -33,6 +34,9 @@ function nowText() {
 }
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     loading: true,
     missing: false,

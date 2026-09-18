@@ -1,4 +1,4 @@
-<view class="mg-page dict">
+<view class="mg-page dict {{themeClass}}">
 
   <view class="dict__sub">
     <text>选择一个词库打开，可浏览全部单词或按单词查询</text>

@@ -12,6 +12,7 @@ import { wrongToQuestion } from '../../services/exam';
 import { generateRealExamExplanation, LETTERS, SUBTYPE_LABEL } from '../../services/realExam';
 import { WRONG_QUESTION_MASTERY_THRESHOLD } from '../../constants/index';
 import { openWordDetail } from '../../utils/wordNav';
+import { applyTheme } from '../../utils/theme';
 
 const MODE_LABEL = { reading: '阅读', cloze: '完形', newtype: '新题型' };
 
@@ -50,6 +51,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.loadAll();
   },
 

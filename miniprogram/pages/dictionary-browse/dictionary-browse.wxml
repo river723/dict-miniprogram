@@ -1,4 +1,4 @@
-<view class="mg-page db">
+<view class="mg-page db {{themeClass}}">
 
   <!-- 状态栏 -->
   <view class="db__status">

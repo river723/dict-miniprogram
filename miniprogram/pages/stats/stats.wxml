@@ -1,4 +1,4 @@
-<view class="mg-page st">
+<view class="mg-page st {{themeClass}}">
 
   <!-- 空态：还没有学习数据 -->
   <block wx:if="{{loaded && totalWords === 0}}">

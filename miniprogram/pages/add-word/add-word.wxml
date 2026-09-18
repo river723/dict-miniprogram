@@ -1,4 +1,4 @@
-<view class="mg-page aw">
+<view class="mg-page aw {{themeClass}}">
   <view class="aw__inner">
 
     <!-- 页头 -->

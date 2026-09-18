@@ -1,4 +1,4 @@
-<view class="mg-page ea">
+<view class="mg-page ea {{themeClass}}">
 
   <!-- 无题可答 -->
   <view wx:if="{{empty}}" class="ea__empty">

@@ -1,4 +1,4 @@
-<view class="mg-page rel-page">
+<view class="mg-page rel-page {{themeClass}}">
 
   <view wx:if="{{loading}}" class="rel-loading">
     <text class="rel-loading-text">真题加载中…</text>

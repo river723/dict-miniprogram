@@ -9,10 +9,14 @@
 import StorageService from '../../services/storage';
 import { correctAnswerOf, parseWordHighlight, splitBlank } from '../../services/exam';
 import { EXAM_CONFIG, QUESTION_TYPE_LABEL } from '../../constants/index';
+import { applyTheme } from '../../utils/theme';
 
 const LETTERS = 'ABCDEFGH';
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     ready: false,
     empty: false,

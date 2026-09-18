@@ -8,6 +8,7 @@ import StorageService from '../../services/storage';
 import { searchWorddict } from '../../services/worddict';
 import { callCloud } from '../../services/cloud';
 import { MAX_ADD_WORDS } from '../../theme/tokens';
+import { applyTheme } from '../../utils/theme';
 
 const SPLIT_RE = /[\s\n,，。；;：:、\-]+/;
 
@@ -36,6 +37,9 @@ function labelOf(d) {
 }
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     tab: 'wordbank', // wordbank | manual
 

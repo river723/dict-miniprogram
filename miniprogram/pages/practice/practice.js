@@ -4,6 +4,7 @@
  */
 import StorageService from '../../services/storage';
 import { buildExamSets, formatMonthDay, accuracyLevel } from '../../services/exam';
+import { applyTheme } from '../../utils/theme';
 
 const TYPE_LABEL = { definition: '释义单选', cloze: '完形选词' };
 const MODE_LABEL = { reading: '阅读', cloze: '完形', newtype: '新题型' };
@@ -23,6 +24,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.load();
   },
 

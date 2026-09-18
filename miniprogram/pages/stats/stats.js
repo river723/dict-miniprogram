@@ -12,6 +12,7 @@
 import StorageService from '../../services/storage';
 import { getWeeklyTrend } from '../../services/studyPlan';
 import { formatDate } from '../../utils/util';
+import { applyTheme } from '../../utils/theme';
 
 /** 折线图几何（单位 rpx）。 */
 const CH = { w: 640, h: 240, top: 24, right: 16, bottom: 48, left: 56 };
@@ -113,6 +114,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.load();
   },
 

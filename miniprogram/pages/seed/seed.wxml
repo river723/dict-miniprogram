@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{themeClass}}">
   <view class="mg-card">
     <view class="mg-text-secondary">{{sourceText}}数据源 {{total}} 条 · 云端 {{countText}}</view>
     <view class="bar">

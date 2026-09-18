@@ -1,4 +1,4 @@
-<view class="mg-page se" wx:if="{{settings}}">
+<view class="mg-page se {{themeClass}}" wx:if="{{settings}}">
 
   <!-- ===== 外观 ===== -->
   <mg-section-header title="外观" icon="palette-outline" />
@@ -12,7 +12,7 @@
         data-value="{{item.value}}"
         bindtap="onThemeChange"
       >
-        <mg-icon name="{{item.icon}}" size="32" color="{{settings.theme === item.value ? '#2E5E4E' : '#5C605C'}}" />
+        <mg-icon name="{{item.icon}}" size="32" color="{{settings.theme === item.value ? 'var(--mg-primary)' : 'var(--mg-text-3)'}}" />
         <text class="se-seg__text">{{item.label}}</text>
       </view>
     </view>

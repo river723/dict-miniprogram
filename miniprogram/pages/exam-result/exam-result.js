@@ -9,8 +9,12 @@ import StorageService from '../../services/storage';
 import { accuracyLevel } from '../../services/exam';
 import { QUESTION_TYPE_LABEL, WRONG_QUESTION_MASTERY_THRESHOLD } from '../../constants/index';
 import { openWordDetail } from '../../utils/wordNav';
+import { applyTheme } from '../../utils/theme';
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     empty: false,
     typeLabel: '',

@@ -7,6 +7,7 @@ import StorageService from '../../services/storage';
 import { getWeeklyTrend } from '../../services/studyPlan';
 import { fillTodayIfNeeded } from '../../services/autoWord';
 import { formatDate } from '../../utils/util';
+import { applyTheme } from '../../utils/theme';
 
 const DEFAULT_SUGGESTION = {
   title: '保持学习节奏',
@@ -141,6 +142,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.refresh();
   },
 

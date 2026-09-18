@@ -3,6 +3,7 @@
  * 一次性工具页，数据跑通之后这段代码就没用了，留着也不占地方。
  */
 import { callCloud } from '../../services/cloud';
+import { applyTheme } from '../../utils/theme';
 
 const MAX_ROUNDS = 40; // 防死循环兜底（每轮约 2.2 秒，只写一部分）
 
@@ -67,6 +68,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     if (!this.data.loaded) this.refresh();
   },
 

@@ -1,4 +1,4 @@
-<view class="mg-page rex">
+<view class="mg-page rex {{themeClass}}">
 
   <view wx:if="{{loading}}" class="rex-center">
     <text class="rex-center__text">真题加载中…</text>

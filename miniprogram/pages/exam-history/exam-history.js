@@ -8,6 +8,7 @@
  */
 import StorageService from '../../services/storage';
 import { accuracyLevel } from '../../services/exam';
+import { applyTheme } from '../../utils/theme';
 
 const FILTERS = [
   { key: 'all', label: '全部' },
@@ -28,6 +29,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.load();
   },
 

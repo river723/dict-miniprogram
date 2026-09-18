@@ -1,4 +1,4 @@
-<view class="mg-page wl">
+<view class="mg-page wl {{themeClass}}">
 
   <!-- 搜索 -->
   <view class="wl__top">

@@ -12,6 +12,7 @@
 import StorageService from '../../services/storage';
 import { getExamYears, getExamSet } from '../../services/realExam';
 import { REAL_EXAM_ENTRY_META, REAL_EXAM_SUBTYPE_LABEL } from '../../constants/index';
+import { applyTheme } from '../../utils/theme';
 
 const FILTERS = [
   { key: 'all', label: '全部' },
@@ -43,6 +44,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.loadStatus();
   },
 

@@ -8,6 +8,7 @@
  * 由 exam-list 通过 `?year=&set=e1|e2&mode=translation|writing&pid=` 进入。
  */
 import { getExamSet, findPaper } from '../../services/realExam';
+import { applyTheme } from '../../utils/theme';
 
 const SET_OF = { e1: 'english1', e2: 'english2' };
 
@@ -22,6 +23,9 @@ const HINT_OF = {
 };
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     loading: true,
     missing: false,

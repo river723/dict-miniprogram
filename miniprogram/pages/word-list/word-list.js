@@ -4,6 +4,7 @@
  * 词根预览、考频条、删除；底部悬浮「添加生词」。
  */
 import StorageService from '../../services/storage';
+import { applyTheme } from '../../utils/theme';
 
 const SORT_OPTIONS = [
   { value: 'recent', label: '最近' },
@@ -81,6 +82,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.load();
   },
 

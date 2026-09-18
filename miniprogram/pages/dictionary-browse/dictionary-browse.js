@@ -9,6 +9,7 @@
  *   - 筛选（难度/考频）与排序在「当前已载入的这一批」上本地生效，语义与 App 一致。
  */
 import { searchWorddict, pickWorddict } from '../../services/worddict';
+import { applyTheme } from '../../utils/theme';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -78,6 +79,9 @@ function toRow(entry) {
 }
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     dictId: 'local',
     dictName: '考研核心词库',

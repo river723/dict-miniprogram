@@ -1,4 +1,4 @@
-<view class="mg-page wq">
+<view class="mg-page wq {{themeClass}}">
 
   <!-- Tab 切换 -->
   <view class="wq__tabs">

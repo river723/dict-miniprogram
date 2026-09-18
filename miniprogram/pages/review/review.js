@@ -1,7 +1,11 @@
 import { getDueReviewWords, getTodayNewWords, recordStudyResult } from '../../services/studyPlan';
 import { callCloud } from '../../services/cloud';
+import { applyTheme } from '../../utils/theme';
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     mode: 'review', // review | new
     queue: [],

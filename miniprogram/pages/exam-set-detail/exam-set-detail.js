@@ -10,6 +10,7 @@ import StorageService from '../../services/storage';
 import { parseWordHighlight, splitBlank, accuracyLevel } from '../../services/exam';
 import { QUESTION_TYPE_LABEL } from '../../constants/index';
 import { openWordDetail } from '../../utils/wordNav';
+import { applyTheme } from '../../utils/theme';
 
 const LETTERS = 'ABCDEFGH';
 
@@ -34,6 +35,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     // 重做返回后刷新「已练次数 / 最新正确率」
     if (this.rootId) this.load();
   },

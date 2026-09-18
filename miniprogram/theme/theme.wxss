@@ -3,8 +3,12 @@
  * 页面/组件通过 @import "/theme/theme.wxss"; 后使用 var(--mg-*)。
  *
  * 数值换算：App 的 px × 2 = 本文件的 rpx（见 tokens.js 顶部约定）。
- * 暗色：变量已在 prefers-color-scheme: dark 下覆写；需在 app.json 打开 "darkmode": true
- *       后才会生效（不打开时该媒体查询不匹配，等同纯浅色，安全）。
+ * 暗色：变量在作用域类 `.mg-theme-dark` 下覆写，由 utils/theme.js 按
+ *       「设置档位 light/dark/system + 系统主题」挂到页面根 view 上。
+ *
+ * ⚠️ 不要再改回 `@media (prefers-color-scheme: dark)`：媒体查询只看系统、不看 App 内设置，
+ *    真机系统深色时会无条件命中，导致"设置了浅色却是深色"，且开发者工具不模拟深色、
+ *    表现为"工具正常、真机变深"。受控类才是正确做法。
  */
 
 /* ======================  变量  ====================== */
@@ -70,8 +74,8 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  page {
+/* 深色作用域类 —— 由 utils/theme.js 挂到页面根 view（受控，不受系统媒体查询影响）。 */
+.mg-theme-dark {
     --mg-primary: #6FA08C;
     --mg-primary-dark: #9CC4AE;
     --mg-primary-light: #1E3A2D;
@@ -109,7 +113,6 @@ page {
     --mg-shadow-card: 0 4rpx 8rpx rgba(0, 0, 0, 0.36);
     --mg-shadow-raised: 0 8rpx 24rpx rgba(0, 0, 0, 0.44);
     --mg-shadow-overlay: 0 16rpx 48rpx rgba(0, 0, 0, 0.5);
-  }
 }
 
 /* ======================  布局 / 文本工具  ====================== */

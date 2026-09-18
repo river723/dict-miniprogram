@@ -19,6 +19,7 @@ import {
   buildWordStats,
 } from '../../services/exam';
 import { EXAM_CONFIG, QUESTION_TYPE_LABEL } from '../../constants/index';
+import { applyTheme } from '../../utils/theme';
 
 const TYPE_HINT = {
   definition: '给定含有生词的英文句子，选择正确的英文释义（AI 出题）',
@@ -71,6 +72,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     // 首次进入才初始化（返回本页时保留用户已调整的选词）
     if (this.inited) return;
     this.inited = true;

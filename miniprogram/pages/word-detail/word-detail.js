@@ -5,6 +5,7 @@
  */
 import StorageService from '../../services/storage';
 import { callCloud } from '../../services/cloud';
+import { applyTheme } from '../../utils/theme';
 
 function level(d) {
   return Math.max(1, Math.min(5, d || 1));
@@ -31,6 +32,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.load();
   },
 

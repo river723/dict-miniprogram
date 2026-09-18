@@ -6,6 +6,7 @@
 import StorageService from '../../services/storage';
 import { buildExamSets, accuracyLevel } from '../../services/exam';
 import { QUESTION_TYPE_LABEL } from '../../constants/index';
+import { applyTheme } from '../../utils/theme';
 
 Page({
   data: {
@@ -13,6 +14,8 @@ Page({
   },
 
   onShow() {
+
+    applyTheme(this);
     this.load();
   },
 

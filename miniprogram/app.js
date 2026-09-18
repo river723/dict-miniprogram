@@ -1,5 +1,6 @@
 // app.js —— 云开发初始化 + 启动自检（openid 由云函数侧自动注入，免自建鉴权）
 import { CLOUD_ENV } from './constants/index';
+import { initThemeWindow } from './utils/theme';
 
 App({
   globalData: {
@@ -8,6 +9,7 @@ App({
   },
 
   onLaunch() {
+    initThemeWindow(); // 先落窗口色（深色下避免首屏闪浅色），再跑其余初始化
     this.setupUpdateManager();
     this.setupErrorHandler();
     this.initCloud();

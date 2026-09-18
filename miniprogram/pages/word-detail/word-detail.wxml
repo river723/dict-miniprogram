@@ -1,4 +1,4 @@
-<view class="mg-page wd">
+<view class="mg-page wd {{themeClass}}">
 
   <view wx:if="{{!word}}" class="wd__missing">
     <mg-empty icon="alert-circle-outline" title="未找到该单词" description="它可能已被删除" action-label="返回" bind:action="goBack" />

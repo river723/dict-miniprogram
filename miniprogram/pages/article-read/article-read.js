@@ -6,6 +6,7 @@
 import StorageService from '../../services/storage';
 import { callCloud } from '../../services/cloud';
 import { parseArticle, markWords } from '../../utils/article';
+import { applyTheme } from '../../utils/theme';
 
 const THEME_LABELS = {
   technology: '科技',
@@ -27,6 +28,9 @@ function buildPairs(content, translation, words) {
 }
 
 Page({
+  onShow() {
+    applyTheme(this);
+  },
   data: {
     loading: true,
     article: null,
