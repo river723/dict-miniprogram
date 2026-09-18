@@ -1,6 +1,6 @@
 # 下一步行动清单（接手时状态 → 首个体验版）
 
-更新：2026-09-11 · 对象：[memo-grad-miniprogram](../README.md) 0.1.0 · 云环境 `cloud1-d6gfdnelqf7478e85`
+更新：2026-09-18（新增 3a 节待办） · 2026-09-11 · 对象：[memo-grad-miniprogram](../README.md) 0.1.0 · 云环境 `cloud1-d6gfdnelqf7478e85`
 
 ## 0. 体检结论
 
@@ -94,9 +94,26 @@ TCB_SECRET_ID=xxx TCB_SECRET_KEY=xxx node scripts/upload-content.mjs --env=cloud
 清理：删除冗余的 `pages/quiz`、`pages/story-list`、`pages/wordbook`（功能已由
 `exam-answer` + `exam-practice`、`read`、`word-list` + `dictionary-browse` 覆盖）。
 
+## 3a. 2026-09-18 新增待办（AI 侧改动后必做）
+
+今天改了 `cloudfunctions/ai/index.js` 三件事：① 显式关闭思考模式 ② 按 action 设 `max_tokens`
+③ `AI_BASE_URL` / `AI_MODEL` / `AI_THINKING` 环境变量化 + 模型名更新为 `deepseek-flash`。
+**改完不重新部署就等于没改。**
+
+| # | 动作 | 验证标准 |
+|---|---|---|
+| 6 | **重新部署 `ai` 云函数**（IDE 右键 `cloudfunctions/ai` → 上传并部署，或 `npm run deploy:cf -- ai`） | 云函数列表 `ai` 的更新时间变化；AI 出题/短文仍能正常返回 |
+| 7 | **真机验收正文渲染**：`pages/story-read` 与 `pages/article-read` 的目标词高亮、词间空格、折行 | 无粘连、无右溢出、无目标词后怪异换行（这是唯一一直没真机确认的改动） |
+| 8 | 顺手确认云开发**计费模式**（控制台 → 套餐用量页）：旧「配额模式」20 万次/月 vs 新「资源点模式」≈ 200 万次/月，差 10 倍 | 认清当前用的是哪一套；注意切到资源点模式后**不可切回** |
+
+> 部署后若 AI 变慢或质量下降，可临时把环境变量 `AI_THINKING` 设为 `enabled` 对比
+> （但注意思维链会计入输出计费、且此时 `temperature` 不生效）。
+
 ## 3b. 仍未处理 / 后续排期
 
-- **支付/订阅**：按约定跳过；若商业化需新建 `payment` 云函数 + 订阅页，提审前必做
+- **支付/订阅**：按约定跳过。2026-08-31 起**个人主体已可开通虚拟支付**（不必办个体户），
+  但按商业化方案的节奏建议**排在最后** —— 先免费攒口碑 → 再用额度限制测转化 → 最后接支付。
+  真正要动工时需新建 `payment` 云函数 + 商品页，前置条件是**服务类目含「工具」+ 已认证 + ICP 备案**
 - **增量同步**：当前全量拉取 + 脏队列，数据量上来后改 `updated_at` 游标
 - **深色模式**：token 与设置项已具备，未做全量主题切换（设置页可切换，尚未全局生效）
 - **云函数超时验收**：`ai` 需 60s、`content` 20s、`seed` 60s（见上表第 3c 项）
