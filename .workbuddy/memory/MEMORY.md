@@ -47,6 +47,14 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
   - 实体（`&nbsp;` 等）**默认不解析**，必须加 **`decode`** 属性，否则渲染成字面文本。
   - **`user-select` 会把文本节点变成 `inline-block`**，影响折行，非必要不加。
 
+- **`storage.js` 同步 / 异步是混着的**（调用前先确认）：
+  `get*`（getWords/getSettings/getExamDraft/getArticles/…）**同步**，直接取值、不能 `.then`；
+  `add*/update*/delete*/save*/pullAll/flushDirty` **async**，要 `await` 或 `.then`。
+  踩过的坑：`exam-answer.js` 写了 `getSettings().then(...)` → TypeError 中断 `onLoad` → 整页白屏
+  （因为 WXML 全部内容挂在 `wx:elif="{{ready}}"` 上）。
+- **「页面只剩导航栏标题」＝ `onLoad` 中途抛异常**，不是数据为空（数据为空会走 empty 分支并显示提示）。
+  排查顺序：① 找包住全页的 `ready`/`loaded` 开关 ② 顺 `onLoad` 逐行找抛异常点。
+  防御：这类页面 `onLoad` 一律包 `try/catch` 并落到**可见错误态**，绝不白屏。
 - **渲染问题排查方法论**：
   - 先用 Node 脚本复刻渲染结构生成 HTML，用**无头 Chrome 截图**看结构是否合理
     （`.workbuddy/_render_check.cjs`，可复用）。
