@@ -63,6 +63,7 @@ Page({
     difficultyColor: '#2E5E4E',
 
     soundEnabled: true,
+    autoPlaySound: true,
     playing: false,
 
     // 释义模式
@@ -163,6 +164,7 @@ Page({
       this.setData({
         loading: false,
         soundEnabled: settings.soundEnabled !== false,
+        autoPlaySound: settings.autoPlaySound !== false,
         total: queue.length,
         trulyCompleted: 0,
         progressPercent: 0,
@@ -260,11 +262,24 @@ Page({
     this.setData({ flipped: false });
   },
 
+  /** 翻到新词时自动朗读：需「发音功能」与「学新单词时自动朗读」两个开关都开。 */
   maybeAutoPlay() {
-    // 与 App 一致：仅自动播放打开时才读；小程序默认不自动播，避免打扰
+    if (!this.data.soundEnabled || !this.data.autoPlaySound) return;
+    if (!this.data.current) return;
+    this.doPlay(true);
   },
 
+  /** 手动点击朗读（wxml: catchtap="playAudio"）。 */
   playAudio() {
+    this.doPlay(false);
+  },
+
+  /**
+   * 实际播放。
+   * 自动播放走 silent=true —— 失败不弹 toast，否则每个词弹一次"播放失败"会烦死人，
+   * 只写 console 便于真机调试定位（尤其音频域名未配置的情况）。
+   */
+  doPlay(silent) {
     const cur = this.data.current;
     if (!cur || !this.data.soundEnabled) return;
     try {
@@ -276,13 +291,15 @@ Page({
       ctx.src = AUDIO_BASE + encodeURIComponent(cur.word);
       ctx.onPlay(() => this.setData({ playing: true }));
       ctx.onEnded(() => this.setData({ playing: false }));
-      ctx.onError(() => {
+      ctx.onError((err) => {
         this.setData({ playing: false });
-        wx.showToast({ title: '发音播放失败', icon: 'none' });
+        console.warn('[study] 发音播放失败：', (err && err.errMsg) || err);
+        if (!silent) wx.showToast({ title: '发音播放失败', icon: 'none' });
       });
       ctx.play();
     } catch (e) {
-      wx.showToast({ title: '当前环境不支持发音', icon: 'none' });
+      console.warn('[study] 当前环境不支持发音：', e);
+      if (!silent) wx.showToast({ title: '当前环境不支持发音', icon: 'none' });
     }
   },
 

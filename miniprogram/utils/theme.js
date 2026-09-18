@@ -68,15 +68,22 @@ function syncWindow(dark) {
  * @param {Object} ctx 页面 this
  */
 export function applyTheme(ctx) {
-  if (!ctx || typeof ctx.setData !== 'function') return;
-  let dark = false;
+  // ⚠️ 整个函数必须吞掉所有异常：onShow 早于页面首次渲染，
+  //    这里抛异常会直接中断渲染 → 整页空白（只剩 tabBar），且极难定位。
+  //    主题失效的后果只是"颜色不对"，不能拿页面白屏去换。
   try {
-    dark = resolveDark(StorageService.getSettings());
+    if (!ctx || typeof ctx.setData !== 'function') return;
+    let dark = false;
+    try {
+      dark = resolveDark(StorageService.getSettings());
+    } catch (e) {
+      dark = false;
+    }
+    syncWindow(dark);
+    ctx.setData({ themeClass: dark ? DARK_CLASS : '', themeDark: dark });
   } catch (e) {
-    dark = false;
+    console.error('[theme] applyTheme 失败（已忽略，页面继续渲染）：', e);
   }
-  syncWindow(dark);
-  ctx.setData({ themeClass: dark ? DARK_CLASS : '', themeDark: dark });
 }
 
 /** 切主题后清掉窗口色缓存，强制下一次重新应用（用于设置页立即生效）。 */
