@@ -93,11 +93,12 @@ Tab 结构：学习 / 阅读 / 练习 / 我的；订阅与 Admin 后台按用户
 - 远程：`origin` → `https://github.com/river723/dict-miniprogram`（HTTPS）。
 - 默认分支：**`master`**（如需改 `main`：`git branch -m master main && git push -u origin main`）。
 - 本机 git 偏旧（PortableGit 1.2.0）：不支持 `git rm --stdin`；`head/grep/sed/wc/xargs` 缺失。
-- **推送失败先查代理（已踩两次）**：全局配了代理 `http://127.0.0.1:7890`（Clash 一类）。
-  症状：带代理时报 `TLS connect error`，直连报 `Recv failure: Connection was aborted`。
+- **推送失败先查代理（已踩三次）**：全局配了代理 `http://127.0.0.1:7890`（Clash 一类）。
+  代理软件**没开**时 git 仍走代理 → `TLS connect error: error:00000000`。
+  → **绕过代理直连即可推**：`git -c http.proxy= -c https.proxy= push origin master`
+  （偶发 `Recv failure: Connection was aborted`，是网络瞬时抖动，**重试一两次就通**，别急着下结论）。
   诊断顺序：① `git config --global --get https.proxy` ② 测 `127.0.0.1:7890` 是否监听
-  ③ 测 `github.com:443` —— **TCP 可达但 TLS 被 RST**，说明这台机器出网依赖代理。
-  → **代理软件没开就推不上去，开了就正常**。绕过代理直连无效（`git -c https.proxy= push` 同样失败）。
+  ③ 测 `github.com:443`（node 建 TCP 探活即可）。
   SSH 路线不可用：`~/.ssh` 只有 `config` + `known_hosts`，无私钥。
 
 ## 本机环境
