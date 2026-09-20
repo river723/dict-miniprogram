@@ -124,5 +124,14 @@ TCB_SECRET_ID=xxx TCB_SECRET_KEY=xxx node scripts/upload-content.mjs --env=cloud
   `wx.cloud.downloadFile` 取本地临时路径再交给 `InnerAudioContext`（云存储是微信自家域名，
   无需配置合法域名；且本地路径可规避 iOS 直接播网络 URL 的坑）。
   涉及 `study.js` / `word-detail.js` / `dictionary-word-detail.js` 三处播放逻辑。
+  **存储/配额已核算（2026-09-20 实测，见 `.workbuddy/tts_storage_estimate.cjs`）**：
+  从词库均匀抽 60 词实测有道音频，均值 **13.29 KB**（中位 10.54 / P90 12.98）→ 4801 词全量缓存
+  仅 **62 MB = 基础版 5GB 的 1.22%**，上传 4801 次占 0.8% → **空间完全不是问题**。
+  ⚠️ **真正的瓶颈是每月配额**：无本地缓存时每次播放 = 1 云函数 + 1 下载 + 13KB CDN，
+  而基础版云函数调用仅 **20 万次/月** → 约 **67 个重度用户(3000 次/月)即打满**
+  （CDN 5GB/月 约对应 133 人）。
+  → **实现时必须带前端本地文件缓存**：`FileSystemManager.saveFile` 持久化 + `word→本地路径`
+  存 storage，做到"每个设备每个词只走一次云调用，重复播放 0 调用 0 流量"。
+  备选：云函数直返 base64（零存储、零下载配额），代价是每次都真拉有道、延迟更高。
 - **云函数超时验收**：`ai` 需 60s、`content` 20s、`seed` 60s（见上表第 3c 项）
 - **提审**：类目/ICP、隐私指引、`project.private.config.json` 建议加入 `.gitignore`、`git tag v0.1.0` + CI 传体验版
