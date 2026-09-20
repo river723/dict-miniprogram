@@ -8,7 +8,8 @@
 - 1px(App) = 2rpx；设计 token 在 `miniprogram/theme/tokens.js` + `theme.wxss`（`--mg-*`）。
 - 图标：MCI 子集化，码位重映射到 **U+E000–U+E0A5**（4 位转义才合法）；**只能用子集字体**
   `mci-subset.ttf` 渲染，用源字体会得到空字形。
-- 云函数：`ai`(出题/短文/真题解析)、`content`、`seed`、`contentseed`、`worddict`、`words`、`setup`。
+- 云函数：`ai`(出题/短文/真题解析)、`content`、`seed`、`contentseed`、`worddict`、`words`、`setup`、
+  **`tts`**(发音中转，2026-09-20 新增)。
 - `ai` 环境变量：`DEEPSEEK_API_KEY`(必填)、`AI_BASE_URL`(默认 api.deepseek.com)、
   `AI_MODEL`(默认 **`deepseek-flash`**)、`AI_THINKING`(默认 disabled)。
   **换厂商＝改环境变量，不改代码**（各家 OpenAI 兼容）。改完须重新部署。
@@ -29,19 +30,25 @@
 **排查**：取 `DEFAULT_SETTINGS` 全部 key → 全项目扫描 → **只出现在 `services/storage.js`
 + `pages/settings/*` 的即疑似假开关**（Windows 路径分隔符要先统一，否则过滤失效）。
 
-## 发音（上线阻塞项）
-- `study.js`/`word-detail.js`/`dictionary-word-detail.js` 三处走 `https://dict.youdao.com/dictvoice`。
-  小程序音频需后台配合法域名，**第三方域名要往对方服务器放校验文件 → 做不到**
-  → 开发版能响（工具可勾"不校验"），**体验版/正式版必然哑**。
-- 方案：`tts` 云函数拉音频 → 转存云存储（按 word 缓存）→ `wx.cloud.downloadFile` 播本地临时文件。
+## 发音（2026-09-20 已实现为"云函数 base64 中转"，待部署 `tts` 后真机验收）
+- 原实现三处直接播 `https://dict.youdao.com/dictvoice`。小程序音频需后台配合法域名，
+  **第三方域名要往对方服务器放校验文件 → 做不到** → 开发版能响（工具可勾"不校验"），
+  **体验版/正式版必然哑**。
+- 现方案：`cloudfunctions/tts` 代拉 → **base64 直返**（不落云存储）→ 前端
+  `FileSystemManager.writeFile` 写 `USER_DATA_PATH/tts/` → `InnerAudioContext` 播本地文件。
+  前端统一走 `utils/tts.js#createTtsPlayer`（本地缓存 + LRU + 并发去重 + 失效重试 + prefetch）。
+- ⚠️ **有道并不总是返回 MP3**：实测 abandon 是 ID3 头（MP3，11KB），communism 是 RIFF 头
+  **（WAV，135KB）**。所以云函数按 magic bytes **嗅探扩展名**（`sniffExt`）回传 `ext`，
+  前端按真实格式命名 —— 一律存 `.mp3` 会导致部分机型解码失败。
 - **存储占用实测（2026-09-20）**：从词库均匀抽 60 词，60/60 成功 —— 均值 **13.29 KB**、
   中位 10.54、P90 12.98、最大 135KB(communism)。4801 词全量缓存 ≈ **62 MB = 基础版 5GB 的 1.2%**
   （上传 4801 次，占 0.8%）→ **空间完全不是问题**。
 - ⚠️ **真正的瓶颈是配额，不是空间**：无本地缓存时每次播放 = 1 次云函数 + 1 次下载 + 13KB CDN。
   基础版配额 CDN 5GB/月、下载 150 万次、**云函数调用 20 万次** → 重度用户(3000 次/月)
   约 **67 人**就把云函数调用打满。
-  → **必须做前端本地文件缓存**（`FileSystemManager.saveFile` + word→path 存 storage），
-  让每个设备每个词只走一次云调用，重复播放 0 调用 0 流量。
+  → **必须做前端本地文件缓存**（已在 `utils/tts.js` 实现：LRU 400 条 + word→文件名索引
+  存 storage），让每个设备每个词只走一次云调用，重复播放 0 调用 0 流量。
+  本地文件上限 **200MB**（用户文件+缓存文件合计），全量 62MB 占 31% → 故只留 400 条（约 5MB）。
   估算脚本 `.workbuddy/tts_storage_estimate.cjs`（可 `--sample` 重新实测）。
 
 ## 文本渲染

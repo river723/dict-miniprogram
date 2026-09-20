@@ -6,6 +6,7 @@
 import StorageService from '../../services/storage';
 import { searchWorddict } from '../../services/worddict';
 import { applyTheme } from '../../utils/theme';
+import { createTtsPlayer } from '../../utils/tts';
 
 const DIFF_COLORS = ['#3F7A5C', '#7AA85F', '#D4A93A', '#C2603A', '#B5462E'];
 
@@ -99,17 +100,22 @@ Page({
     });
   },
 
+  onUnload() {
+    if (this.tts) this.tts.destroy();
+  },
+
   playAudio() {
     const w = this.data.word;
     if (!w || !this.data.soundEnabled) return;
-    try {
-      const ctx = wx.createInnerAudioContext();
-      ctx.src = `https://dict.youdao.com/dictvoice?type=2&audio=${encodeURIComponent(w.word)}`;
-      ctx.onError(() => wx.showToast({ title: '发音播放失败', icon: 'none' }));
-      ctx.play();
-    } catch (e) {
-      wx.showToast({ title: '当前环境不支持发音', icon: 'none' });
+    if (!this.tts) {
+      this.tts = createTtsPlayer({
+        onError: (err) => {
+          console.warn('[dictionary] 发音播放失败：', (err && err.errMsg) || err);
+          wx.showToast({ title: '发音播放失败', icon: 'none' });
+        },
+      });
     }
+    this.tts.play(w.word);
   },
 
   askAdd() {

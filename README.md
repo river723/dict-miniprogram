@@ -46,7 +46,8 @@ scripts/              数据打包/导入脚本（数据源 ../memo-grad/src/dat
    报 `FUNCTION_NOT_FOUND / -501000` 一律是「还没部署成功」，不是代码问题。
 
    **方式二 · IDE 手动部署**：`cloudfunctions/` 下每个目录右键 →「上传并部署：云端安装依赖」，
-   6 个都要（`words` `worddict` `content` `ai` `setup` `seed`）。
+   8 个都要（`words` `worddict` `content` `contentseed` `ai` `setup` `seed` `tts`）。
+   其中 `contentseed` 只在灌真题/故事时需要，`tts` 供单词发音中转（见下）。
 
    > ⚠️ **云函数默认执行超时只有 3 秒**（IDE/CLI 创建函数时的默认值），超过就报
    > `-504003 Invoking task timed out after 3 seconds`。命令行的 deploy 没有超时参数，
@@ -131,6 +132,7 @@ TCB_SECRET_ID=xxx TCB_SECRET_KEY=xxx node scripts/upload-content.mjs --env=<云�
 |---|---|---|
 | 云函数默认执行超时 **3 秒**（IDE/CLI 创建函数时的默认值） | 批量操作报 `-504003 Invoking task timed out after 3 seconds`；`config.json` 里的 `timeout` CLI 不生效，`cli cloud functions deploy` 也没有超时参数 | 长操作全改成「时间预算内干一段 → 返回 `done`/`next`/`left` → 页面自动续跑」：`importWorddict`、`dedupeWorddict`、`clearWorddict`。想真正提速得去**云开发控制台 → 云函数 → 配置 → 超时时间**调大（`ai` 至少要 20s，否则调大模型必超时） |
 | 小程序链路单次响应包体上限 **1MB**（云函数↔数据库侧是 6MB/50MB，但回传给小程序只有 1MB） | `EXCEED_MAX_RESPONSE_SIZE` | 绝不把词库整包回传：`worddict` 的 `all` 仅留作云端测试用（超过 1MB 会直接返回明确错误），自动配词改走**服务端 `pick`**，只回传选中的 10 条（约 4KB） |
+| 网络音频/图片的域名必须在后台配「合法域名」，第三方域名要往**对方服务器**放校验文件 | 直接播 `dict.youdao.com` 时**开发版能响、体验版/正式版必然没声音**（开发者工具可勾"不校验合法域名"掩盖了这个问题） | 发音改走 `tts` 云函数代拉 → base64 返回 → 前端写本地文件再播（单文件约 17.7KB，远低于 1MB 上限）；配套本地 LRU 缓存，做到每个设备每个词只调一次云函数 |
 
 ## CI 自动上传体验版
 

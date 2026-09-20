@@ -15,6 +15,7 @@ import { callCloud } from '../../services/cloud';
 import { formatDate, addDays } from '../../utils/util';
 import { REVIEW_INTERVALS } from '../../theme/tokens';
 import { applyTheme } from '../../utils/theme';
+import { createTtsPlayer, prefetch } from '../../utils/tts';
 
 const MODES = [
   { key: 'flashcard', label: '单词卡', icon: 'book-open-page-variant' },
@@ -23,7 +24,6 @@ const MODES = [
   { key: 'article', label: '短文', icon: 'creation' },
 ];
 
-const AUDIO_BASE = 'https://dict.youdao.com/dictvoice?type=2&audio=';
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -119,14 +119,20 @@ Page({
     this.removedCount = 0;
     this.newDone = 0;
     this.reviewDone = 0;
-    this.audioCtx = null;
+    this.tts = createTtsPlayer({
+      onPlay: () => this.setData({ playing: true }),
+      onEnd: () => this.setData({ playing: false }),
+      onError: (err, opts) => {
+        this.setData({ playing: false });
+        console.warn('[study] 发音播放失败：', (err && err.errMsg) || err);
+        if (!opts.silent) wx.showToast({ title: '发音播放失败', icon: 'none' });
+      },
+    });
     this.load(false);
   },
 
   onUnload() {
-    if (this.audioCtx) {
-      try { this.audioCtx.destroy(); } catch (e) { /* noop */ }
-    }
+    if (this.tts) this.tts.destroy();
   },
 
   // ==================== 加载 ====================
@@ -267,6 +273,9 @@ Page({
     if (!this.data.soundEnabled || !this.data.autoPlaySound) return;
     if (!this.data.current) return;
     this.doPlay(true);
+    // 首次发音要走云函数（约 0.5~1.5s），提前把下一个词预热到本地，翻卡时就能立刻出声
+    const next = this.queue && this.queue[1];
+    if (next) prefetch(next.word);
   },
 
   /** 手动点击朗读（wxml: catchtap="playAudio"）。 */
@@ -281,26 +290,8 @@ Page({
    */
   doPlay(silent) {
     const cur = this.data.current;
-    if (!cur || !this.data.soundEnabled) return;
-    try {
-      if (this.audioCtx) {
-        try { this.audioCtx.destroy(); } catch (e) { /* noop */ }
-      }
-      const ctx = wx.createInnerAudioContext();
-      this.audioCtx = ctx;
-      ctx.src = AUDIO_BASE + encodeURIComponent(cur.word);
-      ctx.onPlay(() => this.setData({ playing: true }));
-      ctx.onEnded(() => this.setData({ playing: false }));
-      ctx.onError((err) => {
-        this.setData({ playing: false });
-        console.warn('[study] 发音播放失败：', (err && err.errMsg) || err);
-        if (!silent) wx.showToast({ title: '发音播放失败', icon: 'none' });
-      });
-      ctx.play();
-    } catch (e) {
-      console.warn('[study] 当前环境不支持发音：', e);
-      if (!silent) wx.showToast({ title: '当前环境不支持发音', icon: 'none' });
-    }
+    if (!cur || !this.data.soundEnabled || !this.tts) return;
+    this.tts.play(cur.word, { silent });
   },
 
   onKnown() {

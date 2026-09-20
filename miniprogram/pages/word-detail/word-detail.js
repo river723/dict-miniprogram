@@ -6,6 +6,7 @@
 import StorageService from '../../services/storage';
 import { callCloud } from '../../services/cloud';
 import { applyTheme } from '../../utils/theme';
+import { createTtsPlayer } from '../../utils/tts';
 
 function level(d) {
   return Math.max(1, Math.min(5, d || 1));
@@ -58,17 +59,22 @@ Page({
     });
   },
 
+  onUnload() {
+    if (this.tts) this.tts.destroy();
+  },
+
   playAudio() {
     const w = this.data.word;
     if (!w || !this.data.soundEnabled) return;
-    try {
-      const ctx = wx.createInnerAudioContext();
-      ctx.src = `https://dict.youdao.com/dictvoice?type=2&audio=${encodeURIComponent(w.word)}`;
-      ctx.onError(() => wx.showToast({ title: '发音播放失败', icon: 'none' }));
-      ctx.play();
-    } catch (e) {
-      wx.showToast({ title: '当前环境不支持发音', icon: 'none' });
+    if (!this.tts) {
+      this.tts = createTtsPlayer({
+        onError: (err) => {
+          console.warn('[word-detail] 发音播放失败：', (err && err.errMsg) || err);
+          wx.showToast({ title: '发音播放失败', icon: 'none' });
+        },
+      });
     }
+    this.tts.play(w.word);
   },
 
   /** 补全词根 / 例句：ai 云函数 analyze。 */
