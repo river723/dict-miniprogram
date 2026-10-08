@@ -90,7 +90,9 @@ async function addWord(entry) {
     frequency: entry.frequency || 0,
     difficulty: entry.difficulty || 3,
     created_at: now,
+    created_ts: Date.now(),
     updated_at: now,
+    updated_ts: Date.now(),
   };
   read(K.words, []).push(word);
   write(K.words, read(K.words, []));
@@ -227,6 +229,10 @@ async function clearAllData() {
 // ---------- 自动配词守卫 ----------
 const getAutoFillLastDate = () => read(K.fillDate, '');
 const setAutoFillLastDate = (d) => write(K.fillDate, d);
+
+// ---------- 一次性迁移标记（如生词本字段回填） ----------
+const getFlag = (key) => { const m = read('mg_flags', {}); return m[key]; };
+const setFlag = (key, val) => { const m = read('mg_flags', {}); m[key] = val; write('mg_flags', m); };
 
 const getIgnoredWordbankWords = () => read(K.ignored, []);
 const saveIgnoredWordbankWords = (list) => write(K.ignored, Array.isArray(list) ? list : []);
@@ -565,6 +571,7 @@ export default {
   recordWrongAnswer, recordWrongCorrect,
   getSettings, saveSettings, resetSettings, clearAllData, DEFAULT_SETTINGS,
   getAutoFillLastDate, setAutoFillLastDate,
+  getFlag, setFlag,
   getIgnoredWordbankWords, saveIgnoredWordbankWords,
   getArticles, addArticle, getArticleById, updateArticle, markArticleRead, deleteArticle,
   // 练习域

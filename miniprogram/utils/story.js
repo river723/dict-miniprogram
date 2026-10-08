@@ -13,6 +13,19 @@ import { markWords } from './article';
 let indexCache = null;
 const chapterCache = {};
 
+/**
+ * 清空故事缓存。
+ *
+ * 存在的理由：indexCache / chapterCache 是【模块级】缓存，小程序不重启就一直在。
+ * 在设置页导入 / 清空故事内容后，云端数据已经变了，但阅读页拿到的还是这份旧缓存，
+ * 表现为「导入成功，界面还是旧故事」——必须杀掉小程序重进才看得到，很容易误判成导入失败。
+ * 所以内容播种页改完数据后必须调一下这里。
+ */
+export function clearStoryCache() {
+  indexCache = null;
+  Object.keys(chapterCache).forEach((k) => delete chapterCache[k]);
+}
+
 /** 章节索引 [{id, title, word_count, theme, summary}]。 */
 export async function getStoryIndex() {
   if (indexCache) return indexCache;

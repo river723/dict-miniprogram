@@ -4,8 +4,27 @@
  */
 import { callCloud } from '../../services/cloud';
 import { applyTheme } from '../../utils/theme';
+import { clearStoryCache } from '../../utils/story';
 
-const MAX_ROUNDS = 40; // 防死循环兜底（每轮约 2.2 秒，只写一部分）
+const MAX_ROUNDS = 60; // 防死循环兜底（每轮约 2.2 秒，只写一部分）
+
+/**
+ * 故事内容变更标记。
+ *
+ * 为什么要落盘而不只是清内存缓存：阅读页 onShow 不重新拉故事（只在 onLoad /
+ * 下拉刷新时拉），所以从本页返回阅读页时，页面 data 仍是旧内容。
+ * 这里写个标记，阅读页 onShow 看到标记就刷一次并清掉 —— 只多一次请求。
+ */
+const STORY_DIRTY_KEY = 'mg_story_dirty';
+
+function markStoryDirty() {
+  try {
+    clearStoryCache();
+    wx.setStorageSync(STORY_DIRTY_KEY, 1);
+  } catch (e) {
+    /* 缓存清理失败不影响主流程 */
+  }
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -65,6 +84,7 @@ Page({
     contentIndexed: -1,
     contentRemaining: 0,
     contentProgress: 0,
+    cloudStoryText: '',
   },
 
   onShow() {
@@ -128,6 +148,12 @@ Page({
           countable && info.total > 0 ? Math.min(100, Math.round((info.indexed / info.total) * 100)) : 0,
       });
       if (info.loadError) this.pushLog(`✗ 内容数据未随代码上传：${info.loadError}`);
+      // 云端「真正生效」的故事集 —— 排查导入是否落地的第一手证据
+      const cs = info.cloudStory;
+      if (cs) {
+        this.setData({ cloudStoryText: cs.error ? `读取失败：${cs.error}` : `${cs.series_title || '(无)'} · ${cs.total_chapters} 章 · 首章「${cs.first_title || '?'}」` });
+        this.pushLog(`云端当前故事集：${cs.series_title || '(无)'}（${cs.total_chapters} 章，首章「${cs.first_title || '?'}」）`);
+      }
     } catch (e) {
       // contentseed 还没部署：只提示，不打断词库流程
       this.pushLog(`✗ 内容数据检测失败（${shortErr(e)}）—— 若未部署请先执行 npm run deploy:cf -- contentseed`);
@@ -279,17 +305,24 @@ Page({
     this.withBusy(async () => {
       let from = 0;
       let stalls = 0;
+      /**
+       * 自适应轮预算：起步保守（云函数默认超时只有 3 秒），
+       * 只要某轮成功返回就逐步放大，被平台掐断就砍半重试。
+       * 这样不管是「config.json 的 60 秒已同步」还是「仍是默认 3 秒」都能跑完。
+       */
+      let budget = 2500;
       for (let round = 1; round <= MAX_ROUNDS; round += 1) {
         let res;
         try {
           res = await callCloud('contentseed', {
             action: 'import',
             from,
-            timeBudgetMs: 2500,
+            timeBudgetMs: budget,
           });
         } catch (e) {
           stalls += 1;
-          this.pushLog(`第 ${round} 轮中断（${shortErr(e)}），重试 ${stalls}/6`);
+          budget = Math.max(1200, Math.round(budget / 2));
+          this.pushLog(`第 ${round} 轮中断（${shortErr(e)}），重试 ${stalls}/6，预算降到 ${budget}ms`);
           if (stalls >= 6) throw e;
           await sleep(600);
           continue;
@@ -299,6 +332,7 @@ Page({
           `第 ${round} 轮：上传 ${res.uploaded} 个${res.failed ? `，失败 ${res.failed} 个` : ''}，用时 ${(res.elapsedMs / 1000).toFixed(1)}s`
         );
         if (res.failed > 0) res.errors.forEach((e) => this.pushLog(`  ✗ ${e.path}: ${e.msg}`));
+        if (res.uploaded > 0) budget = Math.min(15000, Math.round(budget * 1.6));
         this.setData({
           contentIndexed: res.next,
           contentRemaining: Math.max(0, res.total - res.next),
@@ -306,10 +340,22 @@ Page({
         });
         if (res.done) {
           this.pushLog(`✓ 内容全部导入完成，共 ${res.total} 个文件`);
+          // 云端回读：直接告诉用户云端现在装着哪一版，别让用户猜
+          const cs = res.cloudStory;
+          if (cs) {
+            this.pushLog(
+              cs.error
+                ? `  云端回读失败：${cs.error}`
+                : `  云端此刻的故事集：${cs.series_title || '(无)'}（${cs.total_chapters} 章，首章「${cs.first_title || '?'}」）`
+            );
+          }
           break;
         }
         from = res.next;
       }
+      // 云端内容已变：清掉阅读页的内存缓存，并标记它需要重新拉取
+      markStoryDirty();
+      this.pushLog('✓ 已刷新故事缓存（返回阅读页即可看到新内容）');
       await this.refreshContent();
     });
   },
@@ -319,7 +365,12 @@ Page({
       const res = await callCloud('contentseed', { action: 'verify', count: 6 });
       this.pushLog(`抽查 ${res.checked} 个：成功 ${res.ok}，失败 ${res.failed}`);
       res.results.forEach((r) => {
-        this.pushLog(r.ok ? `  ✓ ${r.path}（${(r.bytes / 1024).toFixed(1)}KB）` : `  ✗ ${r.path}: ${r.msg}`);
+        if (!r.ok) {
+          this.pushLog(`  ✗ ${r.path}: ${r.msg}`);
+          return;
+        }
+        // label 是云端真实内容（系列名 / 章节标题），用来确认导入是否真的生效
+        this.pushLog(`  ✓ ${r.path}（${(r.bytes / 1024).toFixed(1)}KB）${r.label ? `\n      ${r.label}` : ''}`);
       });
       if (res.failed > 0) this.setData({ error: '有内容文件读不出来，建议重新执行「⑤ 导入真题 / 故事」' });
     });
@@ -344,6 +395,7 @@ Page({
           break;
         }
       }
+      markStoryDirty();
       await this.refreshContent();
     });
   },

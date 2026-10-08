@@ -38,8 +38,21 @@ exports.main = async (event) => {
   }
 };
 
+/**
+ * 按 path 取最新一条内容。
+ *
+ * ⚠️ 不能只取 `data[0]`：早期某次导入若没删干净，同一个 path 可能在 content_files
+ * 里残留多条记录，数据库返回顺序不保证，`data[0]` 有可能是那条旧的 →
+ * 读到的永远是旧内容、日志与计数却一切正常。这里强制按 updated_at 降序取最新，
+ * 把"读到旧副本"的可能性彻底掐掉。
+ */
 async function readJson(cloudPath) {
-  const { data } = await db.collection(COL_FILES).where({ path: cloudPath }).limit(1).get();
+  const { data } = await db
+    .collection(COL_FILES)
+    .where({ path: cloudPath })
+    .orderBy('updated_at', 'desc')
+    .limit(1)
+    .get();
   if (!data || data.length === 0) {
     throw new Error(`内容未就绪：${cloudPath}（请先执行 npm run upload:content，并确认已建 content_files 集合）`);
   }

@@ -74,7 +74,7 @@
       </view>
 
       <!-- 待办 -->
-      <view wx:if="{{wrongCount > 0 || difficultCount > 0}}" class="block todos">
+      <view wx:if="{{wrongCount > 0 || difficultCount > 0 || showTodayReview}}" class="block todos">
         <view wx:if="{{wrongCount > 0}}" class="todo" hover-class="mg-hover" bindtap="goWrong">
           <view class="todo__icon todo__icon--danger">
             <mg-icon name="alert-circle-outline" size="40" color="#B5462E" />
@@ -93,6 +93,17 @@
           <view class="todo__body">
             <text class="todo__title">困难词</text>
             <text class="todo__desc">{{difficultCount}} 个词历史正确率偏低</text>
+          </view>
+          <mg-icon name="chevron-right" size="40" color="#8A8E89" />
+        </view>
+
+        <view wx:if="{{showTodayReview}}" class="todo" hover-class="mg-hover" bindtap="onTodayReviewTap">
+          <view class="todo__icon todo__icon--review">
+            <mg-icon name="history" size="40" color="#2E5E4E" />
+          </view>
+          <view class="todo__body">
+            <text class="todo__title">今日回顾</text>
+            <text class="todo__desc">{{todayReviewCount}} 个词今天点过「不认识」，趁热再刷一遍</text>
           </view>
           <mg-icon name="chevron-right" size="40" color="#8A8E89" />
         </view>

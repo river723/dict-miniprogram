@@ -53,7 +53,7 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.loadCounts().finally(() => wx.stopPullDownRefresh());
+    this.loadCounts().then(() => wx.stopPullDownRefresh(), () => wx.stopPullDownRefresh());
   },
 
   openDict(e) {

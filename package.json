@@ -11,6 +11,9 @@
     "export:single": "node scripts/export-single.mjs",
     "seed:build": "node scripts/build-seed-data.mjs",
     "content:build": "node scripts/build-content-data.mjs",
+    "stories:normalize": "node scripts/normalize-stories.mjs",
+    "stories:adapt": "node scripts/adapt-anthology.mjs",
+    "stories:verify": "node scripts/verify-stories.mjs",
     "deploy:cf": "node scripts/deploy-cloudfunctions.mjs"
   },
   "devDependencies": {

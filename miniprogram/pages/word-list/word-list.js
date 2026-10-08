@@ -88,7 +88,7 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.load().finally(() => wx.stopPullDownRefresh());
+    this.load().then(() => wx.stopPullDownRefresh(), () => wx.stopPullDownRefresh());
   },
 
   load() {
@@ -114,7 +114,11 @@ Page({
       if (sortMode === 'diffDesc') return (b.difficulty || 0) - (a.difficulty || 0);
       if (sortMode === 'freqAsc') return (a.frequency || 0) - (b.frequency || 0);
       if (sortMode === 'freqDesc') return (b.frequency || 0) - (a.frequency || 0);
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      // 「最近」：优先用带毫秒精度的 created_ts（同日新词也能正确排到最前）；
+      // 旧数据无 created_ts 时回退到 created_at（日期字符串）。
+      const ta = a.created_ts || new Date(a.created_at || 0).getTime();
+      const tb = b.created_ts || new Date(b.created_at || 0).getTime();
+      return tb - ta;
     });
 
     this.setData({ list: list.map(decorate) });

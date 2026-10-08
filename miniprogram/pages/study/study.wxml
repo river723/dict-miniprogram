@@ -118,6 +118,11 @@
                   {{current.pronunciation_uk ? 'UK ' + current.pronunciation_uk : ''}}{{current.pronunciation_us ? '  US ' + current.pronunciation_us : ''}}
                 </text>
 
+                <view class="fc-back-meta">
+                  <text class="fc-back-meta-item" style="color:{{current.diffColor}}">难度 {{current.diffStars}}</text>
+                  <text class="fc-back-meta-item fc-back-meta-item--freq">考频 {{current.freqSquares}}</text>
+                </view>
+
                 <view wx:for="{{current.definitions}}" wx:key="index" class="def {{index < current.definitions.length - 1 ? 'def--line' : ''}}">
                   <view class="def__head">
                     <text class="def__pos">{{item.part_of_speech}}</text>

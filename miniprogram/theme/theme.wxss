@@ -11,8 +11,15 @@
  *    表现为"工具正常、真机变深"。受控类才是正确做法。
  */
 
+/**
+ * ⚠️ 变量必须声明在 `page` 选择器上，不能只放在 `.mg-page`：
+ *    小程序里 `showModal` / `showActionSheet` 等原生弹窗、下拉刷新背景、滚动越界区
+ *    取的都是 **page 元素的变量值**，用 `.mg-page` 作用域会取到空值 → 深色下弹窗仍是浅色。
+ *    `page` 是页面根节点，变量在这里声明后，页内所有元素（含原生组件投影的样式）都能继承。
+ */
 /* ======================  变量  ====================== */
 page {
+  background: var(--mg-bg);
   --mg-primary: #2E5E4E;
   --mg-primary-dark: #234B3E;
   --mg-primary-light: #E6EFEB;
@@ -106,6 +113,8 @@ page {
     --mg-text-3: #807C74;
     --mg-text-disabled: #5C5F5B;
     --mg-on-primary: #FFFFFF;
+    /* 同步 page 兜底色（见文件顶部说明）：深色下滚动越界/下拉刷新区不露白 */
+    background: #0F1110;
 
     --mg-toast-bg: #262A28;
 

@@ -6,15 +6,49 @@
 import { callCloud } from '../../services/cloud';
 import StorageService from '../../services/storage';
 import { applyTheme } from '../../utils/theme';
+import { clearStoryCache } from '../../utils/story';
 
+/**
+ * 故事章节主题 → 中文标签。
+ * ⚠️ 这里的 key 必须跟着「系列故事」数据源走：换故事（如从科幻换成市井题材）时，
+ *    theme 取值会整体变化，不同步更新的话列表与详情页会直接显示英文 key。
+ *
+ * 三代故事集的 key 并存（按新增顺序写，旧的保留以便回滚）：
+ *   1. 星际漫游者（英文 key）
+ *   2. 南苑九十天（英文 key）
+ *   3. 烟火故事集（**中文 key** —— 新版数据 genre 本身就是中文题材名，
+ *      如「庭审悬疑」「医疗温情」。此时 THEME_LABELS 起「原样透传」作用：
+ *      有映射就用映射值，没映射则 read.js 回落显示原值（c.theme），中文 key 天然可读，
+ *      所以这里不再逐个列举中文 key，保持表精简。）
+ */
 const THEME_LABELS = {
+  // —— 当前故事集（烟火故事集 / anthology）—— 中文 genre 直接透传，无需映射 ——
+
+  // —— 上一版故事集（南苑九十天）——
+  sliceOfLife: '日常',
+  daily: '日常',
+  governance: '治理',
+  government: '治理',
+  family: '家庭',
+  education: '教育',
+  food: '饮食',
+  memory: '记忆',
+  emotion: '情感',
+  social: '社交',
+  society: '社会',
+  morality: '道德',
+  nature: '自然',
+  art: '艺术',
+  action: '行动',
+  commerce: '商业',
+  law: '法律',
+  // —— 旧故事集（星际漫游者）保留，防止回滚时丢标签 ——
   adventure: '冒险',
   mystery: '悬疑',
   fantasy: '奇幻',
   sciFi: '科幻',
   romance: '浪漫',
   history: '历史',
-  nature: '自然',
   random: '随机',
   technology: '科技',
   life: '生活',
@@ -53,13 +87,25 @@ Page({
   },
 
   onShow() {
-
     applyTheme(this);
     this.loadArticles();
+    // 数据初始化页导入 / 清空过故事内容时，页面 data 还是旧的
+    // （onShow 本来不重新拉故事），这里看到标记就刷一次并清掉。
+    try {
+      if (wx.getStorageSync('mg_story_dirty')) {
+        wx.removeStorageSync('mg_story_dirty');
+        this.loadStories();
+      }
+    } catch (e) {
+      /* 读不到标记就按没有处理 */
+    }
   },
 
   onPullDownRefresh() {
-    Promise.all([this.loadStories(), this.loadArticles()]).finally(() => wx.stopPullDownRefresh());
+    // 手动下拉 = 用户明确「我要最新」：连 utils/story.js 里那份模块级缓存也一起清掉，
+    // 否则章节详情页（story-read）拿到的仍是本次会话早期缓存的旧正文。
+    clearStoryCache();
+    Promise.all([this.loadStories(), this.loadArticles()]).then(() => wx.stopPullDownRefresh(), () => wx.stopPullDownRefresh());
   },
 
   async loadStories() {

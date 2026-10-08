@@ -149,10 +149,12 @@
 .todo__icon--danger { background: var(--mg-danger-light); }
 .todo__icon--warning { background: var(--mg-warning-light); }
 .todo__icon--primary { background: var(--mg-primary-container); }
+.todo__icon--review { background: #E6F4EE; }
 
 .todo__body { flex: 1; min-width: 0; }
 
 .todo__title {
+  display: block;
   font-size: 30rpx;
   line-height: 48rpx;
   font-weight: 600;
@@ -160,7 +162,8 @@
 }
 
 .todo__desc {
-  margin-top: 4rpx;
+  display: block;
+  margin-top: var(--mg-gap-xs);
   font-size: 22rpx;
   line-height: 32rpx;
   color: var(--mg-text-2);

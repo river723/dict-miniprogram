@@ -229,6 +229,19 @@
   color: var(--mg-text-3);
 }
 
+.fc-back-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 28rpx;
+  margin: 0 0 20rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.fc-back-meta-item { letter-spacing: 1rpx; color: var(--mg-text-2); }
+.fc-back-meta-item--freq { color: var(--mg-text-3); }
+
 .def { padding: 12rpx 0; }
 .def--line { border-bottom: 1rpx solid var(--mg-outline); }
 

@@ -96,7 +96,18 @@ async function pick(event) {
   const ignored = normSet(event.ignored);
   const limit = Math.min(50, Math.max(1, Number(event.limit) || 10));
   const seed = Number(event.seed) || 0;
-  const FIELDS = { word: true, definitions: true, frequency: true, difficulty: true };
+  // 必须回传词库里已存的完整字段，否则自动配词补进生词本的词会丢词根/记忆/易混词
+  // （这些字段在 worddict 集合里有存，但之前 FIELDS 没选，导致 addWord 时落到默认值空）。
+  // 注意：worddict 集合本身未存音标，故自动配词补入的词无 pronunciation_*（发音仍走 TTS 云函数）。
+  const FIELDS = {
+    word: true,
+    definitions: true,
+    frequency: true,
+    difficulty: true,
+    etymology: true,
+    similar_words: true,
+    memory_tip: true,
+  };
 
   const groups = new Map(); // frequency -> [doc]
   let candidates = 0;

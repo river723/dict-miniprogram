@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');
+const os = require('os');
 
 const ROOT = path.join(__dirname, '..', 'miniprogram');
 const OUT = path.join(__dirname, '_check_report.json');
@@ -39,14 +40,39 @@ const wxmlWarnings = [];
 const wxssWarnings = [];
 const structureErrors = [];
 
-for (const f of jsFiles) {
-  const r = cp.spawnSync(process.execPath, ['--check', f], { encoding: 'utf8' });
-  if (r.status !== 0) {
-    jsErrors.push({
-      file: path.relative(ROOT, f),
-      error: (r.stderr || '').split('\n').slice(0, 8).join('\n').trim(),
-    });
+// 语法检查的兜底：`node --check` 优先，拿不到结果时改用 new vm.Script 静态解析。
+// 为什么不能只看 spawnSync.status：Windows 上对正在运行的可执行文件 spawn 会返回
+// status=null + error.code='EBUSY'，并不代表语法错误。旧版本把 status!==0 一律记成错误，
+// 于是 54 个文件全部误报（error 字段还是空串），把「全绿」变成「全红」。
+const vm = require('vm');
+const checkSyntax = (file) => {
+  const r = cp.spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+  if (r.status === 0) return '';
+  if (r.status === 1) return (r.stderr || '').split('\n').slice(0, 8).join('\n').trim();
+  // status 为 null（EBUSY/ETXTBSY 等）→ 进程没跑起来，换个不进子进程的方式再判一次。
+  // 小程序源码是 ESM（import/export），必须 sourceType:'module'，否则会误报
+  // "Cannot use import statement outside a module"。
+  try {
+    if (typeof vm.SourceTextModule === 'function') {
+      new vm.SourceTextModule(fs.readFileSync(file, 'utf8'), { identifier: file });
+      return '';
+    }
+    // 没有 SourceTextModule（需 --experimental-vm-modules）时退回临时 .mjs 再 --check
+    const tmp = path.join(os.tmpdir(), `mgchk-${process.pid}-${Date.now()}.mjs`);
+    fs.writeFileSync(tmp, fs.readFileSync(file, 'utf8'));
+    const r2 = cp.spawnSync(process.execPath, ['--check', tmp], { encoding: 'utf8' });
+    fs.unlinkSync(tmp);
+    if (r2.status === 0) return '';
+    if (r2.status === 1) return `[mjs] ${(r2.stderr || '').split('\n').slice(0, 6).join('\n').trim()}`;
+    return ''; // 仍然拿不到结果：不误报，交给 IDE 编译兜底
+  } catch (e) {
+    return `[vm] ${e.message}`;
   }
+};
+
+for (const f of jsFiles) {
+  const err = checkSyntax(f);
+  if (err) jsErrors.push({ file: path.relative(ROOT, f), error: err });
 }
 
 for (const f of jsonFiles) {

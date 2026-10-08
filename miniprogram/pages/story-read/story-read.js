@@ -12,14 +12,42 @@ import StorageService from '../../services/storage';
 import { searchWorddict } from '../../services/worddict';
 import { applyTheme } from '../../utils/theme';
 
+/**
+ * 故事章节主题 → 中文标签（与 pages/read 保持一致）。
+ * ⚠️ key 跟着「系列故事」数据源走，换故事集必须同步更新（本表与 read.js 的表要一起改）。
+ *
+ * 当前故事集是「烟火故事集」：其 genre 取值本身就是中文题材名
+ *（庭审悬疑 / 医疗温情 / 科研喜剧 …），故无需映射，回落显示原值即可，
+ * 本表只保留英文 key 的历史故事集，供回滚时使用。
+ */
 const THEME_LABELS = {
+  // —— 当前故事集（烟火故事集）—— 中文 genre 直接透传，无需映射 ——
+
+  // —— 上一版故事集（南苑九十天）——
+  sliceOfLife: '日常',
+  daily: '日常',
+  governance: '治理',
+  government: '治理',
+  family: '家庭',
+  education: '教育',
+  food: '饮食',
+  memory: '记忆',
+  emotion: '情感',
+  social: '社交',
+  society: '社会',
+  morality: '道德',
+  nature: '自然',
+  art: '艺术',
+  action: '行动',
+  commerce: '商业',
+  law: '法律',
+  // —— 旧故事集（星际漫游者）保留 ——
   adventure: '冒险',
   mystery: '悬疑',
   fantasy: '奇幻',
   sciFi: '科幻',
   romance: '浪漫',
   history: '历史',
-  nature: '自然',
   random: '随机',
 };
 
@@ -71,7 +99,7 @@ Page({
         chapter: {
           id: chapter.id,
           title: chapter.title || '',
-          themeLabel: THEME_LABELS[chapter.theme] || '',
+          themeLabel: chapter.theme ? (THEME_LABELS[chapter.theme] || chapter.theme) : '',
           summary: chapter.summary || '',
           wordCount: chapter.word_count || 0,
           targetCount: words.length,

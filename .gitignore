@@ -13,3 +13,5 @@ import-data/
 .workbuddy/_*
 .workbuddy/grid_*.png
 .workbuddy/preview/
+# 故事数据备份（可由 stories.json 重新生成，体积大，不入库）
+.workbuddy/*.backup-*.js

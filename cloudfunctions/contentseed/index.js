@@ -30,6 +30,9 @@ const COL_FILES = 'content_files';
 
 const DATA_FILE = path.join(__dirname, 'content-data.js');
 
+/** 部署版本戳：每次改完 contentseed 改这个数字，用来确认云端跑的是不是最新代码。 */
+const BUILD = '2026-10-08b';
+
 /** 解析内联数据（带缓存）。 */
 let cache = null;
 let dataSource = '';
@@ -80,6 +83,34 @@ exports.main = async (event = {}) => {
   }
 };
 
+/**
+ * 读取云端「真正会被小程序消费」的那份 stories/index.json。
+ *
+ * 排查「导入完了界面还是旧故事」时这是第一手证据：它读的是云存储，
+ * 而不是本函数内联的 content-data.js。两边不一致 = 导入没真的落地。
+ */
+async function readCloudStory() {
+  try {
+    const r = await db.collection(COL_FILES)
+      .where({ path: 'content/stories/index.json' })
+      .orderBy('updated_at', 'desc')
+      .limit(1)
+      .get();
+    if (!r.data || !r.data.length) {
+      return { series_title: '(云端尚无故事索引)', total_chapters: 0, first_title: '' };
+    }
+    const dl = await cloud.downloadFile({ fileID: r.data[0].fileID });
+    const obj = JSON.parse(dl.fileContent.toString('utf8'));
+    return {
+      series_title: obj.series_title || '',
+      total_chapters: obj.total_chapters || (obj.chapters || []).length || 0,
+      first_title: (obj.chapters && obj.chapters[0] && obj.chapters[0].title) || '',
+    };
+  } catch (e) {
+    return { series_title: '', total_chapters: 0, first_title: '', error: String((e && e.message) || e) };
+  }
+}
+
 async function info() {
   let total = -1;
   let loadError = '';
@@ -95,13 +126,29 @@ async function info() {
   } catch (e) {
     countError = (e && e.message) || String(e);
   }
+
+  const cloudStory = await readCloudStory();
+
+  // 「云函数内置数据」里到底是哪一版：import 会用它覆盖云端，所以这是云端即将/已经
+  // 被写入的内容来源。和 cloudStory 对照，能一眼看出「部署是否把最新数据推上去了」。
+  let inlineSeriesTitle = '(解析失败)';
+  try {
+    const idxEntry = loadEntries().find((e) => e.path === 'content/stories/index.json');
+    inlineSeriesTitle = (idxEntry && idxEntry.body && idxEntry.body.series_title) || '(无 index 条目)';
+  } catch (e) {
+    inlineSeriesTitle = `解析失败：${e && e.message}`;
+  }
+
   return {
+    build: BUILD,
     total,
     source: dataSource,
     indexed,
     remaining: total > 0 && indexed > 0 ? Math.max(0, total - indexed) : total,
     loadError,
     countError,
+    inlineSeriesTitle,
+    cloudStory,
     dirname: __dirname,
     dirnameListing: describeDir(__dirname),
   };
@@ -159,27 +206,49 @@ async function doImport(event) {
     }
   }
 
+  const done = next >= entries.length;
+  // 最后一轮回读云端真实内容：让用户当场看到「云端现在到底是哪一版故事」，
+  // 不必再回到首页数章数、猜有没有成功。
+  const cloudStory = done ? await readCloudStory() : null;
+
   return {
-    done: next >= entries.length,
+    done,
     next,
     uploaded,
     failed,
     total: entries.length,
     elapsedMs: Date.now() - started,
     errors,
+    cloudStory,
   };
 }
 
+/**
+ * 写一条内容：删旧文件 → 删旧索引 → 上传新文件 → 登记新索引。
+ *
+ * ⚠️ **不能依赖「同 path 自动覆盖」**：往一个已存在的 cloudPath 上传时，
+ * 微信云存储很可能直接复用已有对象（返回旧的 fileID），内容压根没换 ——
+ * 表现就是「导入日志一切正常，读到的还是上一版故事」。
+ * 所以这里先显式 deleteFile 再上传，把幂等性握在自己手里。
+ */
 async function uploadOne(cloudPath, body) {
+  const existing = await db.collection(COL_FILES).where({ path: cloudPath }).limit(100).get();
+  for (const doc of existing.data) {
+    try {
+      await cloud.deleteFile({ fileList: [doc.fileID] });
+    } catch (e) {
+      // 文件可能本来就不存在，忽略
+    }
+    try {
+      await db.collection(COL_FILES).doc(doc._id).remove();
+    } catch (e) {
+      // 索引已删，忽略
+    }
+  }
   const { fileID } = await cloud.uploadFile({
     cloudPath,
     fileContent: Buffer.from(JSON.stringify(body), 'utf8'),
   });
-  // 索引登记（幂等：先删旧）
-  const existing = await db.collection(COL_FILES).where({ path: cloudPath }).limit(100).get();
-  for (const doc of existing.data) {
-    await db.collection(COL_FILES).doc(doc._id).remove();
-  }
   await db.collection(COL_FILES).add({
     data: { path: cloudPath, fileID, updated_at: Date.now() },
   });
@@ -197,14 +266,27 @@ async function verify(event) {
   const results = [];
   for (const p of samples) {
     try {
-      const { data } = await db.collection(COL_FILES).where({ path: p }).limit(1).get();
+      const { data } = await db.collection(COL_FILES).where({ path: p }).orderBy('updated_at', 'desc').limit(1).get();
       if (!data || data.length === 0) {
         results.push({ path: p, ok: false, msg: '索引里没有这条' });
         continue;
       }
       const res = await cloud.downloadFile({ fileID: data[0].fileID });
       const obj = JSON.parse(res.fileContent.toString('utf-8'));
-      results.push({ path: p, ok: true, bytes: res.fileContent.length, keys: Object.keys(obj).slice(0, 8) });
+      // 带上标题，便于肉眼确认云端到底是哪一个故事集
+      // （排查「导入后还是旧故事」时，这一项比 keys 有用得多）
+      const label = obj.series_title
+        ? `系列：${obj.series_title}（${obj.total_chapters} 章）`
+        : obj.title
+          ? `章节：${obj.title}${obj.theme ? ` [${obj.theme}]` : ''}`
+          : '';
+      results.push({
+        path: p,
+        ok: true,
+        bytes: res.fileContent.length,
+        label,
+        keys: Object.keys(obj).slice(0, 8),
+      });
     } catch (e) {
       results.push({ path: p, ok: false, msg: String((e && e.message) || e) });
     }

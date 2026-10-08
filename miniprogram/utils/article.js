@@ -59,12 +59,20 @@ export function parseArticle(content, words = []) {
  * 渲染走「整段一个外层 <text> + 内部嵌套 <text>」的单一文本流结构，
  * 空格直接保留在片段文本里即可（不会被元素边界折叠）。
  *
+ * ⚠️ words 允许是 string[]，也允许是 {w, ...}[]。
+ *    早期数据是纯字符串数组；新版故事集把目标词写成了对象
+ *    （{w, pos, zh, tip, role, field}）。若只按 String(w) 处理，
+ *    对象会变成 "[object Object]" 拼进正则 —— 一个词都匹配不上，
+ *    整篇正文静默零高亮，且不报错，极难排查。这里统一取词面。
+ *
  * @returns {Array<{text: string, hit: boolean}>}
  */
 export function markWords(plain, words = []) {
   const text = String(plain == null ? '' : plain);
   const list = words
     .filter(Boolean)
+    .map((w) => (typeof w === 'string' ? w : w.w || w.word || ''))
+    .filter((w) => w)
     .map((w) => String(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .sort((a, b) => b.length - a.length);
   if (list.length === 0 || !text) return [{ text, hit: false }];

@@ -54,15 +54,46 @@ export const REAL_EXAM_ENTRY_META = {
   writing: { icon: 'pencil-outline', title: '写作', badge: '阅览' },
 };
 
-/** 故事 / 文章的主题标签。 */
+/**
+ * 故事 / 文章的主题标签。
+ *
+ * ⚠️ 这里混了两类用途，改的时候注意区分：
+ *   1) 「系列故事」章节的 theme —— 由数据源（../memo-grad/src/data/stories.json）决定，
+ *      换故事集时取值会整体变化，必须同步更新（否则列表显示英文 key）。
+ *      现行故事集《烟火故事集》的 genre 本身就是中文题材名（庭审悬疑 / 医疗温情 …），
+ *      所以不再需要英文 key 映射 —— 表里查不到时上层回落显示原值，中文 key 天然可读。
+ *   2) AI 短文生成的主题 —— 见 article-generate 的 THEMES，取值固定。
+ *
+ * 同时见 pages/read/read.js 与 pages/story-read/story-read.js 的同名表（共三处，必须一起改）。
+ */
 export const THEME_LABELS = {
+  // —— 当前故事集《烟火故事集》—— 中文 genre 直接透传，无需映射 ——
+
+  // —— 上一版故事集《南苑九十天》——
+  sliceOfLife: '日常',
+  daily: '日常',
+  governance: '治理',
+  government: '治理',
+  family: '家庭',
+  education: '教育',
+  food: '饮食',
+  memory: '记忆',
+  emotion: '情感',
+  social: '社交',
+  society: '社会',
+  morality: '道德',
+  nature: '自然',
+  art: '艺术',
+  action: '行动',
+  commerce: '商业',
+  law: '法律',
+  // —— 旧故事集《星际漫游者》保留，便于回滚 ——
   adventure: '冒险',
   mystery: '悬疑',
   fantasy: '奇幻',
   sciFi: '科幻',
   romance: '浪漫',
   history: '历史',
-  nature: '自然',
   random: '随机',
   technology: '科技',
   life: '生活',

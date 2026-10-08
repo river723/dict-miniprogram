@@ -5,7 +5,7 @@
  */
 import StorageService from '../../services/storage';
 import { getWeeklyTrend } from '../../services/studyPlan';
-import { fillTodayIfNeeded } from '../../services/autoWord';
+import { fillTodayIfNeeded, getLastFillResult, enrichWordbookOnce } from '../../services/autoWord';
 import { formatDate } from '../../utils/util';
 import { applyTheme } from '../../utils/theme';
 
@@ -135,6 +135,12 @@ Page({
     wrongCount: 0,
     difficultCount: 0,
     difficultWordIds: [],
+
+    // 今日回顾（纯加练）
+    todayReviewCount: 0,
+    todayReviewIds: [],
+    showTodayReview: false,
+
     recentWords: [],
     weeklyStudied: 0,
     avgDaily: 0,
@@ -148,7 +154,7 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.refresh().finally(() => wx.stopPullDownRefresh());
+    this.refresh().then(() => wx.stopPullDownRefresh(), () => wx.stopPullDownRefresh());
   },
 
   async refresh() {
@@ -175,6 +181,21 @@ Page({
       const studiedIds = {};
       allRecords.forEach((r) => { studiedIds[r.word_id] = true; });
       const unstudiedNewWordCount = allWords.filter((w) => !studiedIds[w.id]).length;
+
+      // 今日回顾：收集今天点过「不认识」(result===0) 的去重词 id，仅保留仍在生词本的词。
+      // 这是「纯加练」入口：进入后不写 StudyRecord、不推进复习计划，不污染今日完成数/正确率。
+      const unknownSeen = {};
+      const unknownIds = [];
+      todayRecords.forEach((r) => {
+        if (r.result === 0 && !unknownSeen[r.word_id]) {
+          unknownSeen[r.word_id] = true;
+          unknownIds.push(r.word_id);
+        }
+      });
+      const wordIdSet = {};
+      allWords.forEach((w) => { wordIdSet[w.id] = true; });
+      const todayReviewIds = unknownIds.filter((id) => wordIdSet[id]);
+      const todayReviewCount = todayReviewIds.length;
 
       const stats = {
         totalWords: allWords.length,
@@ -204,7 +225,11 @@ Page({
 
       const recentWords = allWords
         .slice()
-        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        .sort((a, b) => {
+          const ta = a.created_ts || new Date(a.created_at || 0).getTime();
+          const tb = b.created_ts || new Date(b.created_at || 0).getTime();
+          return tb - ta;
+        })
         .slice(0, 5);
 
       const weekly = getWeeklyTrend();
@@ -216,6 +241,8 @@ Page({
         settings.autoAddNewWords !== false &&
         stats.todayPending === 0 &&
         stats.unstudiedNewWordCount === 0;
+      // 今日回顾仅在「今日任务已清空」且「当天确实有过点过不认识的词」时出现。
+      const showTodayReview = stats.todayPending === 0 && todayReviewCount > 0;
 
       this.setData({
         loading: false,
@@ -237,11 +264,17 @@ Page({
         wrongCount: stats.wrongQuestionCount,
         difficultCount: stats.difficultWordCount,
         difficultWordIds: stats.difficultWordIds,
+        todayReviewCount,
+        todayReviewIds,
+        showTodayReview,
         recentWords,
         weeklyStudied,
         avgDaily,
         hasWeekly: weekly.length > 0,
       });
+      // 后台一次性回填生词本里缺失的扩展字段（词根/记忆/易混词/音标），
+      // 用 search action 取全文档，不依赖 wordict 云函数重新部署；仅运行一次。
+      enrichWordbookOnce().catch(() => {});
     } catch (e) {
       console.error('[home] 加载失败', e);
       this.setData({ loading: false, error: true });
@@ -281,6 +314,13 @@ Page({
     wx.navigateTo({ url: `/pages/study/study?wordIds=${ids.join(',')}` });
   },
 
+  /** 今日回顾：纯加练，带 pure=1 进入学习页（不写记录、不推进复习计划）。 */
+  onTodayReviewTap() {
+    const ids = this.data.todayReviewIds || [];
+    if (ids.length === 0) return;
+    wx.navigateTo({ url: `/pages/study/study?wordIds=${ids.join(',')}&pure=1` });
+  },
+
   goDictionary() {
     wx.navigateTo({ url: '/pages/dictionary/dictionary' });
   },
@@ -303,14 +343,34 @@ Page({
     if (this.data.refilling) return;
     this.setData({ refilling: true });
     try {
-      const added = await fillTodayIfNeeded({ force: true, forceRefill: true });
+      // 12s 局部超时兜底：云函数偶发慢时，避免干等 callCloud 的 25s 全局超时，
+      // 直接给明确提示，而不是被静默成「词库已用尽」。
+      const fillP = fillTodayIfNeeded({ force: true, forceRefill: true });
+      const guard = new Promise((_, rej) =>
+        setTimeout(() => rej(new Error('配词超时 12s')), 12000));
+      let added;
+      try {
+        added = await Promise.race([fillP, guard]);
+      } catch (e) {
+        console.warn('[home] 配词超时/失败：', e && e.message);
+        wx.showToast({ title: '配词请求超时，请稍后重试', icon: 'none' });
+        return;
+      }
+
+      const fill = getLastFillResult();
       if (added > 0) {
         wx.showToast({ title: `已自动补充 ${added} 个新词`, icon: 'none' });
         wx.navigateTo({ url: '/pages/study/study' });
+      } else if (fill.error) {
+        // 云函数/网络失败：不算词库用尽，明确告知失败以便重试，避免误以为开关失效。
+        wx.showToast({ title: '配词失败，请稍后重试', icon: 'none' });
       } else if (StorageService.getSettings().autoAddNewWords !== true) {
         wx.showToast({ title: '自动配词已关闭，可在设置中开启', icon: 'none' });
-      } else {
+      } else if (fill.exhausted) {
+        // 仅当候选池真空（确实无可调度新词且复习兜底也空）才报「词库已用尽」。
         wx.showToast({ title: '词库已用尽，可去词库手动挑选', icon: 'none' });
+      } else {
+        wx.showToast({ title: '暂无可补充的新词', icon: 'none' });
       }
     } finally {
       this.setData({ refilling: false });

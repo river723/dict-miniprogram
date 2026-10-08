@@ -42,6 +42,7 @@
       <view class="bar-inner" style="width: {{contentProgress}}%"></view>
     </view>
     <view class="mg-text-tertiary sub">剩余 {{contentRemaining}} 个未导入</view>
+    <view wx:if="{{cloudStoryText}}" class="mg-text-tertiary sub">云端当前故事集：{{cloudStoryText}}</view>
   </view>
 
   <view class="row-btns">
@@ -58,5 +59,6 @@
     <view class="mg-text-secondary">真题与故事按「一篇一文件」存云存储，并登记到 content_files 集合供云函数按路径取用。</view>
     <view class="mg-text-secondary">顺序：先「④ 建内容集合」，再「⑤ 导入真题 / 故事」。共 {{contentTotal}} 个文件，同样会自动分轮跑完。</view>
     <view class="mg-text-secondary">导入完进「练习 → 真题练习」应能看到 2010 年起的年份列表；「阅读 → 故事」应能看到 20 章。</view>
+    <view class="mg-text-secondary">⚠️ 阅读页是 tab 页，只在首次进入时加载一次。导入/清空后要看新内容：<text class="strong">在阅读页下拉刷新</text>，或彻底杀掉小程序重进。</view>
   </view>
 </view>
