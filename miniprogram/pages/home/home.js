@@ -11,8 +11,8 @@ import { applyTheme } from '../../utils/theme';
 
 const DEFAULT_SUGGESTION = {
   title: '保持学习节奏',
-  description: '今天暂无固定计划，也可以先背几个单词保持状态。',
-  actionLabel: '开始背诵',
+  description: '今天暂无固定计划，也可以先学几个单词保持状态。',
+  actionLabel: '开始学习',
   icon: 'book-open-page-variant',
   target: 'study',
 };
@@ -74,12 +74,11 @@ function buildSuggestion(s) {
     };
   }
   if (s.todayStudyCount >= 3 && s.accuracy < 0.6) {
-    const has = s.difficultWordIds.length > 0;
     return {
       title: '今天正确率偏低',
-      description: `当前约 ${Math.round(s.accuracy * 100)}%，建议先复习困难词。`,
-      actionLabel: has ? '强化复习' : '继续学习',
-      icon: has ? 'refresh' : 'book-open-page-variant',
+      description: `当前约 ${Math.round(s.accuracy * 100)}%，可优先复习下方困难词。`,
+      actionLabel: '继续学习',
+      icon: 'book-open-page-variant',
       target: 'study',
     };
   }
@@ -95,9 +94,9 @@ function buildSuggestion(s) {
   if (s.difficultWordCount > 0) {
     return {
       title: `${s.difficultWordCount} 个困难词待强化`,
-      description: '这些词历史正确率偏低。',
-      actionLabel: '强化复习',
-      icon: 'refresh',
+      description: '这些词历史正确率偏低，可优先复习。',
+      actionLabel: '继续学习',
+      icon: 'book-open-page-variant',
       target: 'study',
     };
   }
@@ -217,10 +216,23 @@ Page({
         stats.difficultWordCount = ids.length;
       }
 
-      const totalPlanned = stats.todayTotal;
-      const progress = totalPlanned > 0 ? stats.todayCompleted / totalPlanned : 0;
-      const availableCount = Math.max(stats.todayPending, stats.unstudiedNewWordCount);
       const accuracyPercent = Math.round(stats.accuracy * 100);
+
+      // 英雄卡：今日有固定计划 → 以「计划进度」为主；无计划（自由学习）→ 以「生词本待学/已学」为主。
+      const studiedCount = stats.totalWords - stats.unstudiedNewWordCount;
+      let heroLabel, heroValue, heroSub, heroProgress;
+      if (stats.todayTotal > 0) {
+        heroLabel = stats.todayPending > 0 ? '今日待学' : '今日已完成';
+        heroValue = stats.todayPending > 0 ? stats.todayPending : stats.todayCompleted;
+        heroSub = `今日计划 ${stats.todayTotal} 个 · 已完成 ${stats.todayCompleted}`;
+        heroProgress = stats.todayCompleted / stats.todayTotal;
+      } else {
+        heroLabel = '待学新词';
+        heroValue = stats.unstudiedNewWordCount;
+        heroSub = `生词本 ${stats.totalWords} 个 · 已学 ${studiedCount}`;
+        heroProgress = stats.totalWords > 0 ? studiedCount / stats.totalWords : 0;
+      }
+      const progress = heroProgress;
       const deg = Math.round(Math.min(1, Math.max(0, progress)) * 360);
 
       const recentWords = allWords
@@ -248,8 +260,9 @@ Page({
         loading: false,
         error: false,
         isEmpty: stats.totalWords === 0,
-        heroLabel: availableCount > 0 ? '今日待学' : stats.todayTotal > 0 ? '今日任务' : '今日',
-        heroValue: availableCount > 0 ? availableCount : stats.todayCompleted,
+        heroLabel,
+        heroValue,
+        heroSub,
         heroDesc: suggestion.description,
         progress,
         progressPercentText: `${Math.round(progress * 100)}%`,
@@ -261,6 +274,7 @@ Page({
         ],
         suggestion,
         canStartAnotherGroup,
+        canStudyNewBtn: canStartAnotherGroup && suggestion.target !== 'study',
         wrongCount: stats.wrongQuestionCount,
         difficultCount: stats.difficultWordCount,
         difficultWordIds: stats.difficultWordIds,

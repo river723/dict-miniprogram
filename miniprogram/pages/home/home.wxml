@@ -28,6 +28,7 @@
             <text class="hero__num">{{heroValue}}</text>
             <text class="hero__unit">个词</text>
           </view>
+          <text class="hero__sub">{{heroSub}}</text>
           <text class="hero__desc">{{heroDesc}}</text>
         </view>
         <view class="hero__ring" style="{{ringStyle}}">
@@ -55,7 +56,7 @@
           bind:tap="goWrong"
         />
         <mg-button
-          wx:if="{{canStartAnotherGroup}}"
+          wx:if="{{canStudyNewBtn}}"
           title="学习新词"
           variant="secondary"
           block

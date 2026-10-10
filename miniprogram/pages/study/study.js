@@ -1,7 +1,7 @@
 /**
  * 背诵 / 复习页 —— 对齐 memo-grad StudyScreen + FlashcardStudy。
  *
- * 四种模式：单词卡(flashcard) / 听写(listening) / 释义(quiz) / 短文(article)
+ * 两种模式：单词卡(flashcard) / 短文(article)
  * 队列语义与 App 一致：
  *   - 答对且首次过关 → 出队（并生成后续艾宾浩斯复习计划）
  *   - 答对但在重试中 → 计数 +1，满 2 次才过关，否则移到队尾
@@ -19,8 +19,6 @@ import { createTtsPlayer, prefetch } from '../../utils/tts';
 
 const MODES = [
   { key: 'flashcard', label: '单词卡', icon: 'book-open-page-variant' },
-  { key: 'listening', label: '听写', icon: 'volume-high' },
-  { key: 'quiz', label: '释义', icon: 'pencil' },
   { key: 'article', label: '短文', icon: 'creation' },
 ];
 
@@ -53,15 +51,6 @@ function computeEmptyState(queue, isCustomReview) {
   };
 }
 
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 /** 单词长度自适应字号（与 App 一致，单位 rpx = px × 2）。 */
 function wordFontSize(word) {
@@ -96,16 +85,6 @@ Page({
     playing: false,
 
     // 释义模式
-    options: [],
-    selectedAnswer: '',
-    showQuizResult: false,
-
-    // 听写模式
-    listenStarted: false,
-    listenAnswer: '',
-    listenSubmitted: false,
-    listenCorrect: false,
-
     // 短文模式
     articleLoading: false,
     articleError: '',
@@ -334,11 +313,6 @@ Page({
       wordFontSize: wordFontSize(word.word),
       difficultyColor: diffColors[level - 1],
       flipped: false,
-      selectedAnswer: '',
-      showQuizResult: false,
-      listenStarted: false,
-      listenAnswer: '',
-      listenSubmitted: false,
     });
   },
 
@@ -346,35 +320,13 @@ Page({
   switchMode(e) {
     const mode = e.currentTarget.dataset.key;
     if (mode === this.data.mode) return;
-    this.setData({ mode, flipped: false, selectedAnswer: '', showQuizResult: false, listenStarted: false, listenAnswer: '', listenSubmitted: false, articleError: '' });
+    this.setData({ mode, flipped: false, articleError: '' });
     this.prepareMode();
   },
 
   prepareMode() {
     const mode = this.data.mode;
-    if (mode === 'quiz') this.buildQuizOptions();
     if (mode === 'flashcard') this.maybeAutoPlay();
-  },
-
-  buildQuizOptions() {
-    const cur = this.data.current;
-    if (!cur) return;
-    const correct = ((cur.definitions || [])[0] || {}).meaning || '';
-    if (!correct) {
-      this.setData({ options: [] });
-      return;
-    }
-    const pool = StorageService.getWords()
-      .filter((w) => w.id !== cur.id)
-      .map((w) => ((w.definitions || [])[0] || {}).meaning || '')
-      .filter((m) => m && m !== correct);
-    const uniq = Array.from(new Set(pool));
-    const distractors = shuffle(uniq).slice(0, 3);
-    const options = shuffle([correct].concat(distractors)).map((text, i) => ({
-      key: `opt-${i}-${text.slice(0, 6)}`,
-      text,
-    }));
-    this.setData({ options, selectedAnswer: '', showQuizResult: false });
   },
 
   // ==================== 单词卡 ====================
@@ -440,42 +392,6 @@ Page({
     this.setData({ total: Math.max(0, this.data.total - 1) });
     wx.showToast({ title: `已移出「${cur.word}」`, icon: 'none' });
     this.removeCurrent();
-  },
-
-  // ==================== 释义 ====================
-  onSelectOption(e) {
-    if (this.data.showQuizResult) return;
-    const text = e.currentTarget.dataset.text;
-    const cur = this.data.current;
-    if (!cur) return;
-    const correct = ((cur.definitions || [])[0] || {}).meaning || '';
-    const isCorrect = text === correct;
-    this.setData({ selectedAnswer: text, showQuizResult: true });
-    setTimeout(() => {
-      this.handleResult(isCorrect);
-    }, 1500);
-  },
-
-  // ==================== 听写 ====================
-  startListening() {
-    this.playAudio();
-    this.setData({ listenStarted: true });
-  },
-
-  onListenInput(e) {
-    this.setData({ listenAnswer: e.detail.value });
-  },
-
-  submitListen() {
-    const cur = this.data.current;
-    if (!cur) return;
-    const ok = this.data.listenAnswer.trim().toLowerCase() === String(cur.word).toLowerCase();
-    this.setData({ listenSubmitted: true, listenCorrect: ok });
-    setTimeout(() => this.handleResult(ok), 1200);
-  },
-
-  skipListen() {
-    this.handleResult(false);
   },
 
   // ==================== 短文 ====================

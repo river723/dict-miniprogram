@@ -172,67 +172,6 @@
       </view>
     </block>
 
-    <!-- ---------------- 听写 ---------------- -->
-    <scroll-view wx:elif="{{mode === 'listening'}}" scroll-y class="mode-scroll">
-      <view class="card">
-        <view class="listen">
-          <text class="listen__title">听力练习</text>
-          <view class="listen__icon">
-            <mg-icon name="{{playing ? 'volume-high' : 'ear-hearing'}}" size="80" color="#2E5E4E" />
-          </view>
-          <text class="listen__hint">
-            {{soundEnabled ? (listenStarted ? '播放中…' : '点击听取单词发音') : '发音功能已关闭，请先到设置中开启'}}
-          </text>
-          <mg-button
-            title="{{soundEnabled ? '播放' : '发音已关闭'}}"
-            variant="primary"
-            icon="{{soundEnabled ? 'play' : 'volume-off'}}"
-            disabled="{{!soundEnabled}}"
-            bind:tap="startListening"
-          />
-
-          <view wx:if="{{listenStarted}}" class="listen__answer">
-            <text class="listen__q">你听到了哪个单词？</text>
-            <input
-              class="listen__input"
-              placeholder="输入你听到的单词"
-              placeholder-class="ph"
-              value="{{listenAnswer}}"
-              bindinput="onListenInput"
-            />
-            <view class="listen__btns">
-              <mg-button title="跳过" variant="secondary" block bind:tap="skipListen" />
-              <mg-button title="提交" variant="primary" block disabled="{{!listenAnswer}}" bind:tap="submitListen" />
-            </view>
-            <text wx:if="{{listenSubmitted}}" class="listen__result {{listenCorrect ? 'is-ok' : 'is-bad'}}">
-              {{listenCorrect ? '回答正确 ✓' : '正确答案：' + current.word}}
-            </text>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-
-    <!-- ---------------- 释义 ---------------- -->
-    <scroll-view wx:elif="{{mode === 'quiz'}}" scroll-y class="mode-scroll">
-      <view class="card">
-        <text class="quiz__title">选择正确的释义</text>
-        <text class="quiz__word">{{current.word}}</text>
-        <view class="quiz__options">
-          <view
-            wx:for="{{options}}"
-            wx:key="key"
-            class="quiz__opt {{showQuizResult && item.text === current.definitions[0].meaning ? 'quiz__opt--correct' : ''}} {{showQuizResult && item.text === selectedAnswer && item.text !== current.definitions[0].meaning ? 'quiz__opt--wrong' : ''}}"
-            data-text="{{item.text}}"
-            bindtap="onSelectOption"
-          >
-            <text class="quiz__opt-text">{{item.text}}</text>
-            <mg-icon wx:if="{{showQuizResult && item.text === current.definitions[0].meaning}}" name="check-circle" size="40" color="#3F7A5C" />
-            <mg-icon wx:elif="{{showQuizResult && item.text === selectedAnswer}}" name="close-circle-outline" size="40" color="#B5462E" />
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-
     <!-- ---------------- 短文 ---------------- -->
     <scroll-view wx:else scroll-y class="mode-scroll">
       <view wx:if="{{articleSegments.length === 0}}" class="card">
