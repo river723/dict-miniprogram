@@ -90,7 +90,8 @@ Page({
     articleError: '',
     articleSegments: [],
     articleTranslation: '',
-    articleWords: [],
+    articleCandidateList: [],   // 候选词（本轮生词），供用户勾选 {word, on}
+    articleSelectedCount: 0,    // 已勾选数量
     showTranslation: false,
 
     // 完成 / 退出
@@ -327,6 +328,50 @@ Page({
   prepareMode() {
     const mode = this.data.mode;
     if (mode === 'flashcard') this.maybeAutoPlay();
+    else if (mode === 'article') this.initArticleCandidates();
+  },
+
+  /** 进入短文模式时，把本轮生词作为候选词，默认全选；已初始化则保留上次勾选。 */
+  initArticleCandidates() {
+    if (this.data.articleCandidateList.length > 0) return;
+    const seen = {};
+    const list = [];
+    this.queue.forEach((w) => {
+      if (w && w.word && !seen[w.word]) {
+        seen[w.word] = true;
+        list.push({ word: w.word, on: true });
+      }
+    });
+    this.setData({
+      articleCandidateList: list,
+      articleSelectedCount: list.length,
+      articleError: '',
+    });
+  },
+
+  toggleArticleWord(e) {
+    const word = e.currentTarget.dataset.word;
+    const list = this.data.articleCandidateList.map((it) =>
+      it.word === word ? { word: it.word, on: !it.on } : it);
+    this.setData({
+      articleCandidateList: list,
+      articleSelectedCount: list.filter((it) => it.on).length,
+    });
+  },
+
+  selectAllArticle() {
+    const list = this.data.articleCandidateList.map((it) => ({ word: it.word, on: true }));
+    this.setData({ articleCandidateList: list, articleSelectedCount: list.length });
+  },
+
+  clearArticle() {
+    const list = this.data.articleCandidateList.map((it) => ({ word: it.word, on: false }));
+    this.setData({ articleCandidateList: list, articleSelectedCount: 0 });
+  },
+
+  /** 回到选词界面（保留已勾选），可换一组词重新生成。 */
+  editArticleWords() {
+    this.setData({ articleSegments: [], articleTranslation: '', showTranslation: false });
   },
 
   // ==================== 单词卡 ====================
@@ -397,16 +442,21 @@ Page({
   // ==================== 短文 ====================
   async generateArticle() {
     if (this.data.articleLoading) return;
-    const words = this.queue.slice(0, 30).map((w) => w.word);
+    if (this.data.articleCandidateList.length === 0) {
+      this.setData({ articleError: '本轮没有可选择的单词' });
+      return;
+    }
+    const words = this.data.articleCandidateList.filter((it) => it.on).map((it) => it.word);
     if (words.length === 0) {
-      this.setData({ articleError: '本轮暂无可用于生成短文的单词' });
+      this.setData({ articleError: '请至少勾选一个单词' });
       return;
     }
     this.setData({ articleLoading: true, articleError: '', showTranslation: false });
     try {
-      const res = await callCloud('ai', { action: 'story', words });
+      const used = words.slice(0, 30);
+      const res = await callCloud('ai', { action: 'story', words: used });
       const content = res.content || '';
-      const { segments, translation } = parseArticle(content, words);
+      const { segments, translation } = parseArticle(content, used);
       this.setData({ articleSegments: segments, articleTranslation: translation, articleLoading: false });
     } catch (e) {
       this.setData({ articleLoading: false, articleError: e.message || '生成失败，请稍后重试' });

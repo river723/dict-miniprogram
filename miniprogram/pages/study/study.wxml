@@ -176,20 +176,31 @@
     <scroll-view wx:else scroll-y class="mode-scroll">
       <view wx:if="{{articleSegments.length === 0}}" class="card">
         <text class="art__title">生成短文</text>
-        <text class="art__sub">用本轮生词生成一篇英文短文，在语境中记忆。</text>
-        <view class="art__chips">
-          <text wx:for="{{current ? [current] : []}}" wx:key="index" class="mg-pill art__chip">{{item.word}}</text>
-        </view>
-        <text class="art__note">将根据 {{total}} 个生词生成短文（最多取前 30 个）。</text>
-        <mg-button
-          wx:if="{{!articleLoading}}"
-          title="生成短文"
-          variant="primary"
-          block
-          icon="creation"
-          bind:tap="generateArticle"
-        />
-        <view wx:else class="art__loading">
+        <text class="art__sub">勾选要写进短文的单词，在语境中记忆。</text>
+        <block wx:if="{{articleCandidateList.length > 0}}">
+          <view class="art__chips">
+            <text wx:for="{{articleCandidateList}}" wx:key="word"
+              class="mg-pill art__chip {{item.on ? 'art__chip--on' : ''}}"
+              bindtap="toggleArticleWord" data-word="{{item.word}}">{{item.word}}</text>
+          </view>
+          <view class="art__selbar">
+            <text class="art__selcount">已选 {{articleSelectedCount}} / {{articleCandidateList.length}}</text>
+            <view class="art__selactions">
+              <text class="art__link" bindtap="selectAllArticle">全选</text>
+              <text class="art__link" bindtap="clearArticle">清空</text>
+            </view>
+          </view>
+          <mg-button
+            wx:if="{{!articleLoading}}"
+            title="生成短文"
+            variant="primary"
+            block
+            icon="creation"
+            bind:tap="generateArticle"
+          />
+        </block>
+        <text wx:else class="art__note">本轮没有可选择的单词，先去背几个词吧。</text>
+        <view wx:if="{{articleLoading}}" class="art__loading">
           <mg-icon name="creation" size="48" color="#2E5E4E" />
           <text>AI 正在为你创作短文…</text>
         </view>
@@ -197,6 +208,7 @@
       </view>
 
       <view wx:else class="card">
+        <mg-button title="修改选词" variant="ghost" block bind:tap="editArticleWords" />
         <mg-button title="重新生成短文" variant="secondary" block icon="refresh" bind:tap="generateArticle" />
         <view class="art__body">
           <text wx:for="{{articleSegments}}" wx:key="index" class="art__seg {{item.hit ? 'art__seg--hit' : ''}}" data-word="{{item.text}}" bindtap="onArticleWordTap">{{item.text}}</text>

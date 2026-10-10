@@ -404,6 +404,35 @@
   color: var(--mg-primary);
 }
 
+.art__chip--on {
+  background: var(--mg-primary);
+  color: #fff;
+}
+
+.art__selbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.art__selcount {
+  font-size: 24rpx;
+  color: var(--mg-text-3);
+}
+
+.art__selactions {
+  display: flex;
+  flex-direction: row;
+  gap: 28rpx;
+}
+
+.art__link {
+  font-size: 26rpx;
+  color: var(--mg-primary);
+}
+
 .art__note {
   display: block;
   margin-bottom: 24rpx;
