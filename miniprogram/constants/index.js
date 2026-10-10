@@ -36,23 +36,6 @@ export const QUESTION_TYPE_LABEL = {
   cloze: '完形选词',
 };
 
-/** 真题「新题型」子类型标签。 */
-export const REAL_EXAM_SUBTYPE_LABEL = {
-  ordering: '段落排序',
-  heading: '段落小标题（7选5）',
-  sentence: '选句填空（7选5）',
-  matching: '多项对应（信息匹配）',
-  truefalse: '正误判断（T/F）',
-};
-
-/** 真题列表页的题型条目元数据（图标 / 标题 / 角标）。 */
-export const REAL_EXAM_ENTRY_META = {
-  reading: { icon: 'book-open-variant', title: '阅读理解' },
-  cloze: { icon: 'format-letter-matches', title: '完形填空' },
-  newtype: { icon: 'sort-variant', title: '新题型' },
-  translation: { icon: 'translate', title: '翻译', badge: '阅览' },
-  writing: { icon: 'pencil-outline', title: '写作', badge: '阅览' },
-};
 
 /**
  * 故事 / 文章的主题标签。

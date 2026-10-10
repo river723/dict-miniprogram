@@ -1,23 +1,11 @@
 <view class="mg-page eh {{themeClass}}">
 
-  <!-- 来源筛选 -->
-  <view class="eh__chips">
-    <view
-      wx:for="{{filters}}"
-      wx:key="key"
-      class="chip {{filter === item.key ? 'chip--on' : ''}}"
-      hover-class="mg-hover-soft"
-      data-key="{{item.key}}"
-      bindtap="setFilter"
-    >{{item.label}}</view>
-  </view>
-
   <mg-empty
     wx:if="{{items.length === 0}}"
-    icon="{{filter === 'real' ? 'book-open-page-variant' : 'clipboard-text-multiple'}}"
-    title="{{filter === 'real' ? '暂无真题记录' : '暂无练习记录'}}"
-    description="{{filter === 'real' ? '完成真题练习后，可在此回顾成绩与逐题解析。' : '完成 AI 出题或真题练习后，可在此回顾历史成绩与重做。'}}"
-    action-label="{{filter === 'real' ? '去做真题练习' : '去做一组练习'}}"
+    icon="clipboard-text-multiple"
+    title="暂无练习记录"
+    description="完成 AI 出题后，可在此回顾历史成绩与重做。"
+    action-label="去做一组练习"
     bind:action="goSetup"
   />
 
@@ -54,7 +42,7 @@
           <text class="eh__del-text">删除</text>
         </view>
         <view class="eh__redo">
-          <text>{{item.isAi ? '重做' : '查看回顾'}}</text>
+          <text>重做</text>
           <mg-icon name="chevron-right" size="28" color="#2E5E4E" />
         </view>
       </view>
@@ -62,16 +50,6 @@
 
     <view class="eh__more">
       <mg-button
-        wx:if="{{filter === 'real'}}"
-        title="去做真题练习"
-        variant="secondary"
-        size="lg"
-        block
-        icon="book-open-page-variant"
-        bind:tap="goRealList"
-      />
-      <mg-button
-        wx:else
         title="再做一组练习"
         variant="secondary"
         size="lg"

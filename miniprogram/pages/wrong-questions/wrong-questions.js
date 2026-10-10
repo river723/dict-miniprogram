@@ -1,7 +1,6 @@
 /**
  * 错题本 —— 对齐 memo-grad WrongQuestionReviewScreen。
- * 两个 Tab：单词错题（AI 出题做错的题，可按题型/错误次数筛选后重做）
- *           真题错题（阅读/完形/新题型做错的题，可回原卷重做 + AI 解析）。
+ * 单词错题（AI 出题做错的题，可按题型/错误次数筛选后重做）。
  *
  * 掌握规则：同一题答对 WRONG_QUESTION_MASTERY_THRESHOLD(3) 次自动移出。
  * 平台说明：App 用 navigation 传 questions；小程序把选中的错题写成练习草稿
@@ -9,12 +8,8 @@
  */
 import StorageService from '../../services/storage';
 import { wrongToQuestion } from '../../services/exam';
-import { generateRealExamExplanation, LETTERS, SUBTYPE_LABEL } from '../../services/realExam';
 import { WRONG_QUESTION_MASTERY_THRESHOLD } from '../../constants/index';
-import { openWordDetail } from '../../utils/wordNav';
 import { applyTheme } from '../../utils/theme';
-
-const MODE_LABEL = { reading: '阅读', cloze: '完形', newtype: '新题型' };
 
 const parseTime = (v) => new Date(String(v || '').replace(/-/g, '/')).getTime() || 0;
 
@@ -33,7 +28,6 @@ const COUNT_FILTERS = [
 Page({
   data: {
     threshold: WRONG_QUESTION_MASTERY_THRESHOLD,
-    tab: 'word',
     typeFilters: TYPE_FILTERS,
     countFilters: COUNT_FILTERS,
     typeFilter: 'all',
@@ -42,16 +36,11 @@ Page({
     wordTotal: 0,
     wordDef: 0,
     wordCloze: 0,
-    realTotal: 0,
-    realReading: 0,
-    realCloze: 0,
 
     filtered: [],
-    realList: [],
   },
 
   onShow() {
-
     applyTheme(this);
     this.loadAll();
   },
@@ -61,17 +50,10 @@ Page({
     raw.sort((a, b) => parseTime(b.last_attempt_at) - parseTime(a.last_attempt_at));
     this.raw = raw;
 
-    const real = StorageService.getRealExamWrongQuestions().slice();
-    real.sort((a, b) => parseTime(b.last_attempt_at) - parseTime(a.last_attempt_at));
-
     this.setData({
       wordTotal: raw.length,
       wordDef: raw.filter((w) => (w.type || 'definition') === 'definition').length,
       wordCloze: raw.filter((w) => w.type === 'cloze').length,
-      realTotal: real.length,
-      realReading: real.filter((w) => w.mode === 'reading').length,
-      realCloze: real.filter((w) => w.mode === 'cloze').length,
-      realList: real.map((w) => this.buildRealItem(w)),
     });
     this.applyFilters();
   },
@@ -111,47 +93,7 @@ Page({
     };
   },
 
-  /** 真题错题卡片渲染数据（选项带正确/已选标记）。 */
-  buildRealItem(wq) {
-    const options = (wq.options || []).map((text, i) => {
-      const letter = LETTERS[i] || String(i + 1);
-      return {
-        letter,
-        text,
-        isCorrect: letter === wq.correctAnswer,
-        isSelected: letter === wq.userAnswer,
-      };
-    });
-    const isReading = wq.mode === 'reading';
-    const isNewType = wq.mode === 'newtype';
-    return {
-      id: wq.id,
-      questionId: wq.questionId,
-      mode: wq.mode,
-      modeLabel: MODE_LABEL[wq.mode] || '真题',
-      tagCls: isReading ? 'primary' : 'accent',
-      metaText: `${wq.year} · ${wq.setId === 'english2' ? '英语二' : '英语一'}`
-        + (isNewType && wq.subtype ? ` · ${SUBTYPE_LABEL[wq.subtype] || ''}` : '')
-        + (wq.blankIndex != null ? ` · [${wq.blankIndex}]` : ''),
-      stem: wq.stem || '',
-      options,
-      correctAnswer: wq.correctAnswer,
-      userAnswer: wq.userAnswer,
-      explanation: wq.explanation || '',
-      wrongCount: wq.wrong_count || 0,
-      correctCount: wq.correct_count || 0,
-      hasCorrect: (wq.correct_count || 0) > 0,
-      explaining: false,
-    };
-  },
-
   // ---------- 筛选 ----------
-  switchTab(e) {
-    const tab = e.currentTarget.dataset.tab;
-    if (tab === this.data.tab) return;
-    this.setData({ tab });
-  },
-
   setTypeFilter(e) {
     const typeFilter = e.currentTarget.dataset.key;
     if (typeFilter === this.data.typeFilter) return;
@@ -202,67 +144,6 @@ Page({
     wx.navigateTo({ url: `/pages/word-detail/word-detail?id=${id}` });
   },
 
-  // ---------- 真题错题 ----------
-  /** 回原卷重做：带着 year/setId/paperId 进真题答题壳（由 exam-practice 承接）。 */
-  openPaper(e) {
-    const id = e.currentTarget.dataset.id;
-    const wq = StorageService.getRealExamWrongQuestions().find((x) => x.id === id);
-    if (!wq) return;
-    wx.navigateTo({
-      url: `/pages/exam-practice/exam-practice?mode=${wq.mode}&year=${wq.year}`
-        + `&setId=${wq.setId || 'english1'}&paperId=${wq.paperId}`,
-    });
-  },
-
-  removeReal(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.showModal({
-      title: '移出错题本',
-      content: '确定要把这道真题错题移出错题本吗？',
-      confirmText: '移出',
-      cancelText: '取消',
-      success: (res) => {
-        if (!res.confirm) return;
-        StorageService.removeRealExamWrongQuestion(id);
-        this.loadAll();
-        wx.showToast({ title: '已移出', icon: 'none' });
-      },
-    });
-  },
-
-  /** AI 解析：生成后回写快照并就地展示。 */
-  async explainReal(e) {
-    const id = e.currentTarget.dataset.id;
-    const list = this.data.realList.slice();
-    const idx = list.findIndex((x) => x.id === id);
-    if (idx < 0 || list[idx].explaining) return;
-
-    const raw = StorageService.getRealExamWrongQuestions().find((x) => x.id === id);
-    if (!raw) return;
-
-    list[idx] = { ...list[idx], explaining: true };
-    this.setData({ realList: list });
-
-    try {
-      const explanation = await generateRealExamExplanation(raw);
-      if (!explanation) throw new Error('解析为空');
-      StorageService.updateRealExamWrongExplanation(raw.questionId, explanation);
-
-      const next = this.data.realList.slice();
-      const i = next.findIndex((x) => x.id === id);
-      if (i >= 0) next[i] = { ...next[i], explanation, explaining: false };
-      this.setData({ realList: next });
-    } catch (err) {
-      console.error('[wrong-questions] AI 解析失败', err);
-      const next = this.data.realList.slice();
-      const i = next.findIndex((x) => x.id === id);
-      if (i >= 0) next[i] = { ...next[i], explaining: false };
-      this.setData({ realList: next });
-      wx.showToast({ title: '解析生成失败，请重试', icon: 'none' });
-    }
-  },
-
   // ---------- 空态跳转 ----------
   goSetup() { wx.navigateTo({ url: '/pages/exam-setup/exam-setup' }); },
-  goRealList() { wx.navigateTo({ url: '/pages/exam-list/exam-list' }); },
 });

@@ -1,5 +1,5 @@
 /**
- * content 云函数 —— 真题 / 故事内容分发（按篇存储于云存储，见 scripts/upload-content.mjs）。
+ * content 云函数 —— 故事内容分发（按篇存储于云存储，见 scripts/upload-content.mjs）。
  *
  * 路径 → fileID 的映射来自 content_files 集合：downloadFile 只认完整 fileID
  * （cloud://<env>.<bucket>/<path>），bucket 段因环境而异无法推导，
@@ -13,14 +13,6 @@ const COL_FILES = 'content_files';
 exports.main = async (event) => {
   try {
     switch (event.action) {
-      case 'examList': {
-        const idx = await readJson('content/exams/index.json');
-        return { ok: true, list: idx.exams };
-      }
-      case 'examDetail': {
-        const exam = await readJson(`content/exams/${event.id}.json`);
-        return { ok: true, exam };
-      }
       case 'storyList': {
         const idx = await readJson('content/stories/index.json');
         return { ok: true, series: { series_title: idx.series_title, total_chapters: idx.total_chapters }, list: idx.chapters };

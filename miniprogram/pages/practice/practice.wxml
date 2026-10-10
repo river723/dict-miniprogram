@@ -31,7 +31,7 @@
       </view>
     </view>
 
-    <!-- 双 CTA -->
+    <!-- 主 CTA -->
     <view class="cta">
       <mg-button
         title="AI 出题练习"
@@ -40,13 +40,6 @@
         block
         icon="creation"
         bind:tap="goExamSetup"
-      />
-      <mg-button
-        title="真题练习"
-        variant="secondary"
-        block
-        icon="book-open-page-variant"
-        bind:tap="goRealExam"
       />
     </view>
 

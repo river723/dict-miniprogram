@@ -22,9 +22,6 @@ const K = {
   exams: 'mg_exam_sessions',
   examDraft: 'mg_exam_draft',
   examResult: 'mg_exam_result',
-  realExams: 'mg_real_exam_sessions',
-  realWrong: 'mg_real_wrong',
-  realDraft: 'mg_real_exam_drafts',
 };
 
 const mem = {};
@@ -409,133 +406,6 @@ async function removeWrongQuestion(id) {
   write(K.wrong, read(K.wrong, []).filter((x) => x.id !== id));
 }
 
-// ---------- 真题会话 RealExamSession ----------
-const getRealExamSessions = () => read(K.realExams, []).filter((s) => !s.deleted);
-
-async function saveRealExamSession(session) {
-  const rec = {
-    id: uuid(),
-    year: session.year,
-    mode: session.mode,            // reading | cloze | newtype
-    setId: session.setId || 'english1',
-    paperId: session.paperId,
-    answers: session.answers || [],
-    score: session.score || 0,
-    total: session.total || 0,
-    deleted: false,
-    createdAt: session.createdAt || formatDate(),
-  };
-  read(K.realExams, []).unshift(rec);
-  write(K.realExams, read(K.realExams, []));
-  pushDirty('realExamSessions', rec, 'add');
-  return rec;
-}
-
-async function deleteRealExamSession(id) {
-  const list = read(K.realExams, []);
-  const s = list.find((x) => x.id === id);
-  if (s) { s.deleted = true; write(K.realExams, list); pushDirty('realExamSessions', s, 'update'); }
-}
-
-// ---------- 真题错题本 RealExamWrongQuestion ----------
-const getRealExamWrongQuestions = () => read(K.realWrong, []);
-
-/** 从 paper 里按 questionId 找回题面，用于生成错题快照。 */
-function findRealExamQuestion(paper, questionId, mode) {
-  if (!paper) return null;
-  if (mode === 'reading') {
-    return (paper.questions || []).find((q) => q.id === questionId) || null;
-  }
-  if (mode === 'cloze') {
-    const m = /-b(\d+)$/.exec(questionId || '');
-    const index = m ? Number(m[1]) : null;
-    return (paper.blanks || []).find((b) => b.index === index) || null;
-  }
-  const m = /-p(\d+)$/.exec(questionId || '');
-  const index = m ? Number(m[1]) : null;
-  return (paper.questions || []).find((q) => q.index === index) || null;
-}
-
-/**
- * 把一次真题作答写进真题错题本。
- * 答错 → upsert（wrong_count+1，刷新用户答案）；答对 → 已在本中则 correct_count+1，满 3 次移出。
- */
-async function addOrUpdateRealExamWrongQuestions(session, paper, setId) {
-  const list = read(K.realWrong, []);
-  const mode = session.mode;
-  const now = formatDate();
-  let removed = 0;
-
-  for (const ans of session.answers || []) {
-    const idx = list.findIndex((x) => x.questionId === ans.questionId && x.paperId === session.paperId);
-    if (ans.correct) {
-      if (idx >= 0) {
-        const w = list[idx];
-        w.correct_count = (w.correct_count || 0) + 1;
-        w.last_attempt_at = now;
-        if (w.correct_count >= 3) { list.splice(idx, 1); removed += 1; }
-      }
-      continue;
-    }
-    const q = findRealExamQuestion(paper, ans.questionId, mode);
-    if (!q && idx < 0) continue;
-    if (idx >= 0) {
-      const w = list[idx];
-      w.wrong_count = (w.wrong_count || 0) + 1;
-      w.userAnswer = ans.selected || null;
-      w.last_attempt_at = now;
-    } else {
-      list.push({
-        id: uuid(),
-        questionId: ans.questionId,
-        paperId: session.paperId,
-        mode,
-        year: session.year,
-        setId: setId || 'english1',
-        stem: q.stem || '',
-        options: q.options || [],
-        correctAnswer: q.answer,
-        userAnswer: ans.selected || null,
-        explanation: q.explanation || '',
-        blankIndex: mode === 'cloze' ? q.index : undefined,
-        questionIndex: mode === 'newtype' ? q.index : undefined,
-        subtype: mode === 'newtype' ? paper.subtype : undefined,
-        wrong_count: 1,
-        correct_count: 0,
-        last_attempt_at: now,
-      });
-    }
-  }
-  write(K.realWrong, list);
-  return { removed };
-}
-
-async function removeRealExamWrongQuestion(id) {
-  write(K.realWrong, read(K.realWrong, []).filter((x) => x.id !== id));
-}
-
-/** AI 解析生成后回写，避免下次重复生成。 */
-async function updateRealExamWrongExplanation(questionId, explanation) {
-  const list = read(K.realWrong, []);
-  const w = list.find((x) => x.questionId === questionId);
-  if (!w) return;
-  w.explanation = explanation;
-  write(K.realWrong, list);
-}
-
-// ---------- 真题草稿（按 paperId 分开存） ----------
-const getRealExamDraft = (paperId) => read(K.realDraft, {})[paperId] || null;
-const saveRealExamDraft = (paperId, selections) => {
-  const m = read(K.realDraft, {});
-  m[paperId] = selections;
-  write(K.realDraft, m);
-};
-const clearRealExamDraft = (paperId) => {
-  const m = read(K.realDraft, {});
-  delete m[paperId];
-  write(K.realDraft, m);
-};
-
 // ---------- 脏数据上推 ----------
 function pushDirty(collection, doc, op) {
   const queue = read(K.dirty, []);
@@ -579,8 +449,4 @@ export default {
   getExamSessionById,
   getExamDraft, saveExamDraft, clearExamDraft,
   getExamResult, saveExamResult, clearExamResult,
-  getRealExamSessions, saveRealExamSession, deleteRealExamSession,
-  getRealExamWrongQuestions, addOrUpdateRealExamWrongQuestions,
-  removeRealExamWrongQuestion, updateRealExamWrongExplanation,
-  getRealExamDraft, saveRealExamDraft, clearRealExamDraft,
 };

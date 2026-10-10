@@ -23,10 +23,6 @@
     "pages/exam-set-bank/exam-set-bank",
     "pages/exam-set-detail/exam-set-detail",
     "pages/wrong-questions/wrong-questions",
-    "pages/exam-list/exam-list",
-    "pages/exam-practice/exam-practice",
-    "pages/real-exam-result/real-exam-result",
-    "pages/real-exam-read/real-exam-read",
     "pages/stats/stats",
     "pages/settings/settings",
     "pages/seed/seed"

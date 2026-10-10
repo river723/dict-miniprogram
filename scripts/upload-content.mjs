@@ -44,22 +44,6 @@ const upload = async (cloudPath, obj) => {
   console.log('uploaded', cloudPath, '->', fileID);
 };
 
-// ---- 真题：按年份一套一文件 + 索引 ----
-const exams = JSON.parse(readFileSync(resolve(ROOT, '../memo-grad/src/data/realExams.json'), 'utf8'));
-const examIndex = [];
-for (const year of exams) {
-  const sections = ['english1', 'english2'].filter((s) => year[s]);
-  for (const s of sections) {
-    const id = `${year.year}-${s === 'english1' ? 'e1' : 'e2'}`;
-    await upload(`content/exams/${id}.json`, { id, year: year.year, type: s, ...year[s] });
-    examIndex.push({
-      id, year: year.year,
-      title: `${year.year} 考研英语（${s === 'english1' ? '一' : '二'}）`,
-    });
-  }
-}
-await upload('content/exams/index.json', { exams: examIndex });
-
 // ---- 故事：按章一文件 + 索引 ----
 const stories = JSON.parse(readFileSync(resolve(ROOT, '../memo-grad/src/data/stories.json'), 'utf8'));
 for (const ch of stories.chapters) {
