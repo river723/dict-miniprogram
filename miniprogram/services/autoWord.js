@@ -10,6 +10,7 @@ import StorageService from './storage';
 import { formatDate, diffDays } from '../utils/util';
 import { REVIEW_INTERVALS } from '../theme/tokens';
 import { pickWorddict, searchWorddict } from './worddict';
+import { getLibraryWords, seededShuffle } from './libraries';
 
 // 最近一次配词结果：用于「继续学习」区分『词库真·用尽』与『配词失败/超时』，
 // 避免把网络/云函数抖动误报成「词库已用尽」，让用户误以为自动配词开关失效。
@@ -73,32 +74,57 @@ async function doFill(force, forceRefill) {
     }
 
     // 候选池：词库剔除已有（含软删除）+ 忽略。
-    // 挑选放服务端做 —— 词库 3.4MB，整包拉回客户端会撞 1MB 响应上限。
     const existKeys = StorageService.getWordbookKeysIncludingDeleted();
     const ignored = StorageService.getIgnoredWordbankWords();
-    const picked = await pickWorddict({
-      exclude: Array.from(existKeys),
-      ignored,
-      limit: gap,
-      seed: Number(today.replace(/-/g, '')) || 0,
-    });
+    const seed = Number(today.replace(/-/g, '')) || 0;
+    const activeLibraryId = settings.activeLibraryId || 'all';
 
-    // 候选池空 → 从已学词按复习间隔抽到期复习词
-    let candidates = picked.candidates > 0 ? picked.words : pickReviewFallback(words, records, dailyLimit);
-    if (candidates.length === 0) return { added: 0, exhausted: true };
+    let candidates = [];
+    let usingClientLibrary = false;
 
-    // 诊断：打印词库候选词是否带扩展字段，用于确认 wordict 云函数是否已部署（FIELDS 修复上线）
-    // 以及 worddict 集合里这些字段是否真有值。连接真机点「继续学习」即可在 console 看到。
-    if (picked.candidates > 0 && picked.words[0]) {
-      const s = picked.words[0];
-      console.log(
-        '[AutoWord][诊断] 词库候选样本 keys=',
-        Object.keys(s).join(','),
-        '| 词根=', !!s.etymology,
-        '| 易混词=', !!(s.similar_words && s.similar_words.length),
-        '| 记忆=', !!s.memory_tip,
-        '| 音标UK=', !!s.pronunciation_uk,
-      );
+    // 内置词库：候选池在客户端本地完成，确定性洗牌代替考频排序（同 seed 稳定、跨天轮换）。
+    if (activeLibraryId !== 'all') {
+      const libWords = getLibraryWords(activeLibraryId);
+      if (libWords && libWords.length) {
+        usingClientLibrary = true;
+        const excludeSet = new Set(
+          [...existKeys, ...ignored].map((k) => String(k).toLowerCase())
+        );
+        const pool = libWords.filter((w) => !excludeSet.has(String(w).toLowerCase()));
+        candidates = seededShuffle(pool, seed)
+          .slice(0, gap)
+          .map((w) => ({ word: w }));
+        if (candidates.length === 0) return { added: 0, exhausted: true };
+      }
+      // libWords 为空（未知词库）→ 回落云端考研词库
+    }
+
+    if (!usingClientLibrary) {
+      // 云端考研词库：挑选放服务端做 —— 词库 3.4MB，整包拉回客户端会撞 1MB 响应上限。
+      const picked = await pickWorddict({
+        exclude: Array.from(existKeys),
+        ignored,
+        limit: gap,
+        seed,
+      });
+
+      // 候选池空 → 从已学词按复习间隔抽到期复习词
+      candidates = picked.candidates > 0 ? picked.words : pickReviewFallback(words, records, dailyLimit);
+      if (candidates.length === 0) return { added: 0, exhausted: true };
+
+      // 诊断：打印词库候选词是否带扩展字段，用于确认 wordict 云函数是否已部署（FIELDS 修复上线）
+      // 以及 worddict 集合里这些字段是否真有值。连接真机点「继续学习」即可在 console 看到。
+      if (picked.candidates > 0 && picked.words[0]) {
+        const s = picked.words[0];
+        console.log(
+          '[AutoWord][诊断] 词库候选样本 keys=',
+          Object.keys(s).join(','),
+          '| 词根=', !!s.etymology,
+          '| 易混词=', !!(s.similar_words && s.similar_words.length),
+          '| 记忆=', !!s.memory_tip,
+          '| 音标UK=', !!s.pronunciation_uk,
+        );
+      }
     }
 
     let added = 0;

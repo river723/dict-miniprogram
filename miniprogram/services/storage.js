@@ -193,9 +193,16 @@ const DEFAULT_SETTINGS = {
   articleWordCount: 10,      // 5 - 20
   articleLength: 200,        // 100 - 500，步长 50
   aiProvider: 'deepseek',
+  activeLibraryId: 'all',   // 激活词库：'all'=云端考研词库 / 'ielts'=内置雅思基础词汇
 };
 
 const getSettings = () => ({ ...DEFAULT_SETTINGS, ...read(K.settings, {}) });
+
+/** 当前激活词库 id（自动配词据此切换候选来源）；非法值回落 'all'。 */
+const getActiveLibraryId = () => {
+  const id = getSettings().activeLibraryId;
+  return id === 'ielts' ? 'ielts' : 'all';
+};
 
 async function saveSettings(patch) {
   const s = { ...getSettings(), ...patch };
@@ -439,7 +446,7 @@ export default {
   getStudyPlans, addStudyPlan, completePlan,
   getWrongQuestions, getWrongQuestionByWord, addOrUpdateWrongQuestion, removeWrongQuestion,
   recordWrongAnswer, recordWrongCorrect,
-  getSettings, saveSettings, resetSettings, clearAllData, DEFAULT_SETTINGS,
+  getSettings, saveSettings, resetSettings, clearAllData, DEFAULT_SETTINGS, getActiveLibraryId,
   getAutoFillLastDate, setAutoFillLastDate,
   getFlag, setFlag,
   getIgnoredWordbankWords, saveIgnoredWordbankWords,

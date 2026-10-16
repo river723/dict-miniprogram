@@ -34,3 +34,12 @@ export async function pickWorddict({ exclude = [], ignored = [], limit = 10, see
   });
   return { words: res.words || [], candidates: Number(res.candidates) || 0 };
 }
+
+/**
+ * 词库真实总词条数（走云端 count，区别于 pick 的 candidates 短路计数器）。
+ * @returns {Promise<number>}
+ */
+export async function countWorddict() {
+  const res = await callCloud('worddict', { action: 'count' });
+  return Number(res.total) || 0;
+}

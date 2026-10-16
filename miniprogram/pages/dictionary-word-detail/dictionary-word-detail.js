@@ -5,6 +5,7 @@
  */
 import StorageService from '../../services/storage';
 import { searchWorddict } from '../../services/worddict';
+import { getLibrary, getLibraryWords } from '../../services/libraries';
 import { applyTheme } from '../../utils/theme';
 import { createTtsPlayer } from '../../utils/tts';
 
@@ -28,10 +29,16 @@ Page({
     saving: false,
     showAdd: false,
     notFound: false,
+    localOnly: false,
+    libraryName: '',
   },
 
   onLoad(options) {
     this.key = decodeURIComponent((options && options.word) || '');
+    const dictId = decodeURIComponent((options && options.dictId) || '');
+    const lib = dictId ? getLibrary(dictId) : null;
+    this.localMode = !!(lib && lib.clientSide);
+    this.localDictId = dictId;
     this.load();
   },
 
@@ -46,12 +53,27 @@ Page({
       this.setData({ loading: false, notFound: true });
       return;
     }
-    this.setData({ loading: true });
+    this.setData({ loading: true, localOnly: false, notFound: false });
     try {
       const res = await searchWorddict({ keyword: this.key });
       const list = res.words || [];
       const hit = list.find((w) => String(w.word).toLowerCase() === this.key.toLowerCase()) || list[0] || null;
       if (!hit) {
+        // 云端未命中：若该词来自本地内置词库（如雅思纯词表），不应报"未找到"，
+        // 而是渲染本地词条视图（单词可发音、可加生词本，仅暂无详细释义）。
+        if (this.localMode && this.isInLocalLibrary(this.key)) {
+          const lib = getLibrary(this.localDictId);
+          this.setData({
+            loading: false,
+            notFound: false,
+            localOnly: true,
+            libraryName: lib ? lib.name : '',
+            word: { word: this.key },
+            definitions: [],
+          });
+          this.refreshFlags();
+          return;
+        }
         this.setData({ loading: false, notFound: true, word: null });
         return;
       }
@@ -100,6 +122,14 @@ Page({
     });
   },
 
+  /** 该词是否属于当前本地内置词库（大小写不敏感）。 */
+  isInLocalLibrary(word) {
+    if (!this.localMode || !this.localDictId) return false;
+    const list = getLibraryWords(this.localDictId) || [];
+    const k = String(word).toLowerCase();
+    return list.some((w) => String(w).toLowerCase() === k);
+  },
+
   onUnload() {
     if (this.tts) this.tts.destroy();
   },
@@ -141,11 +171,11 @@ Page({
           is_core: d.is_core,
           is_rare_sense: d.is_rare_sense,
         })),
-        pronunciation_uk: w.pronunciation_uk,
-        pronunciation_us: w.pronunciation_us,
-        etymology: w.etymology,
-        memory_tip: w.memory_tip,
-        similar_words: w.similar,
+        pronunciation_uk: w.pronunciation_uk || '',
+        pronunciation_us: w.pronunciation_us || '',
+        etymology: w.etymology || '',
+        memory_tip: w.memory_tip || '',
+        similar_words: w.similar || [],
       });
       this.setData({ saving: false, showAdd: false, inWordbook: true });
       wx.showToast({ title: '已加入生词本', icon: 'success' });

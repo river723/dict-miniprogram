@@ -30,7 +30,8 @@ Page({
   },
 
   refresh() {
-    this.setData({ settings: StorageService.getSettings() });
+    const settings = StorageService.getSettings();
+    this.setData({ settings });
   },
 
   // ---------- 外观 ----------

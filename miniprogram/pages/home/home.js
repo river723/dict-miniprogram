@@ -6,6 +6,7 @@
 import StorageService from '../../services/storage';
 import { getWeeklyTrend } from '../../services/studyPlan';
 import { fillTodayIfNeeded, getLastFillResult, enrichWordbookOnce } from '../../services/autoWord';
+import { getLibrary } from '../../services/libraries';
 import { formatDate } from '../../utils/util';
 import { applyTheme } from '../../utils/theme';
 
@@ -140,6 +141,8 @@ Page({
     todayReviewIds: [],
     showTodayReview: false,
 
+    activeLibraryName: '全部（考研词库）',
+
     recentWords: [],
     weeklyStudied: 0,
     avgDaily: 0,
@@ -159,7 +162,10 @@ Page({
   async refresh() {
     try {
       const settings = StorageService.getSettings();
-      this.setData({ autoAddEnabled: settings.autoAddNewWords !== false });
+      this.setData({
+        autoAddEnabled: settings.autoAddNewWords !== false,
+        activeLibraryName: (getLibrary(settings.activeLibraryId) || { name: '全部（考研词库）' }).name,
+      });
 
       const added = await fillTodayIfNeeded();
       if (added > 0) {

@@ -118,7 +118,7 @@
           </view>
           <view class="todo__body">
             <text class="todo__title">词库</text>
-            <text class="todo__desc">浏览全部词库 · 按字母查询单词</text>
+            <text class="todo__desc">当前：{{activeLibraryName}} · 浏览 / 按字母查询单词</text>
           </view>
           <mg-icon name="chevron-right" size="40" color="#8A8E89" />
         </view>

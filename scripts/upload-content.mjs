@@ -1,5 +1,5 @@
 /**
- * 内容上传：memo-grad src/data/realExams.json、stories.json → 云存储。
+ * 内容上传：memo-grad src/data/stories.json → 云存储（真题数据路径已移除）。
  * 拆分上传（按套卷 / 按章），运行时小程序按篇拉取，避免单文件过大。
  * 幂等：同路径覆盖上传。
  *

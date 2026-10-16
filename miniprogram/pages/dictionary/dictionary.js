@@ -1,19 +1,18 @@
 /**
- * 词库选择页 —— 对齐 memo-grad DictionaryScreen。
- * 列出可用词库（当前内置 1 个），点「打开词库」进入浏览/查询页。
- * 词条数由云函数 pick 的 candidates 实时得出（加载前显示「? 词」）。
+ * 词库列表页 —— 选择激活词库 + 打开浏览。
+ *
+ * 设计：单一「激活词库」决定自动配词从哪取候选（与设置页无关，选择在此页完成）。
+ * 每个卡片展示：名称 / 描述 / 词数 / 激活态（使用中），并提供两个动作：
+ *   - 「设为本词库」：写入 settings.activeLibraryId（单选激活），切换后清空自动配词日期让首页按新词库补足。
+ *   - 「打开」：进入 dictionary-browse 浏览/查询该词库的单词。
+ *
+ * 词数：客户端内置词库（ielts）直接取本地数组长度；云端词库（all）由 pickWorddict 的
+ * candidates 实时得出（加载前显示「? 词」）。
  */
-import { pickWorddict } from '../../services/worddict';
+import { LIBRARIES, getLibrary, getLibraryWords } from '../../services/libraries';
+import StorageService from '../../services/storage';
+import { countWorddict } from '../../services/worddict';
 import { applyTheme } from '../../utils/theme';
-
-const DICTIONARIES = [
-  {
-    id: 'local',
-    name: '考研核心词库',
-    description:
-      '内置增强词库，剔除了超简单初高中基础词、小众专业冷词、极少考察的古旧词汇，只保留真题有考察价值的词，含释义、例句、词源与记忆技巧，可离线浏览与查询。',
-  },
-];
 
 /** 千分位（不用 toLocaleString，避免运行时差异）。 */
 function group(n) {
@@ -23,28 +22,65 @@ function group(n) {
 }
 
 Page({
-  onShow() {
-    applyTheme(this);
-  },
   data: {
-    dicts: DICTIONARIES.map((d) => ({ ...d, countText: '? 词' })),
+    dicts: [],
+    activeId: 'all',
     loading: true,
     error: '',
   },
 
+  onShow() {
+    applyTheme(this);
+    // 始终基于 LIBRARIES 重建（不依赖 onLoad 时序），保留已拉到的云端词数。
+    this.buildDicts();
+  },
+
   onLoad() {
+    this.buildDicts();
     this.loadCounts();
   },
 
-  async loadCounts() {
+  /** 构造基础卡片（含本地词库词数，云端词库词数先占位「? 词」）。 */
+  buildDicts() {
     try {
-      // limit=1 只取 1 个词，candidates 即候选池总量（排除项为空 → 全库词条数）。
-      const res = await pickWorddict({ limit: 1, seed: 1 });
-      const total = group(res.candidates || 0);
+      const prev = this.data.dicts || [];
+      const prevMap = {};
+      prev.forEach((d) => { prevMap[d.id] = d; });
+      const activeId = StorageService.getActiveLibraryId();
+      const dicts = LIBRARIES.map((d) => {
+        const words = d.clientSide ? getLibraryWords(d.id) : null;
+        const prevCount = prevMap[d.id] && prevMap[d.id].countText;
+        return {
+          id: d.id,
+          name: d.name,
+          desc: d.desc,
+          clientSide: d.clientSide,
+          active: d.id === activeId,
+          countText: d.clientSide
+            ? `${group(words ? words.length : 0)} 词`
+            : (prevCount || '? 词'),
+        };
+      });
+      this.setData({ dicts, activeId });
+    } catch (e) {
+      console.error('[dictionary] buildDicts 失败', e);
+    }
+  },
+
+  /** 拉取云端词库的真实总词数（内置词库已在 buildDicts 算好，跳过）。 */
+  async loadCounts() {
+    const needCloud = this.data.dicts.filter((d) => !d.clientSide);
+    if (needCloud.length === 0) {
+      this.setData({ loading: false });
+      return;
+    }
+    try {
+      const total = group(await countWorddict());
       this.setData({
         loading: false,
         error: '',
-        dicts: this.data.dicts.map((d) => ({ ...d, countText: `${total} 词` })),
+        dicts: this.data.dicts.map((d) =>
+          d.clientSide ? d : { ...d, countText: `${total} 词` }),
       });
     } catch (e) {
       console.error('[dictionary] 词库 meta 拉取失败', e);
@@ -56,8 +92,22 @@ Page({
     this.loadCounts().then(() => wx.stopPullDownRefresh(), () => wx.stopPullDownRefresh());
   },
 
+  /** 单选激活某个词库（自动配词来源）。 */
+  async onLibraryChange(e) {
+    const id = e.currentTarget.dataset.value;
+    if (!id || id === this.data.activeId) return;
+    await StorageService.saveSettings({ activeLibraryId: id });
+    // 清空自动配词日期，让首页刷新时按新词库补足新候选（不删已有生词）。
+    StorageService.setAutoFillLastDate('');
+    this.buildDicts();
+    this.loadCounts();
+    const lib = getLibrary(id);
+    wx.showToast({ title: `已切换：${lib ? lib.name : id}`, icon: 'none' });
+  },
+
   openDict(e) {
     const id = e.currentTarget.dataset.id;
+    if (!id) return;
     wx.navigateTo({ url: `/pages/dictionary-browse/dictionary-browse?dictId=${id}` });
   },
 });

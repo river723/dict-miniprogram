@@ -8,7 +8,8 @@
  *   - 搜索走服务端 keyword 查询（释义不参与检索，与云函数能力一致）；
  *   - 筛选（难度/考频）与排序在「当前已载入的这一批」上本地生效，语义与 App 一致。
  */
-import { searchWorddict, pickWorddict } from '../../services/worddict';
+import { searchWorddict, countWorddict } from '../../services/worddict';
+import { getLibrary, getLibraryWords } from '../../services/libraries';
 import { applyTheme } from '../../utils/theme';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -62,14 +63,14 @@ function seededShuffle(arr, seed) {
   return a;
 }
 
-function toRow(entry) {
+function toRow(entry, localMode) {
+  const def = entry.definitions && entry.definitions[0] && entry.definitions[0].meaning;
   const level = Math.max(1, Math.min(5, entry.difficulty || 3));
   return {
     key: String(entry.word).toLowerCase(),
     word: entry.word,
-    meaning: (entry.definitions || [])[0] && (entry.definitions || [])[0].meaning
-      ? (entry.definitions || [])[0].meaning
-      : '暂无释义',
+    meaning: def || '',
+    isLocal: !!(localMode && !def), // 内置纯词表：无释义，不刷「暂无释义」
     stars: pad5(entry.difficulty, '★'),
     squares: pad5(entry.frequency, '■'),
     diffColor: DIFF_COLORS[level - 1],
@@ -83,8 +84,9 @@ Page({
     applyTheme(this);
   },
   data: {
-    dictId: 'local',
+    dictId: 'all',
     dictName: '考研核心词库',
+    localMode: false,
     totalText: '?',
     loading: true,
 
@@ -111,24 +113,47 @@ Page({
   },
 
   onLoad(options) {
-    if (options && options.dictId) this.setData({ dictId: options.dictId });
+    const dictId = (options && options.dictId) || 'all';
+    const lib = getLibrary(dictId);
+    const localMode = !!lib.clientSide;
+    this.localWords = localMode ? (getLibraryWords(dictId) || []) : null;
+    this.setData({ dictId, dictName: lib.name, localMode });
     this.raw = [];
-    this.loadTotal();
-    this.loadLetter('A');
+    if (localMode) {
+      this.loadTotalLocal();
+      this.loadLetter('A');
+    } else {
+      this.loadTotal();
+      this.loadLetter('A');
+    }
   },
 
-  /** 全库词条数（status bar 展示）。 */
+  /** 全库词条数（status bar 展示），走云端 count 取真实总词数。 */
   async loadTotal() {
     try {
-      const res = await pickWorddict({ limit: 1, seed: 1 });
-      this.setData({ totalText: String(res.candidates || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') });
+      const total = await countWorddict();
+      this.setData({ totalText: String(total || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') });
     } catch (e) {
       this.setData({ totalText: '?' });
     }
   },
 
+  /** 本地词库词条数（直接取内置数组长度）。 */
+  loadTotalLocal() {
+    this.setData({
+      totalText: String((this.localWords || []).length).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+    });
+  },
+
   async loadLetter(letter) {
     this.setData({ loading: true, letter, query: '', hitText: '' });
+    if (this.data.localMode) {
+      const L = String(letter).toLowerCase();
+      this.raw = (this.localWords || []).filter((w) => String(w)[0].toLowerCase() === L).map((w) => ({ word: w }));
+      this.setData({ loading: false });
+      this.apply();
+      return;
+    }
     try {
       const res = await searchWorddict({ prefix: String(letter).toLowerCase() });
       this.raw = res.words || [];
@@ -145,6 +170,13 @@ Page({
   async runSearch(q) {
     if (!q) {
       this.loadLetter(this.data.letter);
+      return;
+    }
+    if (this.data.localMode) {
+      const kw = String(q).toLowerCase();
+      this.raw = (this.localWords || []).filter((w) => String(w).toLowerCase().includes(kw)).map((w) => ({ word: w }));
+      this.setData({ loading: false });
+      this.apply();
       return;
     }
     this.setData({ loading: true });
@@ -176,7 +208,7 @@ Page({
     else list.sort((a, b) => String(a.word).toLowerCase().localeCompare(String(b.word).toLowerCase()));
 
     this.setData({
-      items: list.map(toRow),
+      items: list.map((e) => toRow(e, this.data.localMode)),
       hitText: this.data.query.trim() ? String(list.length) : '',
     });
   },
@@ -260,6 +292,8 @@ Page({
   openWord(e) {
     const word = e.currentTarget.dataset.word;
     if (!word) return;
-    wx.navigateTo({ url: `/pages/dictionary-word-detail/dictionary-word-detail?word=${encodeURIComponent(word)}` });
+    wx.navigateTo({
+      url: `/pages/dictionary-word-detail/dictionary-word-detail?word=${encodeURIComponent(word)}&dictId=${encodeURIComponent(this.data.dictId)}`,
+    });
   },
 });

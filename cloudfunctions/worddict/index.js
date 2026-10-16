@@ -34,6 +34,13 @@ exports.main = async (event) => {
         // 这里只回传最终选中的 limit 条（几百字节到几 KB）。
         return { ok: true, ...(await pick(event)) };
       }
+      case 'count': {
+        // 词库总词条数（供词库列表/浏览页展示真实规模）。
+        // ⚠️ 千万别用 pick 的 candidates 当总数：candidates 只是自动配词算法的
+        // 短路计数器（只扫 top 频率页、集满 200 即停），不是库的真实大小。
+        const res = await db.collection(COL).count();
+        return { ok: true, total: res.total };
+      }
       case 'all': {
         // ⚠️ 不要给客户端用：见 pick 的说明，4801 条会超过 1MB 响应上限。
         // 保留此 action 仅供开发者工具「云端测试」排查，且超体积时直接给出明确错误。

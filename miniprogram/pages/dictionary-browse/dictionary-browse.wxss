@@ -127,6 +127,19 @@
   text-overflow: ellipsis;
 }
 
+.dbrow__meaning--empty { color: var(--mg-text-3); }
+
+.dbrow__tag {
+  display: inline-block;
+  margin-top: 6rpx;
+  padding: 2rpx 12rpx;
+  font-size: 20rpx;
+  line-height: 30rpx;
+  color: var(--mg-accent, #2E5E4E);
+  background: var(--mg-accent-soft, rgba(46, 94, 78, 0.10));
+  border-radius: 999rpx;
+}
+
 .dbrow__meta {
   flex-shrink: 0;
   display: flex;

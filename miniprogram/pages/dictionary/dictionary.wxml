@@ -1,23 +1,40 @@
 <view class="mg-page dict {{themeClass}}">
 
   <view class="dict__sub">
-    <text>选择一个词库打开，可浏览全部单词或按单词查询</text>
+    <text>选择一个词库作为自动配词来源，或打开浏览全部单词</text>
   </view>
 
   <view class="dict__list">
-    <view wx:for="{{dicts}}" wx:key="id" class="dcard">
+    <view
+      wx:for="{{dicts}}"
+      wx:key="id"
+      class="dcard {{item.active ? 'dcard--active' : ''}}"
+    >
       <view class="dcard__head">
-        <text class="dcard__name">{{item.name}}</text>
-        <view class="dcard__badge">
-          <text>{{item.countText}}</text>
+        <view class="dcard__title">
+          <text class="dcard__name">{{item.name}}</text>
+          <view wx:if="{{item.active}}" class="dcard__check">
+            <mg-icon name="check" size="28" color="#2E5E4E" />
+            <text>使用中</text>
+          </view>
         </view>
+        <view class="dcard__badge"><text>{{item.countText}}</text></view>
       </view>
 
-      <text class="dcard__desc">{{item.description}}</text>
+      <text class="dcard__desc">{{item.desc}}</text>
 
       <view class="dcard__actions">
         <mg-button
-          title="打开词库"
+          wx:if="{{!item.active}}"
+          title="设为本词库"
+          variant="secondary"
+          size="md"
+          icon="check-circle-outline"
+          data-value="{{item.id}}"
+          bind:tap="onLibraryChange"
+        />
+        <mg-button
+          title="打开"
           variant="primary"
           size="md"
           icon="book-open-variant"
@@ -30,11 +47,6 @@
     <view wx:if="{{error}}" class="dict__err">
       <mg-icon name="alert-circle-outline" size="32" color="#B5462E" />
       <text>{{error}}</text>
-    </view>
-
-    <view class="dict__foot">
-      <mg-icon name="lightning-bolt-outline" size="26" color="#8A8E89" />
-      <text>更多词库持续整理中</text>
     </view>
   </view>
 </view>

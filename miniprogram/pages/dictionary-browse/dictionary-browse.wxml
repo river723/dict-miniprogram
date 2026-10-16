@@ -30,14 +30,16 @@
       <mg-icon name="sort" size="26" color="#5C605C" />
       <text>{{sortLabel}}</text>
     </view>
-    <view class="chip {{diffFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openDiff">
-      <mg-icon name="filter-variant" size="26" color="{{diffFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
-      <text>{{diffLabel}}</text>
-    </view>
-    <view class="chip {{freqFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openFreq">
-      <mg-icon name="filter-variant" size="26" color="{{freqFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
-      <text>{{freqLabel}}</text>
-    </view>
+    <block wx:if="{{!localMode}}">
+      <view class="chip {{diffFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openDiff">
+        <mg-icon name="filter-variant" size="26" color="{{diffFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
+        <text>{{diffLabel}}</text>
+      </view>
+      <view class="chip {{freqFilter !== null ? 'chip--on' : ''}}" hover-class="mg-hover" bindtap="openFreq">
+        <mg-icon name="filter-variant" size="26" color="{{freqFilter !== null ? '#2E5E4E' : '#5C605C'}}" />
+        <text>{{freqLabel}}</text>
+      </view>
+    </block>
   </view>
 
   <!-- A–Z 索引（小程序按字母分页取词） -->
@@ -78,9 +80,11 @@
     >
       <view class="dbrow__info">
         <text class="dbrow__word">{{item.word}}</text>
-        <text class="dbrow__meaning">{{item.meaning}}</text>
+        <text wx:if="{{item.isLocal}}" class="dbrow__tag">本地词 · 点按发音</text>
+        <text wx:elif="{{item.meaning}}" class="dbrow__meaning">{{item.meaning}}</text>
+        <text wx:else class="dbrow__meaning dbrow__meaning--empty">暂无释义</text>
       </view>
-      <view class="dbrow__meta">
+      <view class="dbrow__meta" wx:if="{{!item.isLocal}}">
         <text class="dbrow__diff" style="color:{{item.diffColor}}">{{item.stars}}</text>
         <text class="dbrow__freq">{{item.squares}}</text>
       </view>
