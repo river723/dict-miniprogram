@@ -47,6 +47,12 @@ const stripTags = (s) => s.replace(/<[^>]+>/g, '');
 const squeeze = (s) => s.replace(/[\u0000-\u001f]+/g, '').replace(/\s+/g, ' ').trim();
 const isWord = (w) => /^[a-zA-Z][a-zA-Z'-]*$/.test(w);
 
+// 学科标签：欧路词典用它标注词条领域，形如 [化] [计] [医][法]，**不是音标**
+// （eudic 里 distil / guideline / odyssey 等 18 个词只有标签没有音标，属源数据缺失）
+const SUBJECT_TAGS = new Set(['化', '计', '医', '法', '律', '建', '电', '机', '生', '物', '地', '史',
+  '语', '哲', '心', '农', '经', '商', '政', '音', '体', '美', '数', '物', '冶', '铁', '矿', '航',
+  '军', '测', '绘', '印', '染', '织', '食', '药']);
+
 const entries = {}; // 统一用小写 key，另存首选拼写
 const re = /<b>([^<]+)<\/b>/g;
 let m;
@@ -59,16 +65,51 @@ for (let i = 0; i < marks.length; i += 1) {
   const stop = i + 1 < marks.length ? marks[i + 1].at : full.length;
   const body = full.slice(end, stop);
 
-  // 音标：[<font ...>xxx</font>] → 取 font 内容
-  const phMatch = body.match(/\[<font face="Lucida Sans Unicode">([^<]*)<\/font>\]/);
-  const ph = phMatch ? squeeze(phMatch[1]) : '';
-
-  // 释义：剥掉音标块后按 <br /> 切段、去标签、去重、限量
+  // 音标有两种写法，都要认（只认 ① 会漏掉 42 个词）：
+  //   ① [<font face="Lucida Sans Unicode">xxx</font>]  —— 带字体标签，绝大多数词
+  //   ② [xxx]  —— 纯文本方括号，如 [5blaindfEuld] / [in5hibit] / [wQt5evE, hw-]
+  //   学科标签 [化] [计] [医] [法] 形似 ② 但**不是音标**，必须排除（见 SUBJECT_TAGS）
+  const phFont = body.match(/\[<font face="Lucida Sans Unicode">([^<]*)<\/font>\]/);
+  let ph = phFont ? squeeze(phFont[1]) : '';
   const rest = body.replace(/\[<font face="Lucida Sans Unicode">[^<]*<\/font>\]/g, '');
+
+  // 释义：先按 <br /> 切段（顺序不能反：先剥标签会把 <br /> 当标签删掉导致段落粘连）
   const senses = rest
     .split(/<br\s*\/?>/gi)
     .map((s) => squeeze(stripTags(s)))
     .filter(Boolean);
+
+  // ② 式音标总在**第一段**的开头，就在这里补提（须在去重/截断之前）
+  if (!ph && senses.length) {
+    const first = senses[0];
+    const closed = first.match(/^\[([^\]]{1,60})\]\s*([\s\S]*)$/);
+    // 未闭合的 `[`：eudic 对多音标词做显示截断（postgraduate = [5pEust5^rAdjuit, 5pEust5^rA...）
+    const open = !closed ? first.match(/^\[([^\]<]{2,60})\.{2,}$/) : null;
+    const hit = closed || open;
+    const inner = hit ? hit[1] : '';
+    if (inner && !/[\u4e00-\u9fa5]/.test(inner) && !SUBJECT_TAGS.has(inner.trim())) {
+      ph = squeeze(inner).replace(/\.+$/, '');
+      // closed 形态把方括号后的正文还回释义；open 形态整段就是音标，整段丢弃
+      if (closed && hit[2].trim()) senses[0] = squeeze(hit[2]);
+      else senses.shift();
+    }
+  }
+
+  // ③ 校正：font 版偶尔抓到的是**词形本身**而非音标（如 sphinx 抓到 `[Sphinx]`，
+  //    真音标 `[sfiNks]` 掉在下一段）。判据很硬：ph 去掉非字母后等于单词本身。
+  const barePh = (s) => String(s).toLowerCase().replace(/[^a-z]/g, '');
+  const bareWord = (s) => String(s).toLowerCase().replace(/[^a-z-]/g, '');
+  if (ph && bareWord(word) && barePh(ph) === bareWord(word)) {
+    const at = senses.findIndex((s) => /^\[[^\]]{1,60}\]$/.test(s));
+    if (at >= 0) {
+      const inner = senses[at].slice(1, -1);
+      if (!/[\u4e00-\u9fa5]/.test(inner) && !SUBJECT_TAGS.has(inner.trim())) {
+        ph = squeeze(inner);
+        senses.splice(at, 1);
+      }
+    }
+  }
+
   const uniq = [];
   senses.forEach((s) => { if (!uniq.includes(s)) uniq.push(s); });
   let def = uniq.slice(0, MAX_SENSES).join('；');

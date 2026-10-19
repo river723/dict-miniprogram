@@ -21,7 +21,8 @@
         <view class="dwd__info">
           <text class="dwd__word">{{word.word}}</text>
           <text wx:if="{{localPh}}" class="dwd__ph">{{localPh}}</text>
-          <text wx:else class="dwd__ph dwd__ph--hint">来自「{{libraryName}}」</text>
+          <!-- 少数词源数据本就没有音标（4491 词中 19 词）：说明成因 + 指向右侧喇叭(TTS)，不留空 -->
+          <text wx:else class="dwd__ph dwd__ph--hint">「{{libraryName}}」未收录音标 · 点右侧喇叭听发音</text>
         </view>
         <view class="dwd__speak" hover-class="mg-hover" bindtap="playAudio">
           <mg-icon name="{{soundEnabled ? 'volume-high' : 'volume-off'}}" size="52" color="#2E5E4E" />

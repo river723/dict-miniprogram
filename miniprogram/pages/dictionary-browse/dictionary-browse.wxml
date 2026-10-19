@@ -85,12 +85,13 @@
         <text wx:if="{{item.meaning}}" class="dbrow__meaning">{{item.meaning}}</text>
         <text wx:else class="dbrow__meaning dbrow__meaning--empty">{{item.isLocal ? '本地词 · 点按发音' : '暂无释义'}}</text>
       </view>
-      <!-- 本地词库词条也带真实考频/难度（f/k），故星标不再按 isLocal 屏蔽 -->
-      <view class="dbrow__meta" wx:if="{{item.frequency > 0}}">
+      <!-- 右侧栏：星标（本地词库词条也带真实考频/难度 f/k，不再按 isLocal 屏蔽）
+           + 音标（4491 词中有 19 词源数据无音标，此时只显示星标，不留空位） -->
+      <view class="dbrow__meta" wx:if="{{item.stars || item.squares || item.ph}}">
         <text class="dbrow__diff" style="color:{{item.diffColor}}">{{item.stars}}</text>
         <text class="dbrow__freq">{{item.squares}}</text>
+        <text wx:if="{{item.ph}}" class="dbrow__ph">{{item.ph}}</text>
       </view>
-      <text wx:else class="dbrow__ph">{{item.ph}}</text>
     </view>
     <view class="db__bottomspace"></view>
   </view>

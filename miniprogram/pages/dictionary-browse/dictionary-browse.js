@@ -83,7 +83,9 @@ function toRow(entry, cloud) {
   // 归一到 difficulty/frequency：本地用短字段名 f/k，避免 toRow 里出现两套取值分支
   const rawDiff = isLocalEntry ? entry.k : entry.difficulty;
   const rawFreq = isLocalEntry ? entry.f : entry.frequency;
-  const level = Math.max(1, Math.min(5, rawDiff || 3));
+  // ⚠ 没有值就不要伪造：早先缺省给 3★、pad5(0) 又返回 '☆☆☆☆☆'/'□□□□□'，
+  // 会让「云端返回但字段缺失」的行看起来像有真实考频。空串 → WXML 直接不渲染。
+  const level = rawDiff ? Math.max(1, Math.min(5, rawDiff)) : 0;
   return {
     key: String(word).toLowerCase(),
     word,
@@ -91,9 +93,9 @@ function toRow(entry, cloud) {
     ph,
     // 本地词条全部带释义；万一某条缺失也不刷「暂无释义」，降级为「本地词」标签
     isLocal: !!isLocalEntry,
-    stars: pad5(level, '★'),
-    squares: pad5(rawFreq, '■'),
-    diffColor: DIFF_COLORS[level - 1],
+    stars: level ? pad5(level, '★') : '',
+    squares: rawFreq ? pad5(rawFreq, '■') : '',
+    diffColor: level ? DIFF_COLORS[level - 1] : '#5C605C',
     difficulty: level,
     frequency: rawFreq || 0,
   };
