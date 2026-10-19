@@ -134,7 +134,8 @@ Page({
       const defs = src.definitions || [];
       return {
         word: src.word || word,
-        phonetic: src.pronunciation_uk || src.pronunciation_us || src.phonetic || '',
+        // 雅思集合用 phonetic_uk 存音标
+        phonetic: src.phonetic_uk || src.pronunciation_uk || src.pronunciation_us || src.phonetic || '',
         meaning: defs.length
           ? defs.map((d) => `${d.part_of_speech || ''} ${d.meaning || ''}`.trim()).join('\n')
           : '暂无释义',
@@ -152,8 +153,14 @@ Page({
 
     wx.showLoading({ title: '查词中' });
     try {
-      const res = await searchWorddict({ keyword: lower });
-      const hit = (res.words || []).find((w) => String(w.word).toLowerCase() === lower);
+      // 先考研库（故事词表以考研 4801 为基准），未命中再查雅思库兜底
+      let hit = null;
+      for (const lib of ['all', 'ielts']) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await searchWorddict({ keyword: lower, lib });
+        hit = (res.words || []).find((w) => String(w.word).toLowerCase() === lower);
+        if (hit) break;
+      }
       wx.hideLoading();
       if (!hit) {
         wx.showToast({ title: '词库中暂无该词', icon: 'none' });

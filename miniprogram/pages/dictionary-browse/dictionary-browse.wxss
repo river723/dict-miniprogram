@@ -129,6 +129,19 @@
 
 .dbrow__meaning--empty { color: var(--mg-text-3); }
 
+/* 本地词库行的右侧音标（替代云端的难度/考频星） */
+.dbrow__ph {
+  flex-shrink: 0;
+  max-width: 220rpx;
+  font-size: 22rpx;
+  line-height: 34rpx;
+  color: var(--mg-text-3);
+  text-align: right;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .dbrow__tag {
   display: inline-block;
   margin-top: 6rpx;

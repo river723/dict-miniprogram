@@ -29,7 +29,7 @@
           title="设为本词库"
           variant="secondary"
           size="md"
-          icon="check-circle-outline"
+          icon="check-decagram-outline"
           data-value="{{item.id}}"
           bind:tap="onLibraryChange"
         />

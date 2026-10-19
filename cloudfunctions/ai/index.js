@@ -6,6 +6,8 @@
  *   story    依据给定词表生成短文（上下文记词）
  *   definition_questions  生成「英文释义单选题」（题干含目标词，选项为英文释义）
  *   cloze_questions       生成「完形选词题」（题干留 [BLANK]，选项为单词）
+ *   define                生成单词的完整词条（释义含例句 / 词根词缀 / 记忆技巧 / 易混词），
+ *                         供内置词库（如雅思）补全富词条，字段与云 worddict 集合对齐
  *
  * 后两个供「练习 Tab · AI 出题」使用，返回结构见各自的 build 函数。
  */
@@ -37,6 +39,7 @@ const MAX_TOKENS = {
   definition_questions: 7000,
   cloze_questions: 5000,
   real_exam_explanation: 500,
+  define: 1500,
 };
 const DEFAULT_MAX_TOKENS = 2000;
 
@@ -64,6 +67,9 @@ exports.main = async (event) => {
       case 'real_exam_explanation':
         prompt = buildRealExamExplanationPrompt(event);
         break;
+      case 'define':
+        prompt = buildDefinePrompt(event.word);
+        break;
       default:
         return { ok: false, error: `unknown action: ${event.action}` };
     }
@@ -86,6 +92,39 @@ function buildAnalyzePrompt(word) {
     `  "root_analysis": "词根词缀分析",`,
     `  "memory_tip": "记忆技巧"`,
     `}`,
+  ].join('\n');
+}
+
+/**
+ * 完整词条生成：字段与云 worddict 集合对齐，供内置词库（雅思）补全富词条。
+ * 防幻觉约束写死在提示词里，调用方仍会再做结构校验（见 scripts/gen-ielts-rich.mjs）：
+ *   - 例句必须原样包含目标词，否则视为编造；
+ *   - 没有真易混词就返回空数组，不许硬凑；
+ *   - 不确定的词源明确说「来源不详」，不许编词根。
+ */
+function buildDefinePrompt(word) {
+  return [
+    `你是雅思词汇编纂专家。请为单词 "${word}" 编写一条完整词条，严格输出以下 JSON（不要 markdown 代码块、不要任何解释文字）：`,
+    `{`,
+    `  "definitions": [`,
+    `    {"part_of_speech": "n.", "meaning": "中文释义", "example": "含该词的英文例句", "is_core": true, "is_rare_sense": false}`,
+    `  ],`,
+    `  "etymology": "词根词缀分析",`,
+    `  "similar_words": [{"word": "易混词", "relation": "spelling", "description": "为何易混及词义区别"}],`,
+    `  "memory_tip": "一句话记忆技巧",`,
+    `  "frequency": 3,`,
+    `  "difficulty": 3`,
+    `}`,
+    ``,
+    `要求：`,
+    `1. definitions 给 1-3 个义项，按重要性排序；最常用的义项 is_core=true；`,
+    `   若该词在雅思阅读中常考「熟词僻义」，把僻义单列一个义项并置 is_rare_sense=true。`,
+    `2. example 为 8-15 词的英文句子，必须原样包含单词 ${word}（允许使用其常见变形），难度贴近雅思阅读。`,
+    `3. etymology 拆解可识别的词根/词缀并说明引申过程；确实无词根可分析时，简述词源或写「来源不详」，不要编造。`,
+    `4. similar_words 只收真正易混的词（拼写相近或词义相近），relation 取值 spelling / meaning / pronunciation；`,
+    `   确实没有易混词时返回空数组 []，不要硬凑。`,
+    `5. frequency 取 1-5（该词在雅思考试中的常见程度），difficulty 取 1-5（记忆难度）。`,
+    `6. 除 similar_words 可为空数组外，其余字段均不可为空字符串。`,
   ].join('\n');
 }
 

@@ -32,7 +32,8 @@ function toRow(entry, selectedKeys) {
   return {
     key,
     word: entry.word,
-    phonetic: entry.pronunciation_uk || entry.pronunciation_us || '',
+    // 雅思集合用 phonetic_uk 存音标；考研集合无音标字段
+    phonetic: entry.phonetic_uk || entry.pronunciation_uk || entry.pronunciation_us || '',
     meaning: def.meaning || '暂无释义',
     stars: stars(entry.difficulty),
     squares: squares(entry.frequency),
@@ -72,6 +73,8 @@ Page({
     this.seedBase = Number(String(Date.now()).slice(-6));
     this.group = 0;
     this.groupWords = [];
+    // 按当前激活词库选云集合：'all' 考研 / 'ielts' 雅思（云端富词条）
+    this.activeLib = (StorageService.getSettings().activeLibraryId) || 'all';
     this.loadGroup(0);
   },
 
@@ -99,6 +102,7 @@ Page({
         ignored,
         limit: PAGE_SIZE,
         seed: this.seedBase + group,
+        lib: this.activeLib,
       });
       const words = res.words || [];
       this.groupWords = words;
@@ -153,7 +157,7 @@ Page({
     }
     this.setData({ loading: true });
     try {
-      const res = await searchWorddict({ keyword: q });
+      const res = await searchWorddict({ keyword: q, lib: this.activeLib });
       const existing = StorageService.getWordbookKeysIncludingDeleted();
       const ignored = StorageService.getIgnoredWordbankWords();
       const words = (res.words || []).filter((w) => {
@@ -302,7 +306,7 @@ Page({
         await StorageService.addWord({
           word: entry.word,
           definitions: entry.definitions || [],
-          pronunciation_uk: entry.pronunciation_uk || '',
+          pronunciation_uk: entry.phonetic_uk || entry.pronunciation_uk || '',
           pronunciation_us: entry.pronunciation_us || '',
           etymology: entry.etymology || '',
           memory_tip: entry.memory_tip || '',

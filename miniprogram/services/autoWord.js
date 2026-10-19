@@ -131,7 +131,7 @@ async function doFill(force, forceRefill) {
     // 用 search action（返回全文档，无 field 限制）补全候选词的扩展字段，
     // 这样即便线上 wordict 云函数的 pick 仍跑旧 FIELDS，自动配词补进生词本的词也能带全信息。
     const toAdd = candidates.slice(0, gap);
-    const enriched = await Promise.all(toAdd.map((e) => enrichCandidate(e)));
+    const enriched = await Promise.all(toAdd.map((e) => enrichCandidate(e, activeLibraryId)));
     for (const entry of enriched) {
       // 复习兜底拿回来的是生词本里已有的词，不能重复添加
       const key = String(entry.word || '').toLowerCase();
@@ -169,33 +169,50 @@ function pickReviewFallback(myWords, records, limit) {
 }
 
 /**
+ * 查某个词的云端完整词条（自动配词 / 回填生词本用）。
+ * 按传入词库先查自己的集合，未命中再查考研集合兜底 ——
+ * 雅思 4491 词中 2758 个与考研重叠，两边都有完整词条；云端雅思集合还没导入时，
+ * 这条兜底保证老行为不退化（早年就是只查考研库）。
+ */
+async function lookupFullWord(word, lib) {
+  const libs = lib === 'all' ? ['all'] : [lib, 'all'];
+  for (const l of libs) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const { words } = await searchWorddict({ keyword: word, lib: l });
+      const full = words && words.find(
+        (w) => String(w.word).toLowerCase() === String(word).toLowerCase()
+      );
+      if (full) return full;
+    } catch (e) { /* 这个库没查到/查失败，换下一个 */ }
+  }
+  return null;
+}
+
+/**
  * 补全单条候选词的扩展字段（词根/记忆/易混词/音标）。
  * 用 search action（返回全文档，无 field 限制）兜底——不依赖 wordict 云函数 pick 的 FIELDS 部署。
  * 若 pick 已返回扩展字段则直接返回；补全失败也不阻断配词（原样返回）。
+ * @param {object} entry 候选词
+ * @param {string} lib   候选词所属词库（决定先查哪个云集合）
  */
-async function enrichCandidate(entry) {
+async function enrichCandidate(entry, lib) {
   if (entry.etymology || (entry.similar_words && entry.similar_words.length) || entry.memory_tip) {
     return entry;
   }
-  try {
-    const { words } = await searchWorddict({ keyword: entry.word });
-    const full = words && words.find(
-      (w) => String(w.word).toLowerCase() === String(entry.word).toLowerCase()
-    );
-    if (!full) return entry;
-    return {
-      ...entry,
-      etymology: entry.etymology || full.etymology || '',
-      memory_tip: entry.memory_tip || full.memory_tip || '',
-      similar_words: entry.similar_words && entry.similar_words.length
-        ? entry.similar_words
-        : (full.similar_words || []),
-      pronunciation_uk: entry.pronunciation_uk || full.pronunciation_uk || '',
-      pronunciation_us: entry.pronunciation_us || full.pronunciation_us || '',
-    };
-  } catch (e) {
-    return entry;
-  }
+  const full = await lookupFullWord(entry.word, lib);
+  if (!full) return entry;
+  return {
+    ...entry,
+    etymology: entry.etymology || full.etymology || '',
+    memory_tip: entry.memory_tip || full.memory_tip || '',
+    similar_words: entry.similar_words && entry.similar_words.length
+      ? entry.similar_words
+      : (full.similar_words || []),
+    // 雅思集合用 phonetic_uk 存音标；考研集合无音标字段（发音走 TTS）
+    pronunciation_uk: entry.pronunciation_uk || full.phonetic_uk || full.pronunciation_uk || '',
+    pronunciation_us: entry.pronunciation_us || full.pronunciation_us || '',
+  };
 }
 
 /**
@@ -214,21 +231,19 @@ export async function enrichWordbookOnce() {
       return;
     }
     const CHUNK = 8;
+    const lib = (StorageService.getSettings().activeLibraryId) || 'all';
     for (let i = 0; i < needEnrich.length; i += CHUNK) {
       const batch = needEnrich.slice(i, i + CHUNK);
       // eslint-disable-next-line no-await-in-loop
       await Promise.all(batch.map(async (w) => {
         try {
-          const { words } = await searchWorddict({ keyword: w.word });
-          const full = words && words.find(
-            (f) => String(f.word).toLowerCase() === String(w.word).toLowerCase()
-          );
+          const full = await lookupFullWord(w.word, lib);
           if (full) {
             await StorageService.updateWord(w.id, {
               etymology: full.etymology || '',
               memory_tip: full.memory_tip || '',
               similar_words: full.similar_words || [],
-              pronunciation_uk: full.pronunciation_uk || '',
+              pronunciation_uk: full.phonetic_uk || full.pronunciation_uk || '',
               pronunciation_us: full.pronunciation_us || '',
             });
           }

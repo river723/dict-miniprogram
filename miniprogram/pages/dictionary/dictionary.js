@@ -6,8 +6,8 @@
  *   - 「设为本词库」：写入 settings.activeLibraryId（单选激活），切换后清空自动配词日期让首页按新词库补足。
  *   - 「打开」：进入 dictionary-browse 浏览/查询该词库的单词。
  *
- * 词数：客户端内置词库（ielts）直接取本地数组长度；云端词库（all）由 pickWorddict 的
- * candidates 实时得出（加载前显示「? 词」）。
+ * 词数：客户端内置词库（ielts）直接取本地数组长度；云端词库（all）由 countWorddict
+ * 取云端真实总数（加载前显示「? 词」）。
  */
 import { LIBRARIES, getLibrary, getLibraryWords } from '../../services/libraries';
 import StorageService from '../../services/storage';

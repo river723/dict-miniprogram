@@ -2,14 +2,21 @@
  * 词库浏览 / 查询 —— 对齐 memo-grad DictionaryBrowseScreen。
  *
  * 平台适配（重要）：
- * App 一次性把 4801 词读进内存，本地做搜索/筛选/排序/虚拟列表。
- * 小程序单次响应上限 1MB，无法整包拉取，因此：
+ *  App 一次性把 4801 词读进内存，本地做搜索/筛选/排序/虚拟列表。
+ *  小程序单次响应上限 1MB，无法整包拉取，因此：
  *   - 默认视图改为「按字母分页」：底部 A–Z 索引条切换首字母，每次只取该字母的词；
  *   - 搜索走服务端 keyword 查询（释义不参与检索，与云函数能力一致）；
  *   - 筛选（难度/考频）与排序在「当前已载入的这一批」上本地生效，语义与 App 一致。
+ *
+ * 雅思词库（clientSide）双数据源：
+ *   - 云端富词条集合（worddict_ielts）齐活时整体走云端：行内带释义/音标/难度/考频，
+ *     筛选 chip 与考研库体验一致；
+ *   - 云端没导入 / 不齐 / 单次请求失败时整体回落本地词条（{w,ph,d}，离线可用）。
+ *   ⚠️ 不许半云端半本地混排：同一列表两种行样式、筛选时灵时不灵，用户会以为出 bug。
+ *     是否切云端由「云端 count ≥ 本地词条数」一次性决定（ensureLocalCloudDecision）。
  */
 import { searchWorddict, countWorddict } from '../../services/worddict';
-import { getLibrary, getLibraryWords } from '../../services/libraries';
+import { getLibrary, getLibraryEntries } from '../../services/libraries';
 import { applyTheme } from '../../utils/theme';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -48,12 +55,14 @@ const pad5 = (n, ch) => {
   return ch.repeat(v) + (ch === '★' ? '☆' : '□').repeat(5 - v);
 };
 
+const fmtNum = (n) => String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
 /** 确定性洗牌（与 App seededShuffle 同思路，避免依赖 Math.random 结果不稳定）。 */
 function seededShuffle(arr, seed) {
   const a = arr.slice();
   let s = seed % 2147483647;
   if (s <= 0) s += 2147483646;
-  for (let i = a.length - 1; i > 0; i -= 1) {
+  for (let i = a.length - 1; i > 0; i--) {
     s = (s * 16807) % 2147483647;
     const j = s % (i + 1);
     const t = a[i];
@@ -63,15 +72,23 @@ function seededShuffle(arr, seed) {
   return a;
 }
 
-function toRow(entry, localMode) {
-  const def = entry.definitions && entry.definitions[0] && entry.definitions[0].meaning;
+function toRow(entry, cloud) {
+  // 云端词条形如 {word, definitions[], phonetic_uk, difficulty, frequency}；
+  // 本地词条形如 {w, ph, d}
+  const isLocalEntry = !cloud && entry && entry.w !== undefined;
+  const word = isLocalEntry ? entry.w : entry.word;
+  const cloudDef = !isLocalEntry && entry.definitions && entry.definitions[0] && entry.definitions[0].meaning;
+  const meaning = isLocalEntry ? (entry.d || '') : (cloudDef || '');
+  const ph = isLocalEntry ? (entry.ph || '') : (entry.phonetic_uk || entry.pronunciation_uk || '');
   const level = Math.max(1, Math.min(5, entry.difficulty || 3));
   return {
-    key: String(entry.word).toLowerCase(),
-    word: entry.word,
-    meaning: def || '',
-    isLocal: !!(localMode && !def), // 内置纯词表：无释义，不刷「暂无释义」
-    stars: pad5(entry.difficulty, '★'),
+    key: String(word).toLowerCase(),
+    word,
+    meaning,
+    ph,
+    // 本地词条全部带释义；万一某条缺失也不刷「暂无释义」，降级为「本地词」标签
+    isLocal: !!isLocalEntry,
+    stars: pad5(level, '★'),
     squares: pad5(entry.frequency, '■'),
     diffColor: DIFF_COLORS[level - 1],
     difficulty: entry.difficulty || 3,
@@ -87,6 +104,7 @@ Page({
     dictId: 'all',
     dictName: '考研核心词库',
     localMode: false,
+    cloudBatch: false,
     totalText: '?',
     loading: true,
 
@@ -116,46 +134,43 @@ Page({
     const dictId = (options && options.dictId) || 'all';
     const lib = getLibrary(dictId);
     const localMode = !!lib.clientSide;
-    this.localWords = localMode ? (getLibraryWords(dictId) || []) : null;
-    this.setData({ dictId, dictName: lib.name, localMode });
+    this.localEntries = localMode ? (getLibraryEntries(dictId) || []) : null;
+    this.setData({ dictId, dictName: lib.name, localMode, cloudBatch: !localMode });
     this.raw = [];
-    if (localMode) {
-      this.loadTotalLocal();
-      this.loadLetter('A');
-    } else {
-      this.loadTotal();
-      this.loadLetter('A');
-    }
-  },
-
-  /** 全库词条数（status bar 展示），走云端 count 取真实总词数。 */
-  async loadTotal() {
-    try {
-      const total = await countWorddict();
-      this.setData({ totalText: String(total || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') });
-    } catch (e) {
-      this.setData({ totalText: '?' });
-    }
-  },
-
-  /** 本地词库词条数（直接取内置数组长度）。 */
-  loadTotalLocal() {
-    this.setData({
-      totalText: String((this.localWords || []).length).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
-    });
+    this.loadLetter('A');
   },
 
   async loadLetter(letter) {
     this.setData({ loading: true, letter, query: '', hitText: '' });
+    const L = String(letter).toLowerCase();
+
     if (this.data.localMode) {
-      const L = String(letter).toLowerCase();
-      this.raw = (this.localWords || []).filter((w) => String(w)[0].toLowerCase() === L).map((w) => ({ word: w }));
-      this.setData({ loading: false });
+      // 雅思：云端富词条齐活才整体切云端，否则整体用本地（见文件头说明）
+      const useCloud = await this.ensureLocalCloudDecision();
+      if (useCloud) {
+        try {
+          const res = await searchWorddict({ prefix: L, lib: this.data.dictId });
+          this.raw = res.words || [];
+          this.setData({ loading: false });
+          this.apply();
+          return;
+        } catch (e) {
+          console.error('[dictionary-browse] 云端按字母加载失败，本轮回落本地', e);
+          // 回落本地必须把 cloudBatch 置回 false，否则本地词条会被当云端行渲染
+          this.raw = (this.localEntries || []).filter((e) => String(e.w)[0].toLowerCase() === L);
+          this.setData({ loading: false, cloudBatch: false });
+          this.apply();
+          return;
+        }
+      }
+      this.raw = (this.localEntries || []).filter((e) => String(e.w)[0].toLowerCase() === L);
+      this.setData({ loading: false, cloudBatch: false });
       this.apply();
       return;
     }
+
     try {
-      const res = await searchWorddict({ prefix: String(letter).toLowerCase() });
+      const res = await searchWorddict({ prefix: L, lib: this.data.dictId });
       this.raw = res.words || [];
       this.setData({ loading: false });
       this.apply();
@@ -167,21 +182,59 @@ Page({
     }
   },
 
+  /**
+   * 本地词库（雅思）是否整体走云端：云端 count ≥ 本地词条数才切。
+   * 一次决定整个页面的生命周期（含状态栏总数），结果缓存在 this._localUseCloud。
+   */
+  async ensureLocalCloudDecision() {
+    if (this._localUseCloud !== undefined) return this._localUseCloud;
+    let total = 0;
+    try {
+      total = await countWorddict(this.data.dictId);
+    } catch (e) {
+      total = 0;
+    }
+    const localCount = (this.localEntries || []).length;
+    const use = total >= localCount && localCount > 0;
+    this._localUseCloud = use;
+    this.setData({ cloudBatch: use, totalText: fmtNum(total > 0 ? total : localCount) });
+    return use;
+  },
+
   async runSearch(q) {
     if (!q) {
       this.loadLetter(this.data.letter);
       return;
     }
     if (this.data.localMode) {
+      const useCloud = await this.ensureLocalCloudDecision();
+      if (useCloud) {
+        this.setData({ loading: true });
+        try {
+          const res = await searchWorddict({ keyword: q, lib: this.data.dictId });
+          this.raw = res.words || [];
+          this.setData({ loading: false });
+          this.apply();
+          return;
+        } catch (e) {
+          console.error('[dictionary-browse] 云端搜索失败，本轮回落本地', e);
+          // 同 loadLetter：回落本地要把 cloudBatch 置回 false
+          const kw = String(q).toLowerCase();
+          this.raw = (this.localEntries || []).filter((e) => String(e.w).toLowerCase().includes(kw));
+          this.setData({ loading: false, cloudBatch: false });
+          this.apply();
+          return;
+        }
+      }
       const kw = String(q).toLowerCase();
-      this.raw = (this.localWords || []).filter((w) => String(w).toLowerCase().includes(kw)).map((w) => ({ word: w }));
-      this.setData({ loading: false });
+      this.raw = (this.localEntries || []).filter((e) => String(e.w).toLowerCase().includes(kw));
+      this.setData({ loading: false, cloudBatch: false });
       this.apply();
       return;
     }
     this.setData({ loading: true });
     try {
-      const res = await searchWorddict({ keyword: q });
+      const res = await searchWorddict({ keyword: q, lib: this.data.dictId });
       this.raw = res.words || [];
       this.setData({ loading: false });
       this.apply();
@@ -194,21 +247,26 @@ Page({
 
   /** 本地筛选 + 排序（作用于当前已载入的一批）。 */
   apply() {
-    const { sortMode, diffFilter, freqFilter, shuffleSeed } = this.data;
+    const { sortMode, diffFilter, freqFilter, shuffleSeed, cloudBatch } = this.data;
     let list = (this.raw || []).slice();
 
-    if (diffFilter !== null) list = list.filter((e) => (e.difficulty || 0) === diffFilter);
-    if (freqFilter !== null) list = list.filter((e) => (e.frequency || 0) === freqFilter);
+    // 本地词库没有难度/考频字段，且筛选 chip 已隐藏；这里再兜底跳过，避免空列表
+    if (cloudBatch) {
+      if (diffFilter !== null) list = list.filter((e) => (e.difficulty || 0) === diffFilter);
+      if (freqFilter !== null) list = list.filter((e) => (e.frequency || 0) === freqFilter);
+    }
+
+    const wordOf = (e) => String(e.w || e.word || '').toLowerCase();
 
     if (sortMode === 'diffAsc') list.sort((a, b) => (a.difficulty || 0) - (b.difficulty || 0));
     else if (sortMode === 'diffDesc') list.sort((a, b) => (b.difficulty || 0) - (a.difficulty || 0));
     else if (sortMode === 'freqAsc') list.sort((a, b) => (a.frequency || 0) - (b.frequency || 0));
     else if (sortMode === 'freqDesc') list.sort((a, b) => (b.frequency || 0) - (a.frequency || 0));
     else if (sortMode === 'shuffle') list = seededShuffle(list, shuffleSeed);
-    else list.sort((a, b) => String(a.word).toLowerCase().localeCompare(String(b.word).toLowerCase()));
+    else list.sort((a, b) => wordOf(a).localeCompare(wordOf(b)));
 
     this.setData({
-      items: list.map((e) => toRow(e, this.data.localMode)),
+      items: list.map((e) => toRow(e, cloudBatch)),
       hitText: this.data.query.trim() ? String(list.length) : '',
     });
   },

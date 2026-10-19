@@ -148,29 +148,33 @@ Page({
     }
   },
 
-  /** 云端词库精确命中。 */
+  /** 云端词库精确命中：先当前激活词库，未命中再查考研库兜底（两库有 2758 词重叠）。 */
   async lookupLocal(word) {
-    try {
-      const res = await searchWorddict({ keyword: word });
-      const list = res.words || [];
-      const hit = list.find((x) => String(x.word).toLowerCase() === word);
-      if (!hit) return null;
-      return {
-        definitions: (hit.definitions || []).map((d) => ({
-          part_of_speech: d.part_of_speech || d.pos || '',
-          meaning: d.meaning || '',
-          example: d.example || '',
-          is_core: !!d.is_core,
-          is_rare_sense: !!d.is_rare_sense,
-        })),
-        etymology: hit.etymology || '',
-        memory_tip: hit.memory_tip || '',
-        similar_words: Array.isArray(hit.similar_words) ? hit.similar_words : [],
-        difficulty: hit.difficulty,
-      };
-    } catch (e) {
-      return null;
+    const lib = (StorageService.getSettings().activeLibraryId) || 'all';
+    const libs = lib === 'all' ? ['all'] : [lib, 'all'];
+    for (const l of libs) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await searchWorddict({ keyword: word, lib: l });
+        const list = res.words || [];
+        const hit = list.find((x) => String(x.word).toLowerCase() === word);
+        if (!hit) continue;
+        return {
+          definitions: (hit.definitions || []).map((d) => ({
+            part_of_speech: d.part_of_speech || d.pos || '',
+            meaning: d.meaning || '',
+            example: d.example || '',
+            is_core: !!d.is_core,
+            is_rare_sense: !!d.is_rare_sense,
+          })),
+          etymology: hit.etymology || '',
+          memory_tip: hit.memory_tip || '',
+          similar_words: Array.isArray(hit.similar_words) ? hit.similar_words : [],
+          difficulty: hit.difficulty,
+        };
+      } catch (e) { /* 这个库查失败，换下一个 */ }
     }
+    return null;
   },
 
   /** ai 云函数 analyze。 */

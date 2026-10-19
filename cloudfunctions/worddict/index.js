@@ -3,21 +3,33 @@
  * worddict.json（约 4.9MB）由 scripts/import-worddict.mjs 幂等导入云数据库
  * worddict 集合（按 word_id 去重），不打包进小程序。
  * 需在云控制台为 worddict 集合建立 prefix 字段索引，并将读权限设为「所有用户可读」。
+ *
+ * 多词库：event.lib 选择集合，缺省 'all'（考研，向后兼容）：
+ *   all   → worddict        考研 4801
+ *   ielts → worddict_ielts  雅思 4491（scripts/import-worddict-ielts.mjs 导入）
+ * 两个集合文档结构一致（word_id/word/prefix/definitions/etymology/similar_words/
+ * memory_tip/frequency/difficulty；雅思集合额外带 phonetic_uk）。
  */
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
-const COL = 'worddict';
+const COLLECTIONS = { all: 'worddict', ielts: 'worddict_ielts' };
+
+/** event.lib → 集合名；未知/缺省回落 'all'（考研），保证旧调用方行为不变。 */
+function colOf(event) {
+  return COLLECTIONS[event && event.lib] || COLLECTIONS.all;
+}
 
 exports.main = async (event) => {
+  const COL = colOf(event);
   try {
     switch (event.action) {
       case 'byLetter': {
         // 热门字母（s/c/p…）可能远超 1000 条，必须分页取完，否则列表被静默截断
         const prefix = (event.prefix || 'a').toLowerCase();
-        return { ok: true, ...(await fetchByPrefix(prefix)) };
+        return { ok: true, ...(await fetchByPrefix(COL, prefix)) };
       }
       case 'search': {
         const kw = (event.keyword || '').toLowerCase().trim();
@@ -32,7 +44,7 @@ exports.main = async (event) => {
         // 自动配词的候选挑选放服务端做：小程序链路单次响应上限 1MB，
         // 4801 条整包约 3.4MB，客户端「拉全量自己挑」必报 EXCEED_MAX_RESPONSE_SIZE。
         // 这里只回传最终选中的 limit 条（几百字节到几 KB）。
-        return { ok: true, ...(await pick(event)) };
+        return { ok: true, ...(await pick(event, COL)) };
       }
       case 'count': {
         // 词库总词条数（供词库列表/浏览页展示真实规模）。
@@ -98,16 +110,17 @@ function normSet(list) {
  * event: { exclude: [word], ignored: [word], limit, seed }
  * 返回: { words, candidates, scanned }  candidates=0 表示候选池空，调用方走复习兜底
  */
-async function pick(event) {
+async function pick(event, COL) {
   const exclude = normSet(event.exclude);
   const ignored = normSet(event.ignored);
   const limit = Math.min(50, Math.max(1, Number(event.limit) || 10));
   const seed = Number(event.seed) || 0;
   // 必须回传词库里已存的完整字段，否则自动配词补进生词本的词会丢词根/记忆/易混词
   // （这些字段在 worddict 集合里有存，但之前 FIELDS 没选，导致 addWord 时落到默认值空）。
-  // 注意：worddict 集合本身未存音标，故自动配词补入的词无 pronunciation_*（发音仍走 TTS 云函数）。
+  // 音标：考研集合未存（发音走 TTS 云函数）；雅思集合带 phonetic_uk，一并选出来。
   const FIELDS = {
     word: true,
+    phonetic_uk: true,
     definitions: true,
     frequency: true,
     difficulty: true,
@@ -174,14 +187,21 @@ function mulberry32(seed) {
 
 const MAX_TOTAL = 5000; // 单个字母的保护上限，超出则认为数据异常并告知调用方
 
-/** 按字母前缀分页取全量，返回是否被截断（供 UI 提示）。 */
-async function fetchByPrefix(prefix) {
+/**
+ * 按字母前缀分页取全量，返回是否被截断（供 UI 提示）。
+ * 只取列表需要的字段：词根/记忆法/易混词体积大且列表不展示，裁剪后可把热门字母的
+ * 响应压到 1MB 链路上限以内（详情页按词精确查询时再取全文档）。
+ */
+async function fetchByPrefix(COL, prefix) {
   let skip = 0;
   let words = [];
   let truncated = false;
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const res = await db.collection(COL).where({ prefix }).skip(skip).limit(PAGE).get();
+    const res = await db.collection(COL)
+      .field({ word: true, prefix: true, phonetic_uk: true, definitions: true, frequency: true, difficulty: true })
+      .where({ prefix })
+      .skip(skip).limit(PAGE).get();
     words = words.concat(res.data);
     if (res.data.length < PAGE) break;
     skip += PAGE;

@@ -143,6 +143,16 @@
 }
 
 /* ---------- 操作 ---------- */
+.dwd__upgrading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 20rpx 0 8rpx;
+  font-size: 24rpx;
+  color: var(--mg-text-2);
+}
+
 .dwd__actions {
   margin-top: 8rpx;
   display: flex;

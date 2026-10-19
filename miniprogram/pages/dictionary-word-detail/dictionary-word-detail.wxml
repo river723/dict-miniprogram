@@ -15,12 +15,13 @@
   />
 
   <block wx:elif="{{localOnly}}">
-    <!-- 本地内置词库词条（纯词表，无详细释义） -->
+    <!-- 本地内置词库词条（含音标与释义；个别词无释义时降级为说明卡片） -->
     <view class="card">
       <view class="dwd__head">
         <view class="dwd__info">
           <text class="dwd__word">{{word.word}}</text>
-          <text class="dwd__ph dwd__ph--hint">来自「{{libraryName}}」</text>
+          <text wx:if="{{localPh}}" class="dwd__ph">{{localPh}}</text>
+          <text wx:else class="dwd__ph dwd__ph--hint">来自「{{libraryName}}」</text>
         </view>
         <view class="dwd__speak" hover-class="mg-hover" bindtap="playAudio">
           <mg-icon name="{{soundEnabled ? 'volume-high' : 'volume-off'}}" size="52" color="#2E5E4E" />
@@ -28,9 +29,19 @@
       </view>
     </view>
 
-    <view class="card">
+    <view wx:if="{{localDef}}" class="card">
+      <text class="card__title">释义</text>
+      <text class="card__text dwd__def">{{localDef}}</text>
+    </view>
+
+    <view wx:else class="card">
       <text class="card__title">说明</text>
-      <text class="card__text">该词来自内置词库（纯词表），暂未内置详细释义。你可点击发音试听，或加入生词本——联网后自动补全释义。</text>
+      <text class="card__text">该词来自内置词库「{{libraryName}}」，暂未内置详细释义。你可点击发音试听，或加入生词本后在学习中掌握。</text>
+    </view>
+
+    <view wx:if="{{upgrading}}" class="dwd__upgrading">
+      <mg-icon name="refresh" size="24" color="#8A8E89" />
+      <text>正在获取完整释义…</text>
     </view>
 
     <view class="dwd__actions">
