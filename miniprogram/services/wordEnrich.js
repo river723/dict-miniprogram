@@ -79,13 +79,22 @@ function fromCloudEntry(hit) {
 
 /**
  * 同步补全：只查本地内置词条（渲染路径要求同步时用，如列表行/首屏）。
- * 命中返回 {word, ph, def, src:'local'}，否则 null。
+ * 命中返回 {word, ph, def, frequency, difficulty, src:'local'}，否则 null。
+ *
+ * 考频/难度：内置词库条目自带 f/k（由 _tools/relabel_ielts_metrics.cjs 按真实语料
+ * 频次 + AWL 学术加权、以及音节/派生/义项等客观指标算出），这里归一成长名字段透出，
+ * 让本地模式与云端模式的调用方（详情页/浏览页）用同一套字段名，不需要各自判断来源。
  */
 export function enrichSync(libId, word) {
   if (!word) return null;
   const e = getLibraryEntry(libId, word);
   if (!e) return null;
-  return { word: e.w, ph: e.ph || '', def: e.d || '', src: 'local' };
+  const hasMetric = Number.isFinite(Number(e.f)) && Number(e.f) >= 1;
+  const hasDiff = Number.isFinite(Number(e.k)) && Number(e.k) >= 1;
+  const row = { word: e.w, ph: e.ph || '', def: e.d || '', src: 'local' };
+  if (hasMetric) row.frequency = Number(e.f);
+  if (hasDiff) row.difficulty = Number(e.k);
+  return row;
 }
 
 /**

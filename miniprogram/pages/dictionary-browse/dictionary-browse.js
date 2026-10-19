@@ -74,13 +74,16 @@ function seededShuffle(arr, seed) {
 
 function toRow(entry, cloud) {
   // 云端词条形如 {word, definitions[], phonetic_uk, difficulty, frequency}；
-  // 本地词条形如 {w, ph, d}
+  // 本地词条形如 {w, ph, d, f, k}（f/k = 考频/难度，见 gen_ielts_js.cjs）
   const isLocalEntry = !cloud && entry && entry.w !== undefined;
   const word = isLocalEntry ? entry.w : entry.word;
   const cloudDef = !isLocalEntry && entry.definitions && entry.definitions[0] && entry.definitions[0].meaning;
   const meaning = isLocalEntry ? (entry.d || '') : (cloudDef || '');
   const ph = isLocalEntry ? (entry.ph || '') : (entry.phonetic_uk || entry.pronunciation_uk || '');
-  const level = Math.max(1, Math.min(5, entry.difficulty || 3));
+  // 归一到 difficulty/frequency：本地用短字段名 f/k，避免 toRow 里出现两套取值分支
+  const rawDiff = isLocalEntry ? entry.k : entry.difficulty;
+  const rawFreq = isLocalEntry ? entry.f : entry.frequency;
+  const level = Math.max(1, Math.min(5, rawDiff || 3));
   return {
     key: String(word).toLowerCase(),
     word,
@@ -89,10 +92,10 @@ function toRow(entry, cloud) {
     // 本地词条全部带释义；万一某条缺失也不刷「暂无释义」，降级为「本地词」标签
     isLocal: !!isLocalEntry,
     stars: pad5(level, '★'),
-    squares: pad5(entry.frequency, '■'),
+    squares: pad5(rawFreq, '■'),
     diffColor: DIFF_COLORS[level - 1],
-    difficulty: entry.difficulty || 3,
-    frequency: entry.frequency || 0,
+    difficulty: level,
+    frequency: rawFreq || 0,
   };
 }
 
@@ -248,25 +251,28 @@ Page({
   /** 本地筛选 + 排序（作用于当前已载入的一批）。 */
   apply() {
     const { sortMode, diffFilter, freqFilter, shuffleSeed, cloudBatch } = this.data;
-    let list = (this.raw || []).slice();
 
-    // 本地词库没有难度/考频字段，且筛选 chip 已隐藏；这里再兜底跳过，避免空列表
-    if (cloudBatch) {
-      if (diffFilter !== null) list = list.filter((e) => (e.difficulty || 0) === diffFilter);
-      if (freqFilter !== null) list = list.filter((e) => (e.frequency || 0) === freqFilter);
-    }
+    // ⚠ 必须先经 toRow 归一再筛/排：原始行两种形态并存
+    //   云端 {word, difficulty, frequency} / 本地 {w, k, f}（考频/难度是短字段名）。
+    //   直接对原始行读 difficulty 会让本地行全部落空 → 筛选出空列表（踩过一次）。
+    let list = (this.raw || []).map((e) => toRow(e, cloudBatch));
 
-    const wordOf = (e) => String(e.w || e.word || '').toLowerCase();
+    // 难度/考频筛选：云端与本地词库都有真实值（本地 f/k 由 relabel 脚本按语料算出），
+    // 所以词库列表一律可筛——早期「本地没有这两个字段」的限制已失效。
+    if (diffFilter !== null) list = list.filter((e) => e.difficulty === diffFilter);
+    if (freqFilter !== null) list = list.filter((e) => e.frequency === freqFilter);
 
-    if (sortMode === 'diffAsc') list.sort((a, b) => (a.difficulty || 0) - (b.difficulty || 0));
-    else if (sortMode === 'diffDesc') list.sort((a, b) => (b.difficulty || 0) - (a.difficulty || 0));
-    else if (sortMode === 'freqAsc') list.sort((a, b) => (a.frequency || 0) - (b.frequency || 0));
-    else if (sortMode === 'freqDesc') list.sort((a, b) => (b.frequency || 0) - (a.frequency || 0));
+    const wordOf = (e) => String(e.word || '').toLowerCase();
+
+    if (sortMode === 'diffAsc') list.sort((a, b) => a.difficulty - b.difficulty);
+    else if (sortMode === 'diffDesc') list.sort((a, b) => b.difficulty - a.difficulty);
+    else if (sortMode === 'freqAsc') list.sort((a, b) => a.frequency - b.frequency);
+    else if (sortMode === 'freqDesc') list.sort((a, b) => b.frequency - a.frequency);
     else if (sortMode === 'shuffle') list = seededShuffle(list, shuffleSeed);
     else list.sort((a, b) => wordOf(a).localeCompare(wordOf(b)));
 
     this.setData({
-      items: list.map((e) => toRow(e, cloudBatch)),
+      items: list,
       hitText: this.data.query.trim() ? String(list.length) : '',
     });
   },

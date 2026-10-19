@@ -82,6 +82,8 @@
 
 .dwd__meta-badge { font-size: 24rpx; letter-spacing: 1rpx; }
 .dwd__meta-freq { font-size: 24rpx; letter-spacing: 1rpx; color: var(--mg-text-2); }
+/* 考频/难度暂无数据时的说明样式（本地词库个别词可能缺 f/k） */
+.dwd__meta--hint .dwd__meta-freq { font-size: 22rpx; opacity: 0.75; }
 
 /* ---------- 释义 ---------- */
 .def {

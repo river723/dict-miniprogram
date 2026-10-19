@@ -18,10 +18,13 @@ import-data/
 
 # 已废弃的 FMM+LNDS 分词探索产物（纯词串还原，含 245 个幻词，勿再用）。
 # 现行管线：_tools/_IELTS_src.eudic → parse_eudic_defs.cjs → ielts_defs.json
-#           → gen_ielts_js.cjs → miniprogram/data/libraries/ielts.js
+#           → relabel_ielts_metrics.cjs（考频/难度）→ gen_ielts_js.cjs
+#           → miniprogram/data/libraries/ielts.js
 _tools/words.txt
 _tools/_dbg.cjs
 _tools/_loc.cjs
 _tools/_seg.cjs
 _tools/_seg3.cjs
 _tools/ielts_words.json
+# 一次性诊断脚本（阈值校准用，跑完即弃）
+_tools/_probe_difficulty.cjs

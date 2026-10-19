@@ -27,6 +27,15 @@
           <mg-icon name="{{soundEnabled ? 'volume-high' : 'volume-off'}}" size="52" color="#2E5E4E" />
         </view>
       </view>
+
+      <!-- 考频/难度：内置词库词条自带 f/k（真实语料频次 + 客观难度指标），本地视图同样展示 -->
+      <view wx:if="{{localFreq}}" class="dwd__meta">
+        <text class="dwd__meta-badge" style="color:{{diffColor}}">难度 {{stars}}</text>
+        <text class="dwd__meta-freq">考频 {{squares}}</text>
+      </view>
+      <view wx:else class="dwd__meta dwd__meta--hint">
+        <text class="dwd__meta-freq">考频/难度依据真实语料统计，暂无该词数据</text>
+      </view>
     </view>
 
     <view wx:if="{{localDef}}" class="card">

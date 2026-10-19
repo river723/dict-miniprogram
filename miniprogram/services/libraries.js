@@ -69,8 +69,9 @@ export function getLibraryWords(id) {
 }
 
 /**
- * 取某词库里单个词的本地词条 {w, ph, d}；本地没有返回 null。
+ * 取某词库里单个词的本地词条 {w, ph, d, f?, k?}；本地没有返回 null。
  * 大小写不敏感。云端词库恒返回 null（交给 wordEnrich 走云端）。
+ * f=考频 1-5、k=难度 1-5（仅内置词库有，由 _tools/relabel_ielts_metrics.cjs 算出）。
  */
 export function getLibraryEntry(id, word) {
   if (!word) return null;

@@ -32,6 +32,7 @@ Page({
     localOnly: false,
     localPh: '',
     localDef: '',
+    localFreq: 0,
     upgrading: false,
     libraryName: '',
   },
@@ -71,6 +72,10 @@ Page({
       local = enrichSync(this.localDictId, this.key);
       if (local) {
         const lib = getLibrary(this.localDictId);
+        // 本地词条自带 f/k（真实语料考频 + 客观难度指标），先渲染出来，
+        // 云端富词条到达后会被覆盖——本地这份也能独立成立，不再是「只有音标释义」。
+        const lv = Math.max(1, Math.min(5, local.difficulty || 1));
+        const fq = Math.max(0, Math.min(5, local.frequency || 0));
         this.setData({
           loading: false,
           notFound: false,
@@ -79,6 +84,10 @@ Page({
           libraryName: lib ? lib.name : '',
           localPh: local.ph || '',
           localDef: local.def || '',
+          localFreq: fq,
+          stars: pad5(lv, '★'),
+          squares: pad5(fq, '■'),
+          diffColor: DIFF_COLORS[lv - 1],
           // 音标一并写入，加入生词本时能带上
           word: { word: local.word, pronunciation_uk: local.ph || '', pronunciation_us: '' },
           definitions: [],
