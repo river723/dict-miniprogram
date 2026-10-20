@@ -28,3 +28,7 @@ _tools/_seg3.cjs
 _tools/ielts_words.json
 # 一次性诊断脚本（阈值校准用，跑完即弃）
 _tools/_probe_difficulty.cjs
+
+# ECDICT 音标源（10MB 二进制，只在需要补音标时重新下载，见 fix_phonetics_from_ecdict.cjs）
+_tools/ecdict.tgz
+_tools/ecdict_src/
