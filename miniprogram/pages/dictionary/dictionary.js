@@ -75,7 +75,8 @@ Page({
       return;
     }
     try {
-      const total = group(await countWorddict());
+      // countWorddict 现在返回 {total, col}（col 用于识别云函数是否支持该 lib）
+      const { total } = group(await countWorddict());
       this.setData({
         loading: false,
         error: '',

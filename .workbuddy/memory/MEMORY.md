@@ -91,6 +91,38 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，默认分支 **m
 在线兜底（`scripts/gen-ielts-rich.mjs` 直接调 API，不占用户侧配额）。在线按需查词仍未接入——
 那需要前端触发 + 计费对账，属产品决策；当前 L1/L2 都未命中时页面渲染干净空态。
 
+## ⚠️「雅思页显示考研词表」的真 bug（2026-10-20 修，判据设计缺陷）
+
+**现象**：用户反馈「fusion / enzyme / estuary / cuisine / adept 等雅思独有词，在雅思库里搜不到」。
+数据在包里（index 1776 等），前端搜索逻辑实测也能命中 → 说明**界面取的根本不是那份数据**。
+
+**根因（不是数据问题，是判据缺陷）**：
+`ensureLocalCloudDecision` 原来只比数量：`use = 云端count >= 本地count`。
+而 `worddict` 云函数当时**还没重部署**（那是待办第三步）→ 线上是**不认识 `lib` 的旧版**，
+对任何 lib 都恒查考研集合 `worddict`，返回 **4801**。于是：
+```
+4801 >= 4491  →  判定「云端更全，切云端」
+                 ↓
+雅思浏览页整个显示成考研 4801 词表（雅思独有词全被顶掉 → 搜不到）
+```
+**两个数量太接近（4801 vs 4491），数量判据天然分辨不出来**。
+
+**修法：不信数量，信「云端实际查的集合名」**
+- `worddict` 云函数所有 return 加 `col: COL`（count/search/byLetter/pick 共 5 处）
+- `services/worddict.js` 导出 `CLOUD_COLLECTION = { all: 'worddict', ielts: 'worddict_ielts' }`；
+  `countWorddict` 改回 `{total, col}`；`searchWorddict` 返回值加 `staleCloud`（col 与 lib 不符时置 true）
+- `ensureLocalCloudDecision`：先校验 `res.col === CLOUD_COLLECTION[lib]`，不符则 `total=0` → 回落本地
+- 页面两处消费 `staleCloud`（它**不抛错**，只靠 try/catch 兜不住，会静默显示空列表）→ 主动 throw 进既有兜底分支
+  且回落时清 `_localUseCloud=false`，否则本会话后续查询继续走坏的云端
+- ⚠ **`countWorddict` 返回值从 number 改成对象** → 调用方 `dictionary.js` 同步改为 `const { total } = group(await countWorddict())`
+  （那个 `group` 是千分位格式化函数，命名有歧义，别误删）
+
+**教训（通用）**：
+1. **「云端更全」不能用数量判据** —— 两个集合数量相近时必然误判。要让服务端回传**它实际查了什么**，前端校验身份。
+2. **前端容错必须处理「返回了但不对」**：`try/catch` 只兜抛错，`staleCloud` 这种「成功返回错误数据」得显式判。
+3. **加了云端特性就必须同步「旧云函数仍在线」这一路**：本次 bug 全部来自「代码改了、云函数没重部署」。
+
+回归：`.workbuddy/_smoke_find.cjs`（30 项：三种云端状态判定 + 11 个雅思独有词搜索 + 锁定词表关系）。
 ## 雅思音标缺失的成因（2026-10-19，已修 23+1 词）
 
 **症状**：4491 词里有的有音标有的没有。查证后是**三类成因，其中一类是我的解析 bug**：

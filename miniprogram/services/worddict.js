@@ -10,17 +10,35 @@
 import { callCloud } from './cloud';
 
 /**
+ * 词库 id → 云集合名。前端用它校验云函数实际查的是不是「我要的那个集合」。
+ * 必须与 cloudfunctions/worddict/index.js 的 COLLECTIONS 保持一致。
+ */
+export const CLOUD_COLLECTION = { all: 'worddict', ielts: 'worddict_ielts' };
+
+/**
  * 词库查询：keyword 走服务端正则前缀查询（search），无 keyword 才按整字母取（byLetter）。
  * 两者都已在云函数侧分页取全量，避免 limit(1000) 静默截断。
+ *
+ * ⚠️ 返回值里带 `staleCloud`：云函数实际查的集合与 lib 不符（**旧版云函数不认识 lib，
+ * 会恒查考研集合**）。调用方据此忽略 words，改走本地词条，不能把考研数据当雅思展示。
+ *
  * @param {{prefix?: string, keyword?: string, lib?: string}} opts
  */
 export async function searchWorddict({ prefix = '', keyword = '', lib = 'all' } = {}) {
-  if (keyword) {
-    const res = await callCloud('worddict', { action: 'search', keyword, lib });
-    return { words: res.words || [], truncated: false };
+  const expect = CLOUD_COLLECTION[lib] || CLOUD_COLLECTION.all;
+  const res = keyword
+    ? await callCloud('worddict', { action: 'search', keyword, lib })
+    : await callCloud('worddict', { action: 'byLetter', prefix, lib });
+  const col = typeof res.col === 'string' ? res.col : '';
+  // col 为空 = 云函数太旧、没这个字段（此时不判 stale，交给 count 那条校验）
+  if (col && col !== expect) {
+    return { words: [], truncated: false, staleCloud: true };
   }
-  const res = await callCloud('worddict', { action: 'byLetter', prefix, lib });
-  return { words: res.words || [], truncated: !!res.truncated };
+  return {
+    words: res.words || [],
+    truncated: !!res.truncated,
+    staleCloud: false,
+  };
 }
 
 /**
@@ -42,10 +60,19 @@ export async function pickWorddict({ exclude = [], ignored = [], limit = 10, see
 
 /**
  * 词库真实总词条数（走云端 count，区别于 pick 的 candidates 短路计数器）。
+ *
+ * ⚠️ 同时回传云函数**实际查询的集合名** `col`：老版本云函数（未重部署）不认识 lib，
+ * 会恒查考研集合并返回 4801。调用方据此判断「云端是否真的支持这个词库」，
+ * 详见 dictionary-browse#ensureLocalCloudDecision。
+ *
  * @param {string} [lib='all'] 词库 id
- * @returns {Promise<number>}
+ * @returns {Promise<{total: number, col: string}>} col 为空表示云函数版本过旧、不可信
  */
 export async function countWorddict(lib = 'all') {
   const res = await callCloud('worddict', { action: 'count', lib });
-  return Number(res.total) || 0;
+  return {
+    total: Number(res.total) || 0,
+    // 老版云函数没有这个字段 → 空串，前端据此回落本地
+    col: typeof res.col === 'string' ? res.col : '',
+  };
 }

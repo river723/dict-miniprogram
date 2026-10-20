@@ -29,29 +29,35 @@ exports.main = async (event) => {
       case 'byLetter': {
         // 热门字母（s/c/p…）可能远超 1000 条，必须分页取完，否则列表被静默截断
         const prefix = (event.prefix || 'a').toLowerCase();
-        return { ok: true, ...(await fetchByPrefix(COL, prefix)) };
+        return { ok: true, col: COL, ...(await fetchByPrefix(COL, prefix)) };
       }
       case 'search': {
         const kw = (event.keyword || '').toLowerCase().trim();
-        if (!kw) return { ok: true, words: [] };
+        if (!kw) return { ok: true, col: COL, words: [] };
         const res = await db.collection(COL)
           .where({ word: db.RegExp({ regexp: `^${escapeRe(kw)}`, options: 'i' }) })
           .limit(50)
           .get();
-        return { ok: true, words: res.data };
+        return { ok: true, col: COL, words: res.data };
       }
       case 'pick': {
         // 自动配词的候选挑选放服务端做：小程序链路单次响应上限 1MB，
         // 4801 条整包约 3.4MB，客户端「拉全量自己挑」必报 EXCEED_MAX_RESPONSE_SIZE。
         // 这里只回传最终选中的 limit 条（几百字节到几 KB）。
-        return { ok: true, ...(await pick(event, COL)) };
+        return { ok: true, col: COL, ...(await pick(event, COL)) };
       }
       case 'count': {
         // 词库总词条数（供词库列表/浏览页展示真实规模）。
         // ⚠️ 千万别用 pick 的 candidates 当总数：candidates 只是自动配词算法的
         // 短路计数器（只扫 top 频率页、集满 200 即停），不是库的真实大小。
+        //
+        // ⚠️ 必须回传 col（实际查询的集合名）：本函数按 lib 分流，若线上部署的还是
+        // **不认识 lib 的旧版**，它会恒查考研集合并返回 4801。前端原来只比「数量是否
+        // ≥ 本地词条数」，4801 ≥ 4491 会被误判成「云端更全，切云端」→ 雅思浏览页
+        // 整个显示成考研词表，雅思独有词（fusion/enzyme/…）全都搜不到。
+        // 前端改为校验 res.col === 期望集合名，不匹配即回落本地。
         const res = await db.collection(COL).count();
-        return { ok: true, total: res.total };
+        return { ok: true, total: res.total, col: COL };
       }
       case 'all': {
         // ⚠️ 不要给客户端用：见 pick 的说明，4801 条会超过 1MB 响应上限。

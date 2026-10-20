@@ -155,6 +155,9 @@ Page({
       if (useCloud) {
         try {
           const res = await searchWorddict({ prefix: L, lib: this.data.dictId });
+          // staleCloud：云函数是旧版、实际查了考研集合 —— 必须回落本地，
+          // 否则会把考研词表当雅思展示（雅思独有词全都搜不到）
+          if (res.staleCloud) throw new Error('云函数未按 lib 分流（需重新部署 worddict）');
           this.raw = res.words || [];
           this.setData({ loading: false });
           this.apply();
@@ -162,6 +165,7 @@ Page({
         } catch (e) {
           console.error('[dictionary-browse] 云端按字母加载失败，本轮回落本地', e);
           // 回落本地必须把 cloudBatch 置回 false，否则本地词条会被当云端行渲染
+          this._localUseCloud = false;
           this.raw = (this.localEntries || []).filter((e) => String(e.w)[0].toLowerCase() === L);
           this.setData({ loading: false, cloudBatch: false });
           this.apply();
@@ -193,16 +197,24 @@ Page({
    */
   async ensureLocalCloudDecision() {
     if (this._localUseCloud !== undefined) return this._localUseCloud;
+    const localCount = (this.localEntries || []).length;
     let total = 0;
     try {
-      total = await countWorddict(this.data.dictId);
+      const res = await countWorddict(this.data.dictId);
+      total = res.total || 0;
+      // ⚠️ 必须校验云端**实际查的是哪个集合**，不能只比数量。
+      // 云函数若未重部署（旧版不认识 lib），会恒查考研集合并返回 4801；
+      // 而「4801 ≥ 4491」会把雅思浏览页整个切成考研词表，
+      // 导致雅思独有词（fusion / enzyme / estuary…）全都搜不到。
+      // 预期集合名与 LIBRARIES 一致：ielts → worddict_ielts。
+      const expectCol = this.data.dictId === 'ielts' ? 'worddict_ielts' : 'worddict';
+      if (res.col !== expectCol) total = 0;
     } catch (e) {
       total = 0;
     }
-    const localCount = (this.localEntries || []).length;
     const use = total >= localCount && localCount > 0;
     this._localUseCloud = use;
-    this.setData({ cloudBatch: use, totalText: fmtNum(total > 0 ? total : localCount) });
+    this.setData({ cloudBatch: use, totalText: fmtNum(use ? total : localCount) });
     return use;
   },
 
@@ -217,13 +229,16 @@ Page({
         this.setData({ loading: true });
         try {
           const res = await searchWorddict({ keyword: q, lib: this.data.dictId });
+          if (res.staleCloud) throw new Error('云函数未按 lib 分流（需重新部署 worddict）');
           this.raw = res.words || [];
           this.setData({ loading: false });
           this.apply();
           return;
         } catch (e) {
           console.error('[dictionary-browse] 云端搜索失败，本轮回落本地', e);
-          // 同 loadLetter：回落本地要把 cloudBatch 置回 false
+          // 同 loadLetter：回落本地要把 cloudBatch 置回 false，并清掉决策缓存，
+          // 否则本会话后续搜索会继续走坏的云端
+          this._localUseCloud = false;
           const kw = String(q).toLowerCase();
           this.raw = (this.localEntries || []).filter((e) => String(e.w).toLowerCase().includes(kw));
           this.setData({ loading: false, cloudBatch: false });
