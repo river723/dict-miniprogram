@@ -11,6 +11,8 @@ import-data/
 
 # 构建/调试临时产物：.workbuddy 下划线临时文件、对比图、预览图（均可重新生成）
 .workbuddy/_*
+# 例外：回归测试脚本必须入库（是防线，不是临时产物）
+!.workbuddy/_smoke_*.cjs
 .workbuddy/grid_*.png
 .workbuddy/preview/
 # 故事数据备份（可由 stories.json 重新生成，体积大，不入库）

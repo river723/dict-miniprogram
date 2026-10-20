@@ -71,8 +71,24 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，默认分支 **m
   像真实考频。缺值输出空串，WXML 自然不渲染。筛选前必须先经 `toRow` 归一。
 
 **雅思富词条管线**：`npm run gen:ielts-rich`（① 复用考研 2758 词零成本 `--reuse-only`；
-② 1733 词调 DeepSeek，约 ¥2.4/11 分钟）→ `import-data/worddict-ielts.jsonl` →
+② 1733 词调 DeepSeek，约 ¥2.36/11 分钟）→ `import-data/worddict-ielts.jsonl` →
 `npm run import:ielts -- --env=<ID>`（幂等，需 TCB 密钥）→ **重部署 worddict** + 建 `prefix` 索引。
+
+**⚠️ 字段来源必须分离（2026-10-20 用户拍板，勿改回整条搬运）**：
+- 可复用（考研侧）：`definitions` / `etymology` / `similar_words` / `memory_tip`（实测复用率 100%）
+- 必须雅思自己的：`frequency` / `difficulty`（web 语料 + AWL 重标口径）、`phonetic_uk`（雅思自带）
+- **为什么**：两库难度差 ≥2 星的有 **773/2753 词（28%）**；整条搬运会覆盖掉真实语料口径。
+  实测产物 f/k 与考研不同占 89% —— 这正是"没被污染"的证据，已写成回归断言。
+- `gen-ielts-rich.mjs#toDoc` 已改为**只从 rich 取内容字段**，f/k/音标强制走 `ieltsMetrics`/`phOf`；
+  AI prompt 也移除了 `frequency`/`difficulty` 两个字段（模型凭记忆拍的数字不可信），
+  `validate()` 不再校验它们。新增 `--rebuild` 开关（改口径后必须用它丢弃旧产物）。
+- 产物体检：`.workbuddy/_smoke_ielts_rich.cjs`（22 项）——含"f/k 与雅思重标一致""释义复用率 ≥95%"
+  "f/k 未被考研覆盖（差异率 >50%）"三条反向断言。
+
+**⚠️ 例句含词校验别写太严**（AI 段产出 0 例外，必须能过）：
+只剥 `-s/-ed/-ing` 会误报 **75 条**（accessories/accompanied/allies/amplified…）；
+加「词干编辑距离 ≤1」降到 13 条（bind→bound/cling→clung/fling→flung 等不规则动词）；
+再补 `IRREGULAR` 显式表 + 前缀构词（overtake→overtook、sculpture→sculpting、weave→wove）才归零。
 `ai` 云函数有 `define` action（防幻觉 prompt + example 必含目标词）但**在线按需查词未接入**（属产品决策）。
 
 **.eudic 解析管线（`_tools/`，可复现）**：

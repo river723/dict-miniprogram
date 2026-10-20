@@ -5,8 +5,14 @@
  *
  * 两步走，能白嫖的就白嫖：
  *   ① 复用：雅思 4491 词中有 2758 个已存在于考研词库 import-data/worddict-all.json，
- *      直接复制其富词条（只补上雅思侧的音标），零成本、零幻觉；
- *   ② 生成：剩余 1733 个词调 DeepSeek 生成（约 ¥3，并发 8 约 15 分钟）。
+ *      直接复制其富词条（释义/例句/词源/形近词/记忆技巧），零成本、零幻觉；
+ *   ② 生成：剩余 1733 个词调 DeepSeek 生成（约 ¥2.4，并发 8 约 11 分钟）。
+ *
+ * ⚠️ 字段来源严格分离（2026-10-20 定，勿再整条搬运）：
+ *   可复用（来自考研）：definitions / etymology / similar_words / memory_tip
+ *   必须雅思自己的  ：frequency / difficulty（ielts.js 里已按 web 语料 + AWL 重标，
+ *                      与考研口径差 ≥2 星的难度有 773 词 / 28%，整条搬运会污染）
+ *                      phonetic_uk（雅思自带，考研集合无音标字段）
  *
  * 产物：import-data/worddict-ielts.jsonl（每行一条，字段与 worddict 集合一致）
  *   再由 scripts/import-worddict-ielts.mjs 导入云集合 worddict_ielts。
@@ -14,6 +20,7 @@
  * 用法：
  *   node scripts/gen-ielts-rich.mjs --dry-run              # 只看计划与成本，不调用
  *   node scripts/gen-ielts-rich.mjs --reuse-only           # 只落复用部分（零成本，不需要密钥）
+ *   node scripts/gen-ielts-rich.mjs --rebuild              # 丢弃旧产物按新口径重建（改口径后必须用）
  *   node scripts/gen-ielts-rich.mjs --sample=5             # 先生成 5 条人工审（写到 .sample.jsonl）
  *   node scripts/gen-ielts-rich.mjs                        # 全量（断点续跑）
  *   node scripts/gen-ielts-rich.mjs --concurrency=4        # 降并发防限流
@@ -23,7 +30,7 @@
  *
  * 断点续跑：已写入产物的单词自动跳过；中断后重跑同一命令即可接着来。
  */
-import { readFileSync, writeFileSync, appendFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, rmSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import https from 'node:https';
@@ -41,6 +48,7 @@ const CONCURRENCY = Math.max(1, Number(args.concurrency) || 8);
 const SAMPLE = args.sample ? Number(args.sample) : 0;
 const DRY_RUN = !!args['dry-run'];
 const REUSE_ONLY = !!args['reuse-only'];
+const REBUILD = !!args.rebuild;
 const ONLY = args.only || 'missing'; // missing=只生成考研库没有的（默认）
 
 const API_KEY = process.env.DEEPSEEK_API_KEY || '';
@@ -111,19 +119,29 @@ const clamp15 = (n, dflt = 3) => {
   return Math.min(5, Math.max(1, Math.round(v)));
 };
 
-/** 统一成与 worddict 集合一致的文档结构。 */
-function toDoc(word, { definitions, etymology, similar_words, memory_tip, frequency, difficulty }, phonetic) {
+/**
+ * 统一成与 worddict 集合一致的文档结构。
+ *
+ * ⚠️ 字段来源分离（勿改回整条搬运）：
+ *   - rich 侧只取内容字段：definitions / etymology / similar_words / memory_tip
+ *   - frequency / difficulty 一律用 ieltsMetrics（雅思真实语料口径），
+ *     **忽略 rich 里的值** —— 考研难度反映考研卷面词汇等级，与雅思口径差 ≥2 星的有 773 词。
+ *   - phonetic_uk 一律用 ieltsPh（雅思自带；考研集合无音标字段）。
+ *   传入的 frequency/difficulty 仅在 ieltsMetrics 缺该词时兜底（并在日志中计数）。
+ */
+function toDoc(word, rich, ieltsPh, ieltsMetrics) {
+  const m = ieltsMetrics || {};
   return {
     word_id: word,
     word,
     prefix: word[0].toLowerCase(),
-    phonetic_uk: phonetic || '',
-    definitions: normDefs(definitions),
-    etymology: String(etymology || '').trim(),
-    similar_words: normSimilar(similar_words),
-    memory_tip: String(memory_tip || '').trim(),
-    frequency: clamp15(frequency),
-    difficulty: clamp15(difficulty),
+    phonetic_uk: ieltsPh || '',
+    definitions: normDefs(rich.definitions),
+    etymology: String(rich.etymology || '').trim(),
+    similar_words: normSimilar(rich.similar_words),
+    memory_tip: String(rich.memory_tip || '').trim(),
+    frequency: clamp15(m.f),
+    difficulty: clamp15(m.k),
   };
 }
 
@@ -201,8 +219,8 @@ function validate(entry, word) {
   if (!String(entry.etymology || '').trim()) errs.push('etymology 为空');
   if (!String(entry.memory_tip || '').trim()) errs.push('memory_tip 为空');
   if (entry.similar_words != null && !Array.isArray(entry.similar_words)) errs.push('similar_words 不是数组');
-  if (!(Number(entry.frequency) >= 1 && Number(entry.frequency) <= 5)) errs.push('frequency 越界');
-  if (!(Number(entry.difficulty) >= 1 && Number(entry.difficulty) <= 5)) errs.push('difficulty 越界');
+  // ⚠️ 刻意不校验 frequency / difficulty：这两个字段由 ielts_metrics.json 提供（真实语料），
+  //   AI 凭记忆拍的数字一律丢弃。prompt 里也已移除这两个字段。
   return errs;
 }
 
@@ -223,6 +241,20 @@ async function main() {
   const ielts = await loadIeltsEntries();
   const rich = loadKyoyoRich();
   const phOf = new Map(ielts.map((e) => [e.w.toLowerCase(), e.ph || '']));
+  // 雅思自己的 f/k（真实语料口径）。ielts.js 已含 f/k，可直接读；退化时读 metrics.json。
+  const metricsOf = new Map(ielts.map((e) => [e.w.toLowerCase(), { f: e.f, k: e.k }]));
+  if (ielts.some((e) => e.f == null || e.k == null)) {
+    const mPath = resolve(ROOT, '_tools/ielts_metrics.json');
+    if (existsSync(mPath)) {
+      const raw = JSON.parse(readFileSync(mPath, 'utf8'));
+      const list = Array.isArray(raw) ? raw : (raw.metrics || raw.entries || []);
+      list.forEach((m) => {
+        const k = String(m.w || m.word || '').toLowerCase();
+        if (k) metricsOf.set(k, { f: m.f, k: m.k });
+      });
+      console.log('提示：ielts.js 部分词条缺 f/k，已并入 _tools/ielts_metrics.json 兜底');
+    }
+  }
   const words = ielts.map((e) => e.w);
 
   // 分类：可复用 vs 需生成
@@ -234,6 +266,12 @@ async function main() {
     if (hit && ONLY === 'missing') reuse.push({ word: w, rich: hit });
     else todo.push(w);
   });
+
+  if (REBUILD) {
+    for (const p of [OUT_REUSE, OUT_SAMPLE, resolve(ROOT, 'import-data/worddict-ielts.failures.json')]) {
+      if (existsSync(p)) { rmSync(p); console.log(`已清空旧产物 ${p.replace(`${ROOT}/`, '')}`); }
+    }
+  }
 
   const done = loadDone(OUT_REUSE);
   const reusePending = reuse.filter((r) => !done.has(r.word.toLowerCase()));
@@ -273,7 +311,8 @@ async function main() {
   const lines = [];
   const reuseTake = SAMPLE > 0 ? reusePending.slice(0, SAMPLE) : reusePending;
   reuseTake.forEach((r) => {
-    const doc = toDoc(r.word, r.rich, phOf.get(r.word.toLowerCase()));
+    const k = r.word.toLowerCase();
+    const doc = toDoc(r.word, r.rich, phOf.get(k), metricsOf.get(k));
     lines.push(JSON.stringify(doc));
   });
   if (lines.length > 0) {
@@ -314,7 +353,8 @@ async function main() {
           const entry = extractJson(content);
           const errs = validate(entry, word);
           if (errs.length > 0) throw new Error(`校验未过：${errs.join('；')}`);
-          const doc = toDoc(word, entry, phOf.get(word.toLowerCase()));
+          const k = word.toLowerCase();
+          const doc = toDoc(word, entry, phOf.get(k), metricsOf.get(k));
           appendFileSync(outPath, `${JSON.stringify(doc)}\n`);
           ok += 1;
           inTok += usage.prompt_tokens || 0;
@@ -355,17 +395,18 @@ async function main() {
 
 function buildPrompt(word) {
   // 与 cloudfunctions/ai 的 buildDefinePrompt 保持一致；此处独立一份，避免批量脚本反向依赖云函数
+  // ⚠️ 不要求 AI 输出 frequency / difficulty —— 考频难度来自真实语料统计（ielts_metrics.json），
+  //    模型凭记忆拍的数字不可信，会污染已重标的口径。
   return [
     `你是雅思词汇编纂专家。请为单词 "${word}" 编写一条完整词条，严格输出以下 JSON（不要 markdown 代码块、不要任何解释文字）：`,
-    `{"definitions":[{"part_of_speech":"n.","meaning":"中文释义","example":"含该词的英文例句","is_core":true,"is_rare_sense":false}],"etymology":"词根词缀分析","similar_words":[{"word":"易混词","relation":"spelling","description":"为何易混及词义区别"}],"memory_tip":"一句话记忆技巧","frequency":3,"difficulty":3}`,
+    `{"definitions":[{"part_of_speech":"n.","meaning":"中文释义","example":"含该词的英文例句","is_core":true,"is_rare_sense":false}],"etymology":"词根词缀分析","similar_words":[{"word":"易混词","relation":"spelling","description":"为何易混及词义区别"}],"memory_tip":"一句话记忆技巧"}`,
     ``,
     `要求：`,
     `1. definitions 给 1-3 个义项，按重要性排序；最常用的义项 is_core=true；若该词在雅思阅读中常考「熟词僻义」，把僻义单列一个义项并置 is_rare_sense=true。`,
     `2. example 为 8-15 词的英文句子，必须原样包含单词 ${word}（允许使用其常见变形），难度贴近雅思阅读。`,
     `3. etymology 拆解可识别的词根/词缀并说明引申过程；确实无词根可分析时，简述词源或写「来源不详」，不要编造。`,
     `4. similar_words 只收真正易混的词（拼写相近或词义相近），relation 取值 spelling / meaning / pronunciation；确实没有易混词时返回空数组 []，不要硬凑。`,
-    `5. frequency 取 1-5（该词在雅思考试中的常见程度），difficulty 取 1-5（记忆难度）。`,
-    `6. 除 similar_words 可为空数组外，其余字段均不可为空字符串。`,
+    `5. 除 similar_words 可为空数组外，其余字段均不可为空字符串。不要输出 frequency / difficulty 字段。`,
   ].join('\n');
 }
 
