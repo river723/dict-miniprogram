@@ -150,7 +150,7 @@ const IRREGULAR = {
   wring: ['wrung'], bear: ['bore', 'borne', 'born'], begin: ['began', 'begun'],
   bite: ['bit', 'bitten'], blow: ['blew', 'blown'], choose: ['chose', 'chosen'],
   come: ['came', 'come'], do: ['did', 'done'], draw: ['drew', 'drawn'],
-  drink: ['drank', 'drunk'], drive: ['drove', 'driven'], fall: ['fell', 'fallen'],
+  drink: ['drank', 'drunk'], drive: ['drove', 'driven'], fall: ['fell', 'fallen'], feel: ['felt'],
   fly: ['flew', 'flown'], forget: ['forgot', 'forgotten'], freeze: ['froze', 'frozen'],
   give: ['gave', 'given'], go: ['went', 'gone'], grow: ['grew', 'grown'],
   hide: ['hid', 'hidden'], know: ['knew', 'known'], lay: ['laid', 'lain'],
@@ -185,6 +185,7 @@ for (const e of rows) {
   const allowedIrregular = IRREGULAR[w] || [];
   for (const d of e.definitions || []) {
     const ex = String(d.example || '').toLowerCase();
+    if (!ex) continue; // 空例句不算幻觉，跳过（每个词只保证至少 1 条例句，见 noEx 断言）
     if (ex.includes(w)) continue;
     const toks = ex.split(/[^a-z]+/);
     const hit = toks.some((t) => t.length >= 3 && editDistanceAtMost(st, stemOf(t), 1))

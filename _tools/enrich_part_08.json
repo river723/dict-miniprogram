@@ -1,0 +1,1150 @@
+[
+  {
+    "word": "mercenary",
+    "examples": ["The mercenary fought for whoever paid him the most.", "She took a mercenary attitude toward the project, caring only about profit."],
+    "etymology": "from Latin mercenarius 'hired for pay', from merces 'wages, reward'",
+    "similar": [],
+    "memory_tip": "词根 merc=报酬(merces)，-ary 表人，联想'为钱打仗的雇佣兵'。"
+  },
+  {
+    "word": "mercurial",
+    "examples": ["His mercurial mood swung from joy to anger within minutes."],
+    "etymology": "from Latin Mercurius (the god Mercury), noted for swiftness and changeability, + -al",
+    "similar": [{"word": "mercenary", "relation": "spelling", "description": "形似但 mercenary 指'雇佣的/雇佣兵'"}],
+    "memory_tip": "源自墨丘利(Mercury)神，善变敏捷，记'水银般喜怒无常'。"
+  },
+  {
+    "word": "meringue",
+    "examples": ["She piped the meringue onto the pie and baked it until golden."],
+    "etymology": "from French meringue, of uncertain origin",
+    "similar": [],
+    "memory_tip": "法式蛋白霜，联想 meringue 音似'没软'——烤脆的。"
+  },
+  {
+    "word": "mesh",
+    "examples": ["The gears mesh smoothly when properly aligned.", "The wire mesh kept the animals out."],
+    "etymology": "from Middle English mesche, perhaps from Old English masc 'mesh of a net'",
+    "similar": [{"word": "mash", "relation": "pronunciation", "description": "发音相近，mash 是'捣碎'"}],
+    "memory_tip": "mesh 网眼，联想 fish 网——mesh 与 net 都指网。"
+  },
+  {
+    "word": "messy",
+    "examples": ["The children left the kitchen in a messy state."],
+    "etymology": "from mess (a disordered heap) + -y",
+    "similar": [{"word": "massy", "relation": "spelling", "description": "massy 指'巨大的/实心的'，易混"}],
+    "memory_tip": "mess(混乱)+y→乱糟糟的。"
+  },
+  {
+    "word": "metabolism",
+    "examples": ["Exercise speeds up your metabolism."],
+    "etymology": "from Greek metabolē 'change, overthrow', from meta- 'over' + ballein 'to throw'",
+    "similar": [],
+    "memory_tip": "meta(变化)+bol(扔)+ism，记'身体代谢=物质被转换扔出'。"
+  },
+  {
+    "word": "metallic",
+    "examples": ["The paint gave the surface a metallic sheen."],
+    "etymology": "from Latin metallicus, from Greek metallikon, from metallon 'metal'",
+    "similar": [],
+    "memory_tip": "metal(金属)+lic→金属般的。"
+  },
+  {
+    "word": "metallurgy",
+    "examples": ["He studied metallurgy to learn how to refine iron."],
+    "etymology": "from Greek metallon 'metal' + ergon 'work'",
+    "similar": [],
+    "memory_tip": "metal+urgy(工作，如 energy 能量)→冶金术。"
+  },
+  {
+    "word": "meteoric",
+    "examples": ["Her rise to fame was meteoric."],
+    "etymology": "from Greek meteōros 'lofty, in the air' + -ic",
+    "similar": [{"word": "meteorological", "relation": "spelling", "description": "形似，meteorological 指'气象的'"}],
+    "memory_tip": "meteor(流星)+ic，记'流星般迅速的(成名)'。"
+  },
+  {
+    "word": "meteorologist",
+    "examples": ["The meteorologist predicted heavy rain."],
+    "etymology": "from meteorology + -ist (one who studies)",
+    "similar": [],
+    "memory_tip": "meteorology(气象学)+ist(人)→气象学家。"
+  },
+  {
+    "word": "meteorology",
+    "examples": ["Meteorology helps us understand weather patterns."],
+    "etymology": "from Greek meteōrologia, from meteōron 'thing high in the air' + -logia 'study'",
+    "similar": [],
+    "memory_tip": "meteor(高空现象)+logy(学)→气象学。"
+  },
+  {
+    "word": "methodical",
+    "examples": ["She kept methodical records of every experiment."],
+    "etymology": "from method + -ical",
+    "similar": [{"word": "methodic", "relation": "spelling", "description": "methodic 是更简形式，methodical 更常用"}],
+    "memory_tip": "method(方法)+ical→有条理的。"
+  },
+  {
+    "word": "methodology",
+    "examples": ["The study used a clear research methodology."],
+    "etymology": "from Greek methodologia, from methodos 'pursuit, method' + -logia",
+    "similar": [],
+    "memory_tip": "method+ology(学)→方法论。"
+  },
+  {
+    "word": "meticulous",
+    "examples": ["He was meticulous about cleaning every corner."],
+    "etymology": "from Latin meticulosus 'fearful, timid', from metus 'fear'",
+    "similar": [{"word": "metrical", "relation": "spelling", "description": "metrical 指'格律的'，易混"}],
+    "memory_tip": "源自 metus(恐惧)——因害怕出错而'一丝不苟'。"
+  },
+  {
+    "word": "Metro",
+    "examples": ["I took the Metro to the city centre."],
+    "etymology": "short for metropolitan railway; from French métro",
+    "similar": [],
+    "memory_tip": "法语 métro 缩写，指城市地铁。"
+  },
+  {
+    "word": "Mexican",
+    "examples": ["We enjoyed authentic Mexican food."],
+    "etymology": "from Mexico + -an (of or relating to)",
+    "similar": [],
+    "memory_tip": "Mexico+an→墨西哥的。"
+  },
+  {
+    "word": "microbe",
+    "examples": ["A single microbe can multiply rapidly."],
+    "etymology": "from French, from Greek mikros 'small' + bios 'life'",
+    "similar": [],
+    "memory_tip": "micro(小)+bio(生命)→微生物。"
+  },
+  {
+    "word": "microcosm",
+    "examples": ["The small garden was a microcosm of the larger ecosystem."],
+    "etymology": "from Greek mikros 'small' + kosmos 'world, order'",
+    "similar": [],
+    "memory_tip": "micro(小)+cosm(世界，如 cosmic)→微观世界/缩影。"
+  },
+  {
+    "word": "microfilm",
+    "examples": ["Old newspapers were stored on microfilm."],
+    "etymology": "from micro- 'small' + film",
+    "similar": [],
+    "memory_tip": "micro+film→缩微胶片。"
+  },
+  {
+    "word": "microwave",
+    "examples": ["She heated the soup in the microwave."],
+    "etymology": "from micro- 'small' + wave; originally of short radio waves",
+    "similar": [],
+    "memory_tip": "micro(小)+wave(波)→微波炉。"
+  },
+  {
+    "word": "mien",
+    "examples": ["His confident mien impressed the interviewers."],
+    "etymology": "from French mine 'look, expression, air'",
+    "similar": [{"word": "mean", "relation": "spelling", "description": "拼写相近，mean 意为'刻薄/平均'"}],
+    "memory_tip": "mien 音似'面'→面容/风度。"
+  },
+  {
+    "word": "mighty",
+    "examples": ["A mighty storm destroyed the bridge."],
+    "etymology": "from Old English mihtig, from miht 'power'",
+    "similar": [],
+    "memory_tip": "might(力量)+y→强大的。"
+  },
+  {
+    "word": "migrant",
+    "examples": ["Migrant workers travel to find seasonal jobs."],
+    "etymology": "from Latin migrans, present participle of migrare 'to move, wander'",
+    "similar": [{"word": "migratory", "relation": "meaning", "description": "migratory 多作形容词'迁徙的'"}],
+    "memory_tip": "migr(移动，如 migrate)+ant(人)→移民/候鸟。"
+  },
+  {
+    "word": "migratory",
+    "examples": ["Swallows are migratory birds."],
+    "etymology": "from Latin migratorius, from migrare 'to migrate'",
+    "similar": [{"word": "migrant", "relation": "meaning", "description": "migrant 可作名词'移民'"}],
+    "memory_tip": "migr+atory→迁徙的。"
+  },
+  {
+    "word": "mildew",
+    "examples": ["The damp walls were covered in mildew."],
+    "etymology": "from Old English meledeaw, from mel- + dēaw 'dew'",
+    "similar": [],
+    "memory_tip": "联想 mil(千)+dew(露)——潮湿霉斑。"
+  },
+  {
+    "word": "millennium",
+    "examples": ["The new millennium began in the year 2000."],
+    "etymology": "from Latin mille 'thousand' + annus 'year'",
+    "similar": [],
+    "memory_tip": "mill(千)+enn(年，如 annual)+ium→千年。"
+  },
+  {
+    "word": "mimic",
+    "examples": ["The parrot can mimic human speech."],
+    "etymology": "from Greek mimikos, from mimos 'imitator, mime'",
+    "similar": [{"word": "mimicry", "relation": "meaning", "description": "mimicry 是名词'拟态/模仿'"}],
+    "memory_tip": "mime(哑剧/模仿)+ic→模仿。"
+  },
+  {
+    "word": "mind",
+    "examples": ["Keep in mind that deadlines matter."],
+    "etymology": "from Old English gemynd 'memory, thought'",
+    "similar": [],
+    "memory_tip": "基础词，'头脑/介意'。"
+  },
+  {
+    "word": "mineral",
+    "examples": ["This water is rich in natural minerals."],
+    "etymology": "from Medieval Latin minerale, from minera 'ore, mine'",
+    "similar": [],
+    "memory_tip": "mine(矿)+ral→矿物。"
+  },
+  {
+    "word": "minimal",
+    "examples": ["The design follows a minimal style."],
+    "etymology": "from Latin minimus 'smallest' + -al",
+    "similar": [{"word": "minimum", "relation": "meaning", "description": "minimum 是'最小值'，minimal 是'最小的'"}],
+    "memory_tip": "mini(小)+mal→最小的/极简的。"
+  },
+  {
+    "word": "mint",
+    "examples": ["She added mint leaves to the tea.", "The coin was fresh from the mint."],
+    "etymology": "plant: from Old English minte, from Latin mentha; coin: from Old English mynet 'coin'",
+    "similar": [],
+    "memory_tip": "薄荷 / 造币厂，两义；mentha→薄荷。"
+  },
+  {
+    "word": "minute",
+    "examples": ["The scientist noticed a minute difference in the samples."],
+    "etymology": "adjective from Latin minutus 'small', from minuere 'to lessen'",
+    "similar": [{"word": "minute (time)", "relation": "spelling", "description": "同形异义，作名词指'分钟'"}],
+    "memory_tip": "minute(极小的)来自 min(u)(小)，与'分钟'同形。"
+  },
+  {
+    "word": "mirage",
+    "examples": ["The desert mirage looked like a lake in the distance."],
+    "etymology": "from French mirage, from mirer 'to look at, reflect'",
+    "similar": [],
+    "memory_tip": "mir(看，如 mirror)+age→海市蜃楼(幻景)。"
+  },
+  {
+    "word": "mire",
+    "examples": ["The car sank into the mire after the rain."],
+    "etymology": "from Old English mīr 'swamp, mire'",
+    "similar": [{"word": "mild", "relation": "spelling", "description": "mild 是'温和的'，易混"}],
+    "memory_tip": "mire 音似'泥'→泥沼。"
+  },
+  {
+    "word": "misappropriate",
+    "examples": ["He was fired for misappropriating company funds."],
+    "etymology": "from mis- 'wrongly' + appropriate",
+    "similar": [],
+    "memory_tip": "mis(错误)+appropriate(占用)→挪用/盗用。"
+  },
+  {
+    "word": "miscarriage",
+    "examples": ["The project ended in a miscarriage of justice."],
+    "etymology": "from mis- 'badly' + carriage (from carry); originally of failed pregnancy",
+    "similar": [],
+    "memory_tip": "mis+carriage→流产/失败。"
+  },
+  {
+    "word": "miscellaneous",
+    "examples": ["The box contained miscellaneous old items."],
+    "etymology": "from Latin miscellaneus 'mixed', from miscellus 'mixed', from miscere 'to mix'",
+    "similar": [],
+    "memory_tip": "misc(混合，如 mix)+aneous→混杂的/各种各样的。"
+  },
+  {
+    "word": "mischance",
+    "examples": ["By mischance, the letter was lost in the post."],
+    "etymology": "from mis- 'bad' + chance",
+    "similar": [],
+    "memory_tip": "mis+chance→不幸/灾难。"
+  },
+  {
+    "word": "misconceive",
+    "examples": ["You misconceive the purpose of the rule."],
+    "etymology": "from mis- 'wrongly' + conceive",
+    "similar": [],
+    "memory_tip": "mis+conceive(构想)→误解。"
+  },
+  {
+    "word": "misdeed",
+    "examples": ["His misdeeds were finally discovered."],
+    "etymology": "from mis- 'bad' + deed",
+    "similar": [],
+    "memory_tip": "mis+deed(行为)→恶行。"
+  },
+  {
+    "word": "misgiving",
+    "examples": ["She had deep misgivings about the plan."],
+    "etymology": "from mis- + giving (as in 'what one gives/feels')",
+    "similar": [],
+    "memory_tip": "mis+giving(给予的心情)→疑虑/担忧。"
+  },
+  {
+    "word": "misguided",
+    "examples": ["A misguided policy harmed the economy."],
+    "etymology": "from mis- 'wrongly' + guided",
+    "similar": [],
+    "memory_tip": "mis+guided(引导的)→被误导的。"
+  },
+  {
+    "word": "mishap",
+    "examples": ["Apart from a small mishap, the trip went well."],
+    "etymology": "from mis- 'bad' + hap 'chance, fortune'",
+    "similar": [],
+    "memory_tip": "mis+hap(运气)→小事故。"
+  },
+  {
+    "word": "misrepresent",
+    "examples": ["The article misrepresented his views."],
+    "etymology": "from mis- 'wrongly' + represent",
+    "similar": [],
+    "memory_tip": "mis+represent(表述)→歪曲。"
+  },
+  {
+    "word": "misuse",
+    "examples": ["Misuse of the drug can be dangerous."],
+    "etymology": "from mis- 'wrong' + use",
+    "similar": [],
+    "memory_tip": "mis+use→误用/滥用。"
+  },
+  {
+    "word": "mitigate",
+    "examples": ["Steps were taken to mitigate the risk."],
+    "etymology": "from Latin mitigare 'to soften, alleviate', from mitis 'soft, mild' + agere 'to do'",
+    "similar": [{"word": "militate", "relation": "pronunciation", "description": "发音相近，militate 指'起作用/产生影响'"}],
+    "memory_tip": "mit(软，如 mild)+igate→缓和/减轻。"
+  },
+  {
+    "word": "modish",
+    "examples": ["She wore modish clothes from Paris."],
+    "etymology": "from mode 'fashion' + -ish",
+    "similar": [],
+    "memory_tip": "mode(时尚)+ish→时髦的。"
+  },
+  {
+    "word": "modulate",
+    "examples": ["He modulated his voice to sound calm."],
+    "etymology": "from Latin modulari 'to measure, regulate', from modus 'measure'",
+    "similar": [],
+    "memory_tip": "mod(度量，如 mode)+ulate→调节(声音)。"
+  },
+  {
+    "word": "mold",
+    "examples": ["The cheese began to mold in the heat.", "He shaped the clay in a mold."],
+    "etymology": "fungus: from Middle English moulde; form/shape: from Old French modle",
+    "similar": [],
+    "memory_tip": "霉菌 / 模具，两义；mould 原式。"
+  },
+  {
+    "word": "mole",
+    "examples": ["The mole burrowed under the lawn."],
+    "etymology": "small mammal: from Middle English molle; spot: from Middle English mole",
+    "similar": [],
+    "memory_tip": "鼹鼠 / 痣，两义；联想'mole 在土里钻'。"
+  },
+  {
+    "word": "molest",
+    "examples": ["He was arrested for trying to molest the child."],
+    "etymology": "from Latin molestus 'troublesome', from moles 'mass, burden'",
+    "similar": [{"word": "modest", "relation": "spelling", "description": "modest 是'谦虚的'，易拼混"}],
+    "memory_tip": "molest 音似'磨累死'——骚扰使人烦累。"
+  },
+  {
+    "word": "molten",
+    "examples": ["Molten lava flowed down the volcano."],
+    "etymology": "from Old English molten, past participle of meltan 'to melt'",
+    "similar": [{"word": "melted", "relation": "meaning", "description": "melted 泛指'融化'，molten 多指高温熔化的金属/岩浆"}],
+    "memory_tip": "melt 的过去分词变形→熔融的。"
+  },
+  {
+    "word": "momentous",
+    "examples": ["The discovery was a momentous event in science."],
+    "etymology": "from moment + -ous; originally 'moving, having force'",
+    "similar": [{"word": "momentary", "relation": "spelling", "description": "momentary 是'瞬间的'，易混"}],
+    "memory_tip": "moment(时刻/重大)+ous→重大的。"
+  },
+  {
+    "word": "monarchy",
+    "examples": ["The country abolished its monarchy."],
+    "etymology": "from Greek monarkhia, from monos 'single' + arkhein 'to rule'",
+    "similar": [{"word": "monopoly", "relation": "spelling", "description": "monopoly 是'垄断'，形似"}],
+    "memory_tip": "mono(单一)+archy(统治，如 arch)→君主制。"
+  },
+  {
+    "word": "monologue",
+    "examples": ["The character's long monologue bored the audience."],
+    "etymology": "from Greek monos 'single' + logos 'speech'",
+    "similar": [{"word": "dialogue", "relation": "meaning", "description": "dialogue 是'对话'"}],
+    "memory_tip": "mono(单)+logue(说话)→独白。"
+  },
+  {
+    "word": "monsoon",
+    "examples": ["The monsoon brings heavy rain to India."],
+    "etymology": "from Portuguese monção, from Arabic mawsim 'season'",
+    "similar": [],
+    "memory_tip": "阿拉伯语 mawsim(季节)→季风。"
+  },
+  {
+    "word": "monstrous",
+    "examples": ["The monstrous wave crushed the small boat."],
+    "etymology": "from Latin monstrum 'omen, monster' + -ous",
+    "similar": [],
+    "memory_tip": "monster(怪物)+ous→巨大的/骇人的。"
+  },
+  {
+    "word": "monumental",
+    "examples": ["The bridge was a monumental achievement."],
+    "etymology": "from Latin monumentum 'memorial' + -al",
+    "similar": [],
+    "memory_tip": "monument(纪念碑)+al→纪念碑式的/重大的。"
+  },
+  {
+    "word": "moped",
+    "examples": ["He rode his moped to work."],
+    "etymology": "from mo(tor) + ped(al), coined in Swedish",
+    "similar": [],
+    "memory_tip": "motor+pedal→助动车/摩托。"
+  },
+  {
+    "word": "morbid",
+    "examples": ["He had a morbid fascination with death."],
+    "etymology": "from Latin morbidus 'sick', from morbus 'disease'",
+    "similar": [{"word": "moribund", "relation": "spelling", "description": "moribund 指'垂死的/奄奄一息的'，易混"}],
+    "memory_tip": "morb(病，如 morbidity)+id→病态的/恐怖的。"
+  },
+  {
+    "word": "most",
+    "examples": ["She is the most talented student in the class."],
+    "etymology": "from Old English māst, superlative of mickle 'great'",
+    "similar": [],
+    "memory_tip": "基础词，'最/大多数'。"
+  },
+  {
+    "word": "motif",
+    "examples": ["The floral motif appeared throughout the design."],
+    "etymology": "from French motif, from Latin motivus 'moving, causing motion'",
+    "similar": [{"word": "motive", "relation": "meaning", "description": "motive 是'动机'"}],
+    "memory_tip": "mot(动，如 motion)+if→主题/动机图案。"
+  },
+  {
+    "word": "motto",
+    "examples": ["Their family motto is 'honesty first'."],
+    "etymology": "from Italian motto 'word, saying', from Latin muttum 'utterance'",
+    "similar": [],
+    "memory_tip": "motto 音似'猫头'——刻在牌上的'座右铭'。"
+  },
+  {
+    "word": "moustache",
+    "examples": ["He twisted the ends of his moustache."],
+    "etymology": "from French moustache, from Italian mostaccio, from Greek mystax 'upper lip, moustache'",
+    "similar": [{"word": "mustache", "relation": "spelling", "description": "mustache 是美式拼写"}],
+    "memory_tip": "希腊语 mystax(上唇)→胡子/髭。"
+  },
+  {
+    "word": "mucous",
+    "examples": ["The mucous membrane lines the inside of the nose."],
+    "etymology": "from Latin mucosus, from mucus 'slime, nasal mucus'",
+    "similar": [{"word": "mucus", "relation": "spelling", "description": "mucus 是名词'黏液'，mucous 是形容词"}],
+    "memory_tip": "mucus(黏液)+ous→黏液的。"
+  },
+  {
+    "word": "muddle",
+    "examples": ["The explanation only muddled the issue further."],
+    "etymology": "frequentative of mud; from mud + -le",
+    "similar": [],
+    "memory_tip": "mud(泥)+dle→把水搅浑/使混乱。"
+  },
+  {
+    "word": "multifarious",
+    "examples": ["The job involved multifarious duties."],
+    "etymology": "from Latin multifarius 'of many sorts', from multus 'many' + fari 'to speak/sort'",
+    "similar": [{"word": "multifaceted", "relation": "meaning", "description": "multifaceted 指'多方面的'，语义相近"}],
+    "memory_tip": "multi(多)+fari(种)+ous→多种多样的。"
+  },
+  {
+    "word": "multilateral",
+    "examples": ["The treaty was a multilateral agreement."],
+    "etymology": "from multi- 'many' + lateral 'side'",
+    "similar": [],
+    "memory_tip": "multi(多)+lateral(边的)→多边的。"
+  },
+  {
+    "word": "mundane",
+    "examples": ["He found the daily chores utterly mundane."],
+    "etymology": "from Latin mundanus 'of the world', from mundus 'world'",
+    "similar": [{"word": "mantle", "relation": "pronunciation", "description": "发音相近，mantle 是'地幔/披风'"}],
+    "memory_tip": "mund(世界)→世俗的/平凡的。"
+  },
+  {
+    "word": "muster",
+    "examples": ["The captain mustered his troops."],
+    "etymology": "from Old French mostrer 'to show', from Latin monstrare 'to point out'",
+    "similar": [],
+    "memory_tip": "must(必须)+er→集结/召集。"
+  },
+  {
+    "word": "mutation",
+    "examples": ["The virus underwent a mutation."],
+    "etymology": "from Latin mutatio 'change', from mutare 'to change'",
+    "similar": [],
+    "memory_tip": "mut(改变，如 mutual)+ation→突变/变异。"
+  },
+  {
+    "word": "myriad",
+    "examples": ["A myriad of stars filled the night sky."],
+    "etymology": "from Greek myrias 'ten thousand', from myrioi 'countless'",
+    "similar": [],
+    "memory_tip": "希腊语 myrias(万)→无数/大量。"
+  },
+  {
+    "word": "mystify",
+    "examples": ["The magic trick mystified the audience."],
+    "etymology": "from mystery + -fy",
+    "similar": [{"word": "mystique", "relation": "meaning", "description": "mystique 是'神秘性'"}],
+    "memory_tip": "mystery(神秘)+fy→使困惑/使神秘。"
+  },
+  {
+    "word": "mythology",
+    "examples": ["Greek mythology includes many gods and heroes."],
+    "etymology": "from Greek mythologia, from mythos 'story' + logos 'speech'",
+    "similar": [],
+    "memory_tip": "myth(神话)+ology(学)→神话学。"
+  },
+  {
+    "word": "narcotic",
+    "examples": ["The doctor prescribed a narcotic for the pain."],
+    "etymology": "from Greek narkōtikos 'numbing', from narke 'numbness, torpor'",
+    "similar": [],
+    "memory_tip": "nark(麻木，如 narcosis)→麻醉的/致幻的。"
+  },
+  {
+    "word": "nasal",
+    "examples": ["He had a nasal voice due to a cold."],
+    "etymology": "from Latin nasalis, from nasus 'nose'",
+    "similar": [{"word": "nascent", "relation": "spelling", "description": "nascent 是'新生的'，易混"}],
+    "memory_tip": "nas(鼻，如 nose)+al→鼻的/带鼻音的。"
+  },
+  {
+    "word": "natal",
+    "examples": ["The hospital has a special natal care unit."],
+    "etymology": "from Latin natalis 'of birth', from natus 'born'",
+    "similar": [{"word": "native", "relation": "meaning", "description": "native 是'本地的/天生的'"}],
+    "memory_tip": "nat(出生，如 nation)+al→出生的/产期的。"
+  },
+  {
+    "word": "nausea",
+    "examples": ["The boat trip caused severe nausea."],
+    "etymology": "from Greek nautia 'seasickness', from nautēs 'sailor', from naus 'ship'",
+    "similar": [{"word": "nauseous", "relation": "meaning", "description": "nauseous 多作形容词'令人作呕的'"}],
+    "memory_tip": "nau(船，如 nautical)+sia→晕船/恶心。"
+  },
+  {
+    "word": "nautical",
+    "examples": ["The map used many nautical terms."],
+    "etymology": "from Greek nautikos 'of ships', from naus 'ship'",
+    "similar": [],
+    "memory_tip": "naut(船)+ical→航海的。"
+  },
+  {
+    "word": "navigable",
+    "examples": ["The river is navigable by small boats."],
+    "etymology": "from Latin navigabilis, from navigare 'to sail', from navis 'ship' + agere 'to drive'",
+    "similar": [],
+    "memory_tip": "nav(船)+igable→可航行的。"
+  },
+  {
+    "word": "negation",
+    "examples": ["His silence was a negation of the earlier claim."],
+    "etymology": "from Latin negatio, from negare 'to deny'",
+    "similar": [],
+    "memory_tip": "neg(否定，如 negative)+ation→否定。"
+  },
+  {
+    "word": "negligence",
+    "examples": ["The accident was due to gross negligence."],
+    "etymology": "from Latin negligentia, from neglegere 'to neglect', from neg- 'not' + legere 'to pick'",
+    "similar": [{"word": "negligible", "relation": "meaning", "description": "negligible 是'可忽略的'"}],
+    "memory_tip": "neg(不)+lect(顾，如 collect)+ence→疏忽。"
+  },
+  {
+    "word": "negotiable",
+    "examples": ["The price is negotiable if you buy in bulk."],
+    "etymology": "from negotiate + -able",
+    "similar": [],
+    "memory_tip": "negoti(谈判)+able(可)→可协商的。"
+  },
+  {
+    "word": "neurosis",
+    "examples": ["He suffered from anxiety neurosis."],
+    "etymology": "from Greek neuron 'nerve' + -osis 'condition'",
+    "similar": [],
+    "memory_tip": "neur(神经，如 nerve)+osis→神经症。"
+  },
+  {
+    "word": "neurotic",
+    "examples": ["She was neurotic about cleanliness."],
+    "etymology": "from Greek neuron 'nerve' + -otic",
+    "similar": [],
+    "memory_tip": "neur+otic→神经质的。"
+  },
+  {
+    "word": "neutralize",
+    "examples": ["The acid was neutralized with an alkali."],
+    "etymology": "from neutral + -ize",
+    "similar": [],
+    "memory_tip": "neutral(中性)+ize→中和/抵消。"
+  },
+  {
+    "word": "nibble",
+    "examples": ["The mouse nibbled the cheese slowly."],
+    "etymology": "from Middle Low German nibbeln 'to nip'",
+    "similar": [{"word": "nipple", "relation": "pronunciation", "description": "发音相近，nipple 是'乳头'"}],
+    "memory_tip": "nibble 音似' nib 啃'→小口咬/细啃。"
+  },
+  {
+    "word": "nicety",
+    "examples": ["The nicety of the language impressed her."],
+    "etymology": "from nice + -ty; originally 'precision'",
+    "similar": [],
+    "memory_tip": "nice(精细的)+ty→细微之处/精确。"
+  },
+  {
+    "word": "nil",
+    "examples": ["The final score was three to nil."],
+    "etymology": "from Latin nihil 'nothing'",
+    "similar": [{"word": "null", "relation": "meaning", "description": "null 是'无效的/零'，语义近"}],
+    "memory_tip": "拉丁语 nihil(无)→零/无。"
+  },
+  {
+    "word": "nitrate",
+    "examples": ["Nitrate is widely used as a fertilizer."],
+    "etymology": "from French nitrate, from Latin nitrum 'natron, nitre' + -ate",
+    "similar": [],
+    "memory_tip": "nitr(硝石)+ate→硝酸盐。"
+  },
+  {
+    "word": "nobility",
+    "examples": ["The nobility attended the royal banquet."],
+    "etymology": "from Latin nobilitas, from nobilis 'known, noble'",
+    "similar": [],
+    "memory_tip": "noble(贵族)+ity→贵族(阶层)。"
+  },
+  {
+    "word": "nomad",
+    "examples": ["The nomad moved with the changing seasons."],
+    "etymology": "from French nomade, from Latin nomas 'roaming', from Greek nomas 'pasturing'",
+    "similar": [],
+    "memory_tip": "nom(牧场/游荡)+ad→游牧民。"
+  },
+  {
+    "word": "nominee",
+    "examples": ["She was the nominee for the award."],
+    "etymology": "from nominate + -ee (one who is nominated)",
+    "similar": [],
+    "memory_tip": "nomin(命名，如 name)+ee(被...的人)→被提名者。"
+  },
+  {
+    "word": "normalize",
+    "examples": ["Relations between the two countries normalized."],
+    "etymology": "from normal + -ize",
+    "similar": [],
+    "memory_tip": "normal(正常)+ize→使正常化。"
+  },
+  {
+    "word": "nostalgia",
+    "examples": ["He felt a deep nostalgia for his childhood home."],
+    "etymology": "from Greek nostos 'return home' + algos 'pain'",
+    "similar": [],
+    "memory_tip": "nost(回家)+algia(痛，如 neuralgia)→怀旧/思乡。"
+  },
+  {
+    "word": "nostril",
+    "examples": ["The horse flared its nostrils."],
+    "etymology": "from Old English nosu 'nose' + thyrel 'hole'",
+    "similar": [],
+    "memory_tip": "nose+thril(孔)→鼻孔。"
+  },
+  {
+    "word": "notably",
+    "examples": ["The building is notably tall for this area."],
+    "etymology": "from notable + -ly",
+    "similar": [],
+    "memory_tip": "notable(显著的)+ly→显著地。"
+  },
+  {
+    "word": "notary",
+    "examples": ["The contract was signed before a notary."],
+    "etymology": "from Latin notarius 'clerk', from nota 'mark, note'",
+    "similar": [],
+    "memory_tip": "not(标记)+ary→公证人。"
+  },
+  {
+    "word": "notation",
+    "examples": ["Music uses a special notation for pitch."],
+    "etymology": "from Latin notatio, from nota 'mark, note'",
+    "similar": [],
+    "memory_tip": "not(标记)+ation→记号/符号系统。"
+  },
+  {
+    "word": "notch",
+    "examples": ["He cut a notch in the stick to mark his height."],
+    "etymology": "from Middle English nocche, of unknown origin",
+    "similar": [],
+    "memory_tip": "notch 音似'凹槽'→刻痕/V 形切口。"
+  },
+  {
+    "word": "nothing",
+    "examples": ["There is nothing to worry about."],
+    "etymology": "from no + thing",
+    "similar": [],
+    "memory_tip": "no+thing→没有什么。"
+  },
+  {
+    "word": "notional",
+    "examples": ["It is a notional value, not a real one."],
+    "etymology": "from Latin notio 'idea, notion' + -al",
+    "similar": [],
+    "memory_tip": "notion(概念)+al→概念上的/假设的。"
+  },
+  {
+    "word": "notoriety",
+    "examples": ["The crime gave him sudden notoriety."],
+    "etymology": "from Latin notorius 'well-known' + -ety",
+    "similar": [],
+    "memory_tip": "not(知道，如 note)+oriety→恶名/声名狼藉。"
+  },
+  {
+    "word": "nought",
+    "examples": ["All their efforts came to nought."],
+    "etymology": "from Old English nōwiht 'nothing', from ne 'not' + ōwiht 'anything'",
+    "similar": [{"word": "naught", "relation": "spelling", "description": "naught 是美式拼写，同义"}],
+    "memory_tip": "古英语'无'→零/无(naught)。"
+  },
+  {
+    "word": "nourishment",
+    "examples": ["Plants need nourishment from the soil."],
+    "etymology": "from nourish + -ment",
+    "similar": [],
+    "memory_tip": "nourish(滋养)+ment→营养。"
+  },
+  {
+    "word": "novice",
+    "examples": ["As a novice, she made many beginner mistakes."],
+    "etymology": "from Latin novicius 'newcomer', from novus 'new'",
+    "similar": [{"word": "novel", "relation": "etymology", "description": "同词根 nov(新)"}],
+    "memory_tip": "nov(新)+ice→新手。"
+  },
+  {
+    "word": "noxious",
+    "examples": ["The gas released from the factory was noxious."],
+    "etymology": "from Latin noxius 'harmful', from noxa 'harm'",
+    "similar": [],
+    "memory_tip": "nox(害，如 noxa)+ious→有毒的/有害的。"
+  },
+  {
+    "word": "nozzle",
+    "examples": ["The hose nozzle was clogged with dirt."],
+    "etymology": "from Middle English nosel 'small nose', diminutive of nose",
+    "similar": [],
+    "memory_tip": "nose(鼻)+le→喷嘴(像小鼻子)。"
+  },
+  {
+    "word": "nuance",
+    "examples": ["He appreciated the nuance of her tone."],
+    "etymology": "from French nuance, from nuer 'to shade', from nue 'cloud'",
+    "similar": [],
+    "memory_tip": "法语 nuance→细微差别/色调。"
+  },
+  {
+    "word": "null",
+    "examples": ["The contract was declared null and void."],
+    "etymology": "from Latin nullus 'none, not any'",
+    "similar": [{"word": "nil", "relation": "meaning", "description": "nil 也指'零/无'"}],
+    "memory_tip": "拉丁语 nullus(无)→无效的/零。"
+  },
+  {
+    "word": "nullify",
+    "examples": ["The court can nullify an unconstitutional law."],
+    "etymology": "from null + -ify",
+    "similar": [],
+    "memory_tip": "null(无效)+ify(使)→使无效/废除。"
+  },
+  {
+    "word": "numerate",
+    "examples": ["Children should be numerate by age seven."],
+    "etymology": "from Latin numerus 'number' + -ate; back-formed from numerical",
+    "similar": [],
+    "memory_tip": "numer(数字，如 number)+ate→识数的。"
+  },
+  {
+    "word": "oasis",
+    "examples": ["The garden was a green oasis in the desert."],
+    "etymology": "from Latin oasis, from Greek, of Egyptian origin",
+    "similar": [],
+    "memory_tip": "绿洲，源自埃及语→沙漠中的绿洲/避风港。"
+  },
+  {
+    "word": "oatmeal",
+    "examples": ["He ate a bowl of oatmeal for breakfast."],
+    "etymology": "from oat + meal (ground grain)",
+    "similar": [],
+    "memory_tip": "oat(燕麦)+meal(粉)→燕麦片。"
+  },
+  {
+    "word": "obese",
+    "examples": ["The obese patient needed specialist medical care."],
+    "etymology": "from Latin obesus 'fat', from ob- 'over' + edere 'to eat'",
+    "similar": [],
+    "memory_tip": "ob(过度)+ese(吃，edere)→肥胖的。"
+  },
+  {
+    "word": "obligate",
+    "examples": ["The law obligates employers to pay tax."],
+    "etymology": "from Latin obligatus, from obligare 'to bind', from ob- 'to' + ligare 'to bind'",
+    "similar": [{"word": "oblige", "relation": "meaning", "description": "oblige 是'迫使/帮忙'，obligate 是'使负有义务'"}],
+    "memory_tip": "ob+lig(绑，如 ligament)+ate→使负有义务。"
+  },
+  {
+    "word": "obligatory",
+    "examples": ["Attendance at the meeting is obligatory."],
+    "etymology": "from Latin obligatorius, from obligare 'to bind'",
+    "similar": [],
+    "memory_tip": "obligat(e)+ory→强制的/义务的。"
+  },
+  {
+    "word": "obliging",
+    "examples": ["The obliging waiter brought us extra water."],
+    "etymology": "from oblige + -ing",
+    "similar": [{"word": "obligatory", "relation": "meaning", "description": "obligatory 是'义务的'，obliging 是'乐于助人的'"}],
+    "memory_tip": "oblig(e)+ing→亲切的/乐于助人的。"
+  },
+  {
+    "word": "oblique",
+    "examples": ["He made an oblique reference to the scandal."],
+    "etymology": "from Latin obliquus 'slanting, sideways'",
+    "similar": [{"word": "opaque", "relation": "spelling", "description": "opaque 是'不透明的'，易拼混"}],
+    "memory_tip": "ob+lique(斜)→倾斜的/间接的。"
+  },
+  {
+    "word": "oblivious",
+    "examples": ["He was oblivious to the danger around him."],
+    "etymology": "from Latin obliviosus, from oblivisci 'to forget'",
+    "similar": [],
+    "memory_tip": "ob+liv(忘记，如 oblivion)+ious→未察觉的/健忘的。"
+  },
+  {
+    "word": "oblong",
+    "examples": ["The table was an oblong shape."],
+    "etymology": "from Latin oblongus 'longish', from ob- 'in the direction of' + longus 'long'",
+    "similar": [],
+    "memory_tip": "ob+long→拉长的/椭圆形的。"
+  },
+  {
+    "word": "obnoxious",
+    "examples": ["The obnoxious child annoyed everyone."],
+    "etymology": "from Latin obnoxius 'exposed to harm, offensive', from ob- + noxa 'harm'",
+    "similar": [{"word": "obscene", "relation": "meaning", "description": "obscene 是'淫秽的'，语义近易混"}],
+    "memory_tip": "ob+nox(害)+ious→讨厌的/可憎的。"
+  },
+  {
+    "word": "obscene",
+    "examples": ["The film contained obscene language."],
+    "etymology": "from Latin obscenus 'offensive, indecent'",
+    "similar": [{"word": "obnoxious", "relation": "spelling", "description": "obnoxious 是'讨厌的'，易混"}],
+    "memory_tip": "ob+scen(场景)+e→淫秽的/下流的。"
+  },
+  {
+    "word": "observance",
+    "examples": ["Observance of the law is required by all citizens."],
+    "etymology": "from Latin observantia, from observare 'to watch, heed'",
+    "similar": [],
+    "memory_tip": "ob+serv(看/守，如 serve)+ance→遵守/奉行。"
+  },
+  {
+    "word": "observatory",
+    "examples": ["The hilltop observatory watches the stars."],
+    "etymology": "from observe + -atory (place for)",
+    "similar": [],
+    "memory_tip": "observe(观测)+atory→天文台/观测站。"
+  },
+  {
+    "word": "occupant",
+    "examples": ["The occupant of the room was away on holiday."],
+    "etymology": "from Latin occupantem, present participle of occupare 'to seize, occupy'",
+    "similar": [],
+    "memory_tip": "occup(y)+ant(人)→居住者/占用者。"
+  },
+  {
+    "word": "occupational",
+    "examples": ["He suffered an occupational injury at work."],
+    "etymology": "from occupation + -al",
+    "similar": [],
+    "memory_tip": "occupation(职业)+al→职业的。"
+  },
+  {
+    "word": "octagon",
+    "examples": ["The stop sign is an octagon."],
+    "etymology": "from Greek oktagonon, from okta 'eight' + gonia 'angle'",
+    "similar": [],
+    "memory_tip": "octa(八，如 octopus)+gon(角)→八边形。"
+  },
+  {
+    "word": "odometer",
+    "examples": ["The odometer showed 50,000 miles."],
+    "etymology": "from Greek hodos 'way, path' + metron 'measure'",
+    "similar": [],
+    "memory_tip": "odo(路)+meter(计量)→里程表。"
+  },
+  {
+    "word": "odour",
+    "examples": ["A faint odour of smoke lingered in the hall."],
+    "etymology": "from Latin odor 'smell'",
+    "similar": [{"word": "odor", "relation": "spelling", "description": "odor 是美式拼写"}],
+    "memory_tip": "odor 英式 odour→气味。"
+  },
+  {
+    "word": "odyssey",
+    "examples": ["His life was a long odyssey of discovery."],
+    "etymology": "from Greek Odyssey, the epic of Odysseus' wanderings",
+    "similar": [],
+    "memory_tip": "源自《奥德赛》→漫长艰险的旅程。"
+  },
+  {
+    "word": "off-hand",
+    "examples": ["His off-hand remark upset her badly."],
+    "etymology": "from off + hand; 'at hand's length'",
+    "similar": [],
+    "memory_tip": "off+hand→随便的/即席的。"
+  },
+  {
+    "word": "offshore",
+    "examples": ["They drilled for oil in offshore waters."],
+    "etymology": "from off + shore",
+    "similar": [],
+    "memory_tip": "off+shore(岸)→离岸的/近海的。"
+  },
+  {
+    "word": "omen",
+    "examples": ["A black cat was seen as an omen of bad luck."],
+    "etymology": "from Latin omen 'sign, portent'",
+    "similar": [],
+    "memory_tip": "omen 音似'omin 预兆'→预兆/征兆。"
+  },
+  {
+    "word": "ominous",
+    "examples": ["There were ominous clouds before the storm."],
+    "etymology": "from Latin ominosus, from omen 'portent'",
+    "similar": [],
+    "memory_tip": "omen(预兆)+ous→不祥的/预兆的。"
+  },
+  {
+    "word": "on",
+    "examples": ["The book is on the table."],
+    "etymology": "from Old English on, of",
+    "similar": [],
+    "memory_tip": "基础词，'在...上'。"
+  },
+  {
+    "word": "once",
+    "examples": ["I once lived in London."],
+    "etymology": "from Old English ānes, genitive of ān 'one'",
+    "similar": [],
+    "memory_tip": "one 的所有格→曾经/一次。"
+  },
+  {
+    "word": "oncoming",
+    "examples": ["Watch the oncoming traffic at the crossing."],
+    "etymology": "from on + coming",
+    "similar": [],
+    "memory_tip": "on+coming→迎面而来的。"
+  },
+  {
+    "word": "one",
+    "examples": ["She ate just one apple."],
+    "etymology": "from Old English ān 'one'",
+    "similar": [],
+    "memory_tip": "基础词，'一'。"
+  },
+  {
+    "word": "ongoing",
+    "examples": ["The ongoing project still needs funding."],
+    "etymology": "from on + going",
+    "similar": [],
+    "memory_tip": "on+going→持续进行的。"
+  },
+  {
+    "word": "onlooker",
+    "examples": ["A crowd of onlookers gathered around the accident."],
+    "etymology": "from on + looker",
+    "similar": [],
+    "memory_tip": "on+looker→旁观者。"
+  },
+  {
+    "word": "onset",
+    "examples": ["The onset of winter came earlier than usual."],
+    "etymology": "from on + set (beginning)",
+    "similar": [],
+    "memory_tip": "on+set→开始/发作。"
+  },
+  {
+    "word": "onus",
+    "examples": ["The onus is on the buyer to check the goods."],
+    "etymology": "from Latin onus 'burden, load'",
+    "similar": [],
+    "memory_tip": "拉丁语 onus(负担)→责任/义务。"
+  },
+  {
+    "word": "optic",
+    "examples": ["The optic nerve connects the eye to the brain."],
+    "etymology": "from Greek optikos 'of sight', from optos 'seen'",
+    "similar": [{"word": "opt", "relation": "spelling", "description": "opt 是'选择'，形似易混"}],
+    "memory_tip": "opt(看，如 optical)+ic→视觉的/眼的。"
+  },
+  {
+    "word": "optics",
+    "examples": ["The optics of the new lens were extremely precise."],
+    "etymology": "from Greek optikē 'the science of sight'",
+    "similar": [],
+    "memory_tip": "optic 的学科形式→光学。"
+  },
+  {
+    "word": "optimism",
+    "examples": ["Her optimism kept the whole team going."],
+    "etymology": "from Latin optimum 'best' + -ism; coined by Leibniz",
+    "similar": [],
+    "memory_tip": "optim(最佳，如 optimum)+ism→乐观主义。"
+  },
+  {
+    "word": "ordeal",
+    "examples": ["The survival test was a terrible ordeal."],
+    "etymology": "from Old English ordāl 'judgment, trial by water/fire'",
+    "similar": [],
+    "memory_tip": "ordeal 音似'熬弟欧'→严酷考验/折磨。"
+  },
+  {
+    "word": "orientate",
+    "examples": ["The map is orientated to the north."],
+    "etymology": "from orient + -ate; from Latin oriens 'rising sun, east'",
+    "similar": [{"word": "orient", "relation": "meaning", "description": "orient 更常用作动词'使朝向'"}],
+    "memory_tip": "orient(东方/定向)+ate→使适应/定方位。"
+  },
+  {
+    "word": "orthopedic",
+    "examples": ["Orthopedics corrects bone and joint problems."],
+    "etymology": "from Greek orthos 'straight' + pais 'child' + -ics (originally correcting childhood deformities)",
+    "similar": [],
+    "memory_tip": "ortho(直，如 ortho-)+ped(儿童)→骨科/整形外科。"
+  },
+  {
+    "word": "oscillate",
+    "examples": ["The needle oscillates back and forth."],
+    "etymology": "from Latin oscillare 'to swing', from oscillum 'small swing'",
+    "similar": [],
+    "memory_tip": "oscill(摆动)+ate→振荡/摇摆。"
+  },
+  {
+    "word": "ostensible",
+    "examples": ["His ostensible reason for leaving was a lie."],
+    "etymology": "from Latin ostensibilis, from ostendere 'to show'",
+    "similar": [{"word": "ostentatious", "relation": "meaning", "description": "ostentatious 是'炫耀的'，易混"}],
+    "memory_tip": "osten(展示)+sible→表面的/假装的。"
+  },
+  {
+    "word": "ostentation",
+    "examples": ["The ostentation of the palace shocked the visitors."],
+    "etymology": "from Latin ostentatio, from ostendere 'to show'",
+    "similar": [{"word": "ostensible", "relation": "spelling", "description": "ostensible 是'表面的'，同源易混"}],
+    "memory_tip": "osten(展示)+tation→炫耀/摆阔。"
+  },
+  {
+    "word": "oust",
+    "examples": ["The board ousted the CEO after the scandal."],
+    "etymology": "from Old French oster 'to remove', from Latin obstare 'to stand in the way'",
+    "similar": [],
+    "memory_tip": "oust 音似'奥斯特'→驱逐/罢免。"
+  },
+  {
+    "word": "outcast",
+    "examples": ["The outcast lived alone on the streets."],
+    "etymology": "from out + cast (thrown out)",
+    "similar": [],
+    "memory_tip": "out+cast(抛掷)→被遗弃者/流放者。"
+  },
+  {
+    "word": "outcry",
+    "examples": ["There was a public outcry against the plan."],
+    "etymology": "from out + cry",
+    "similar": [],
+    "memory_tip": "out+cry→强烈抗议/喊叫。"
+  },
+  {
+    "word": "outdated",
+    "examples": ["This computer software is now outdated."],
+    "etymology": "from out + dated",
+    "similar": [],
+    "memory_tip": "out+dated(过时的)→过时的。"
+  },
+  {
+    "word": "outdo",
+    "examples": ["She tried hard to outdo her rival."],
+    "etymology": "from out + do",
+    "similar": [],
+    "memory_tip": "out+do→胜过/超过。"
+  },
+  {
+    "word": "outlaw",
+    "examples": ["The bandit was declared an outlaw."],
+    "etymology": "from out + law (outside the protection of law)",
+    "similar": [],
+    "memory_tip": "out+law→歹徒/剥夺法律保护。"
+  },
+  {
+    "word": "outlying",
+    "examples": ["They searched the outlying villages for survivors."],
+    "etymology": "from out + lying (lying away from)",
+    "similar": [],
+    "memory_tip": "out+lying→偏远的/边远的。"
+  },
+  {
+    "word": "outrageous",
+    "examples": ["The price they charged was simply outrageous."],
+    "etymology": "from outrage + -ous",
+    "similar": [],
+    "memory_tip": "outrage(暴行/愤慨)+ous→骇人的/过分的。"
+  },
+  {
+    "word": "outright",
+    "examples": ["He rejected the idea outright."],
+    "etymology": "from out + right",
+    "similar": [],
+    "memory_tip": "out+right→彻底地/坦率地。"
+  },
+  {
+    "word": "outspoken",
+    "examples": ["She was outspoken about the injustice."],
+    "etymology": "from out + spoken",
+    "similar": [],
+    "memory_tip": "out+spoken(说出的)→直言的/坦率的。"
+  },
+  {
+    "word": "outstrip",
+    "examples": ["Demand quickly outstripped supply."],
+    "etymology": "from out + strip (to outrun, from strip 'to move fast')",
+    "similar": [],
+    "memory_tip": "out+strip(赶超)→超过/胜过。"
+  },
+  {
+    "word": "outweigh",
+    "examples": ["The benefits far outweigh the risks."],
+    "etymology": "from out + weigh",
+    "similar": [],
+    "memory_tip": "out+weigh(称重)→重于/超过。"
+  }
+]
