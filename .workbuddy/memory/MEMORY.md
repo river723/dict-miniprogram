@@ -14,7 +14,6 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，分支 **master*
 ## 通用约定
 - 1px(App)=2rpx；token 在 `theme/tokens.js` + `theme.wxss`（`--mg-*`）。
 - 图标：MCI 子集化，码位重映射 **U+E000–U+E0A5**；只能用 `mci-subset.ttf`。
-- 云函数：`ai`/`content`/`seed`/`contentseed`/`worddict`/`words`/`setup`/`tts`/`admin`。
 - `ai` 环境变量：`DEEPSEEK_API_KEY`(必填) + `AI_BASE_URL`/`AI_MODEL`/`AI_THINKING`。
   **换厂商＝改环境变量不改代码**，改完须重部署。
 - ⚠ 根 `package.json` 是 `"type":"module"` → 根下 `.js` 被当 ESM，脚本用 `.cjs`；
@@ -31,6 +30,8 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，分支 **master*
    `cloud.getWXContext().OPENID` 由平台注入不可伪造；缺的不是「登录/认证」而是
    **授权/角色**。⚠ 做「登录功能」是过度设计。
 5. **`setData` 是异步的** → `this.data` 不能当同步重入锁；用实例标志（`this._saving`）。
+6. **给用户的命令示例必须「可直接复制执行」**：别用 `/` 当分隔符（用户会当成
+   参数，Git Bash 还会把 `/` 转成绝对路径）→ 用空格/逗号：`npm run deploy:cf -- a b c`。
 
 ## ⚠️ 管理员鉴权（→ `docs/管理员与鉴权.md`）
 - 三层闸门：云函数入口（**真闸门**）／前端隐藏／seed 页 onShow 兜底。
@@ -53,7 +54,6 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，分支 **master*
 - **toRow 不许伪造缺省值**：缺值输出空串，筛选前必须先经 `toRow` 归一。
 - ⚠ **字段来源必须分离（用户拍板，勿改回整条搬运）**：内容字段可复用考研侧；
   `frequency`/`difficulty`/`phonetic_uk` 必须雅思自己的（两库难度差 ≥2 星的有 28%）。
-
 ## 校验脚本与商业化（→ `docs/运维手册.md` 第四、六节）
 - ⚠ `check_syntax.cjs` 判错**别用** `spawnSync(...['--check',f])` 的 `status!==0`
   （会 EBUSY 全量误报）；已改 `status===1`。
@@ -62,6 +62,5 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，分支 **master*
   `temperature` 静默失效。
 - `definition_questions` 是 `analyze` 的 11 倍 → **限制集中在「AI 批量出题」，
   别按次数一刀切限流**。主推 ¥98 考研全程卡。
-- ⚠ **待做：`ai` 云函数无 openid 限流**（8 个云函数里只有 `words` 做了身份识别，
-  其余 7 个全无身份、全无限流）→ 任何人可无限刷 AI 额度。复用
-  `docs/管理员与鉴权.md` 的 openid 机制即可。
+- ⚠ **待做：`ai` 云函数无 openid 限流**（8 个云函数里只有 `words` 做了身份识别）
+  → 任何人可无限刷 AI 额度。复用 `docs/管理员与鉴权.md` 的 openid 机制即可。
