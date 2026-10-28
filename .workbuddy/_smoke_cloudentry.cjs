@@ -32,7 +32,15 @@ const copy = (rel, extra = '') => {
   fs.writeFileSync(dest, src + extra);
 };
 deps.forEach((d) => copy(d));
-copy('miniprogram/services/wordEnrich.js', '\nexport { fromCloudEntry };\n');
+// ⚠ wordEnrich.js 里 fromCloudEntry 已是 `export function`（2026-10-28 起），
+//   早期是内部函数、靠这里追加 export 导出。现在追加会造成 "Duplicate export"。
+//   故先探测：源码已含 export function 时就不再追加。
+const weSrc = fs.readFileSync(path.join(ROOT, 'miniprogram/services/wordEnrich.js'), 'utf8');
+const alreadyExported = /^\s*export\s+function\s+fromCloudEntry/m.test(weSrc);
+copy(
+  'miniprogram/services/wordEnrich.js',
+  alreadyExported ? '' : '\nexport { fromCloudEntry };\n'
+);
 
 const kyoyo = {
   word_id: 'abandon', word: 'abandon', prefix: 'a',
