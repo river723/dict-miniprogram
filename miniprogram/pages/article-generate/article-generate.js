@@ -239,7 +239,11 @@ Page({
 
   async save() {
     const p = this.data.preview;
-    if (!p || this.data.saving) return;
+    // ⚠️ 同步实例标志做防重入：setData 的 this.data.saving 是异步落到视图层的，
+    // 同一次点击流里若 navigateBack 失败/延迟，页面不会立即销毁，二次点击会再存一条。
+    // 用 this._saving + this._saved 同步判定，确保「一次生成只落一条」。
+    if (!p || this._saving || this._saved) return;
+    this._saving = true;
     this.setData({ saving: true });
     try {
       await StorageService.addArticle({
@@ -250,10 +254,12 @@ Page({
         word_ids: this.data.selected.map((w) => w.id),
         theme: this.data.theme,
       });
+      this._saved = true;
       this.setData({ saving: false });
       wx.showToast({ title: '已保存', icon: 'success' });
       setTimeout(() => wx.navigateBack({ fail: () => wx.switchTab({ url: '/pages/read/read' }) }), 500);
     } catch (e) {
+      this._saving = false; // 失败才允许重试
       console.error('[article-generate] 保存失败', e);
       this.setData({ saving: false });
       wx.showToast({ title: '保存失败，请重试', icon: 'none' });

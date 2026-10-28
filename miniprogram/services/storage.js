@@ -242,7 +242,22 @@ const getIgnoredWordbankWords = () => read(K.ignored, []);
 const saveIgnoredWordbankWords = (list) => write(K.ignored, Array.isArray(list) ? list : []);
 
 // ---------- Articles（趣味文章，本地优先；生成后写本地缓存） ----------
-const getArticles = () => read(K.articles, []);
+const getArticles = () => {
+  const list = read(K.articles, []);
+  // 自愈：清掉历史遗留的「完全重复」条目（同标题 + 同正文 + 同目标词），
+  // 否则修复前的旧数据会让列表出现两条一模一样的文章。仅在确有重复时才写回，避免每次读取都落盘。
+  const seen = new Set();
+  const clean = [];
+  let hasDup = false;
+  for (const a of list) {
+    const sig = `${a.title} ${a.content} ${(a.word_ids || []).join(',')}`;
+    if (seen.has(sig)) { hasDup = true; continue; }
+    seen.add(sig);
+    clean.push(a);
+  }
+  if (hasDup) write(K.articles, clean);
+  return clean;
+};
 
 const getArticleById = (id) => read(K.articles, []).find((a) => a.id === id) || null;
 
@@ -255,11 +270,21 @@ async function updateArticle(id, patch) {
 }
 
 async function addArticle(entry) {
+  const list = read(K.articles, []);
+  // 防重复：同一篇（标题 + 正文 + 目标词完全一致）只允许落一条。
+  // 否则保存按钮在 navigateBack 延迟/失败期间被二次点击会写出两条一模一样的文章。
+  const content = entry.content || '';
+  const wordIds = (entry.word_ids || []).join(',');
+  const title = entry.title || '未命名文章';
+  const dup = list.find(
+    (a) => a.title === title && a.content === content && (a.word_ids || []).join(',') === wordIds
+  );
+  if (dup) return dup;
   const now = formatDate();
   const article = {
     id: uuid(),
-    title: entry.title || '未命名文章',
-    content: entry.content || '',
+    title,
+    content,
     translation: entry.translation || '',
     words: entry.words || [],
     word_ids: entry.word_ids || [],
@@ -267,8 +292,8 @@ async function addArticle(entry) {
     read_count: 0,
     created_at: now,
   };
-  read(K.articles, []).unshift(article);
-  write(K.articles, read(K.articles, []));
+  list.unshift(article);
+  write(K.articles, list);
   return article;
 }
 
