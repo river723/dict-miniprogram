@@ -1,4 +1,6 @@
-# MEMORY.md — 项目长期笔记（精简版，控制在 ~9K）
+# MEMORY.md — 项目长期笔记（精简版，控制在 ~6K）
+
+> 长流程细节见 `docs/词库数据管线.md`（eudic/ECDICT/考频重标/故事对齐）。
 
 ## 项目
 考研英语生词 App 的**微信原生小程序版**（由 `E:\cc_study\memo-grad` RN+Expo 移植）。
@@ -13,13 +15,34 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，默认分支 **m
   `AI_THINKING`(默认 disabled)。**换厂商＝改环境变量不改代码**，改完须重部署。
 - 事件：自定义组件 `bind:tap`，原生 view `bindtap`。
 
-## ⚠️ 三条通用教训（最高价值，踩过多次）
+## ⚠️ 五条通用教训（最高价值，踩过多次）
 1. **「云端更全」不能用数量判据** —— 数量相近必然误判（4801 vs 4491）。要让服务端回传
    **它实际查的集合名**（`col`），前端校验身份。且 `try/catch` 只兜抛错，
    「成功返回错误数据」（`staleCloud`）必须**显式判 + throw**。
 2. **加了云端特性就必须同步「旧云函数仍在线」这一路** —— 本项目多次 bug 都来自
    「代码改了、云函数没重部署」。
 3. **反复修不好时怀疑结构，而不是继续调属性**。
+4. **鉴权只能在云函数做**：前端传什么都不可信（本地存储可改、可抓包）。
+   小程序身份**已免费具备** —— `cloud.getWXContext().OPENID` 由平台自动注入、不可伪造。
+   缺的从来不是「登录/认证」，而是**授权/角色**（「这个 OPENID 是不是管理员」）。
+   ⚠ 做「登录功能」（手机号/密码/自建账号）是过度设计：session/找回/过审/隐私政策全要。
+5. **`setData` 是异步的** → `this.data` 不能当同步重入锁；用实例标志（`this._saving`）。
+
+## ⚠️ 安全：数据初始化必须限管理员（2026-10-28 梳理，尚未修）
+- `pages/settings/settings.wxml:172` 「词库初始化」→ `settings.js#goSeed` **零判断**，
+  任何用户可见可进 `pages/seed/seed`。
+- **`seed`/`contentseed`/`setup` 云函数零鉴权**（无 `getWXContext()`、无角色判断）。
+- 操作对象是**全站共享集合** `worddict`(4801)/`worddict_ielts`(4491)/`content_files`。
+- ⇒ 任意用户点「清空重导」→ `clearWorddict` → **删光全站词库**；「清空内容」→ 删光故事/真题。
+- 对照：设置页「清除所有数据」`clearAll` **是安全的**（只删自己 `_openid` 隔离的数据）。
+  问题**只**在「数据初始化」。
+- **修法**：①云函数入口取 `OPENID` 比对白名单，不中即 `return {ok:false,error:'FORBIDDEN'}`
+  （一行都不执行）；②前端取 `isAdmin` 隐藏入口 + seed 页 `onShow` 兜底校验。
+- 白名单 3 选 1：写死常量 / 环境变量 / **`admins` 集合**（最灵活，
+  但集合权限须**仅管理员可写**，否则用户能自己把自己加进白名单 ⚠）。
+- 顺带发现：**`ai` 云函数无 openid 限流**（谁都能无限刷 AI 额度）；
+  `docs/商业化方案.md` 已把「额度按 openid 计」列为待做项。
+  盘点：仅 `words` 有身份识别（`getWXContext().OPENID`），其余 7 个云函数全无身份、全部无限流。
 
 ## 主题（受控三档 light/dark/system）
 - 深色是作用域类 `.mg-theme-dark`，`utils/theme.js#applyTheme` 挂到**页面根 view**
@@ -61,78 +84,51 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，默认分支 **m
   - `services/wordEnrich.js`：L1 本地(同步) → L2 云端富词条；`enrichSync/enrichCloud/enrichOne/enrichBatch`；
     **双 Map 缓存**（one/cloud 分开，防 L1 简明结果挡住 L2 富结果）。
     详情页标准姿势：`enrichSync` 即时上屏 → `enrichCloud` 到达后无缝升级。
+    `fromCloudEntry` 已 export（音标字段两集合不同名：雅思 `phonetic_uk`，考研无音标字段）。
 - **浏览页禁半云端半本地混排**：`ensureLocalCloudDecision` 一次性决定数据源；
   云端单次失败只回落**本轮**（`cloudBatch` 必须同步置回 false）。
-- **音标字段两集合不同名**：雅思 `phonetic_uk`，考研集合无音标（发音走 TTS）。归一化在 `fromCloudEntry`。
 - **集合身份校验（2026-10-20 修）**：`worddict` 云函数所有 return 加 `col: COL`；
   `services/worddict.js` 导出 `CLOUD_COLLECTION` + `staleCloud`；页面校验 `col` 不符即回落本地。
   回归 `.workbuddy/_smoke_find.cjs`（30 项）。
 - **toRow 不许伪造缺省值**：`rawDiff||3`+`pad5(0)` 会返回非空串 `☆☆☆☆☆`，让「字段缺失」看起来
   像真实考频。缺值输出空串，WXML 自然不渲染。筛选前必须先经 `toRow` 归一。
+- **云端总数要单独取**：`countWorddict` 返回 `{total, col}`；云端分支曾永远显示 `?`（2026-10-27 修）。
 
 **雅思富词条管线**：`npm run gen:ielts-rich`（① 复用考研 2758 词零成本 `--reuse-only`；
 ② 1733 词调 DeepSeek，约 ¥2.36/11 分钟）→ `import-data/worddict-ielts.jsonl` →
 `npm run import:ielts -- --env=<ID>`（幂等，需 TCB 密钥）→ **重部署 worddict** + 建 `prefix` 索引。
+- **⚠️ 字段来源必须分离（2026-10-20 用户拍板，勿改回整条搬运）**：
+  - 可复用（考研侧）：`definitions`/`etymology`/`similar_words`/`memory_tip`（实测复用率 100%）
+  - 必须雅思自己的：`frequency`/`difficulty`（web 语料 + AWL 重标口径）、`phonetic_uk`
+  - **为什么**：两库难度差 ≥2 星的有 **773/2753 词（28%）**；整条搬运会覆盖真实语料口径。
+    实测产物 f/k 与考研不同占 89% —— 这正是"没被污染"的证据，已写成回归断言。
+  - `gen-ielts-rich.mjs#toDoc` **只从 rich 取内容字段**，f/k/音标强制走 `ieltsMetrics`/`phOf`；
+    AI prompt 移除了 `frequency`/`difficulty`（模型凭记忆拍的数字不可信）。
+    新增 `--rebuild` 开关（改口径后必须用它丢弃旧产物）。
+  - 产物体检：`.workbuddy/_smoke_ielts_rich.cjs`（23 项）——含"f/k 与雅思重标一致""释义复用率 ≥95%"
+    "f/k 未被考研覆盖（差异率 >50%）"三条反向断言。
+- **⚠️ 例句含词校验别写太严**：只剥 `-s/-ed/-ing` 误报 **75 条**；
+  加「词干编辑距离 ≤1」降到 13 条（bind→bound/cling→clung 等不规则动词）；
+  再补 `IRREGULAR` 显式表 + 前缀构词（overtake→overtook、sculpture→sculpting、weave→wove）才归零。
+  `ai` 云函数有 `define` action 但**在线按需查词未接入**（属产品决策）。
+- **⚠️ 自动配词写生词本必须搬 `definitions`**（2026-10-27 修）：`autoWord.js#enrichCandidate`
+  只搬 etymology/memory_tip/similar_words/pronunciation → **漏 `definitions`**，
+  雅思候选是客户端裸 `{word}` 字符串（考研候选来自云端 `pick` 自带 definitions），
+  故只有雅思词进生词本后卡片背面无中文释义。修法：云端富词条取结构化 definitions，
+  云端未命中回落本地 `d` 串；再加一次性回填 `enrichWordbookDefinitionsOnce`（flag `wordbookDefsV1`）。
+- **数据现状**：雅思本地 4491（音标已全补齐）；云端 jsonl 仅 2758（未上云）；
+  考研云端 4801 **音标 0 条**；交集 2758 / 雅思独有 1733 / 考研独有 2043。
 
-**⚠️ 字段来源必须分离（2026-10-20 用户拍板，勿改回整条搬运）**：
-- 可复用（考研侧）：`definitions` / `etymology` / `similar_words` / `memory_tip`（实测复用率 100%）
-- 必须雅思自己的：`frequency` / `difficulty`（web 语料 + AWL 重标口径）、`phonetic_uk`（雅思自带）
-- **为什么**：两库难度差 ≥2 星的有 **773/2753 词（28%）**；整条搬运会覆盖掉真实语料口径。
-  实测产物 f/k 与考研不同占 89% —— 这正是"没被污染"的证据，已写成回归断言。
-- `gen-ielts-rich.mjs#toDoc` 已改为**只从 rich 取内容字段**，f/k/音标强制走 `ieltsMetrics`/`phOf`；
-  AI prompt 也移除了 `frequency`/`difficulty` 两个字段（模型凭记忆拍的数字不可信），
-  `validate()` 不再校验它们。新增 `--rebuild` 开关（改口径后必须用它丢弃旧产物）。
-- 产物体检：`.workbuddy/_smoke_ielts_rich.cjs`（22 项）——含"f/k 与雅思重标一致""释义复用率 ≥95%"
-  "f/k 未被考研覆盖（差异率 >50%）"三条反向断言。
-
-**⚠️ 例句含词校验别写太严**（AI 段产出 0 例外，必须能过）：
-只剥 `-s/-ed/-ing` 会误报 **75 条**（accessories/accompanied/allies/amplified…）；
-加「词干编辑距离 ≤1」降到 13 条（bind→bound/cling→clung/fling→flung 等不规则动词）；
-再补 `IRREGULAR` 显式表 + 前缀构词（overtake→overtook、sculpture→sculpting、weave→wove）才归零。
-`ai` 云函数有 `define` action（防幻觉 prompt + example 必含目标词）但**在线按需查词未接入**（属产品决策）。
-
-**.eudic 解析管线（`_tools/`，可复现）**：
-- 源 `_tools/_IELTS_src.eudic`；**释义是分块 zlib 压缩**（每块解压后恰 16384 字节，39 块）。
-  词条形如 `<b>word</b><div><div>[<font face="Lucida Sans Unicode">音标</font>]<br />义项…`。
-- 音标**三种写法**：① 带 font 标签（绝大多数）② 纯文本方括号 `[in5hibit]`（23 词）③ 学科标签
-  `[化][计][医]` —— **形似音标，必须用 `SUBJECT_TAGS` 排除**。
-- ⚠ **切段顺序不能反**：先 `split(/<br\s*\/?>/)` 再 `stripTags`。反了段落粘连。
-- ⚠ 必须剥控制字符（压缩块尾部 NUL Padding）；词表以 eudic 真实词头为准（4491）。
-- ⚠ 词形误取校正：`ph` 去非字母 == 单词本身 → 用下一段音标（sphinx）。
-- ⚠ **改解析器后必跑「旧产物 vs 新产物」diff，基线取 git 版本**，别拿自己刚跑出的坏产物当基线。
-
-**雅思考频/难度重标（2026-10-19）**：原数据是从考研库整条搬来的 + AI 凭记忆拍数字，都不是雅思考频。
-- `fetch_awl.cjs` → `awl_freq.json`：AWL 570 词头/sublist + 3109 词形词频，**内置规格校验**，改版即报错。
-- `relabel_ielts_metrics.cjs` → `ielts_metrics.json`：考频 = **web 语料实测 ppm 绝对阈值**（Norvig，
-  99.5% 覆盖）+ AWL sublist 加权（只上调不下调，直达星级映射）；难度 = 纯客观（音节数>后缀>义项>词长）。
-- 坑：① 两语料 ppm **不可混用**（学术语料抬高 19.4 倍 → 85% 挤 1★）；② 等分位数 ≠ 绝对阈值；
-  ③ 阈值须按实测分布校准；④ 词形表要做词形还原（`sublistOfForm`）。
-- 分布：考频 1048/1936/880/395/232，难度 1243/2101/723/333/91。
-- 回归 `.workbuddy/_smoke_metrics.cjs`（26 项）。
-- **数据现状**：雅思本地 4491（**音标 4472+19 已于 2026-10-20 全部补齐，见下节**）；
-  云端 jsonl 仅 2758（未上云）；考研云端 4801 **音标 0 条**；
-  交集 2758 / 雅思独有 1733 / 考研独有 2043。
-
-## ⚠️ eudic 音标的 KK 字体编码（2026-10-20 修，53 条）
-**比"19 词无音标"更隐蔽的问题**：eudic 对 34 个词给的不是 IPA，而是**KK 字体编码**
-（`5`=ˈ `E`=eɪ `I`=ɪ `Q`=ʌ `N`=ŋ `F`=ʃ `^`=次重音），页面会显示成 `in5hibit`/`sfiNks`/`tB:`；
-另有 8 条带未剥的 `(US)` 地域前缀。上轮"补回 23 词音标"补的是**编码原文**，等于没修。
-
-- **数据源**：`cdict_query` npm 包（`_tools/ecdict_src/package/db/cdict2w.db`，SQLite 56992 词条，
-  tarball 4.2MB / 解包 10MB）。GitHub ECDICT 官方源全部拿不到（raw 是 git-lfs 指针、
-  release zip 404、API 403 限流），**npm 镜像 `registry.npmmirror.com` 是可行入口**。
-  用 Node 22 内置 `node:sqlite` 的 `DatabaseSync` 读，**无需装 sqlite3 依赖**。
-- `_tools/fix_phonetics_from_ecdict.cjs`：ECDICT 覆盖 42 条 + `OVERRIDES` 人工补 11 条 = **53/53 全解**。
-  默认预览，`--apply` 才写。⚠ 归一化四条坑：
-  ① 剥前导尾缀时**不能碰 `:`**，否则 `tar 'tɑ:'` 丢长音号；
-  ② ECDICT 重音符位置不可靠（`misgiving 'mis'^iviŋ` → 词中重音 `ˈˌiviŋ`）→ **只留词首第一个**；
-  ③ 英式拼写在美式词典里查不到 → `variants()` 试 `-ise→-ize` / 双写辅音还原 / 去连字符；
-  ④ **别把「多读音条目」（`ˈkɔːdʒəl, ˈkɔːdiəl`）当坏数据**——曾顺带清尾分号误伤 7 个正常条目。
-- **判据 `isBadPh`**：空 / 含 `[0-9A-Z^]` / 以 `(US)|(UK)` 开头。三者之外一律不动。
-- 校验口径：git 基线 diff → **4491 词数不变、53 处变更全部只动 ph**（d/f/k 逐条比对）、
-  KK 残留 0、无音标 0。主包 993KB/2048KB。
-- 回归加了 4 项：无音标=0（阈值从 ≤20 收紧到 0）、无 KK 残留、无地域前缀、4 个污染词已归一。
-- ⚠ ECDICT 二进制**不入库**（`.gitignore`），需要时重下。
+## ⚠️ 密钥绝不入库（2026-10-28 踩到，GitHub secret scanning 直接拒绝推送）
+- 排障时把真实腾讯云 SecretId 写进了 `.workbuddy/memory/2026-10-27.md`，
+  `git push` 被远端拒绝：`repository rule violations` + secret scanning 拦截链接。
+- **SecretId（AKID 开头）本身就是敏感凭证**，「只有 ID 没有 Key 危害小」是错觉 →
+  一样会被扫描器判定。**写日志只写「已能 echo 出来」，绝不写值本身。**
+- 排查手法：`git grep -I -n -E "AKID[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{24,}" $(git rev-list --all) --`
+  一次扫全历史（含远端分支）。已用它确认当时**只有 1 处、且仅在未推送的提交里**
+  → 只需脱敏当前文件，**不用重写 git 历史**。
+- `.workbuddy/memory/` **是要入库的**（项目记忆靠 git 同步给后续会话），
+  不是本地临时目录 → 往里写东西前先想「这段会不会进公库」。
 
 ## 数据导入（零密钥路线）
 - 内联数据 + 断点续跑：`npm run seed:build`→`seed/seed-data.js`→部署→设置页「①②③」；
@@ -141,27 +137,21 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，默认分支 **m
 - 默认超时 3 秒 → 批量须 timeBudget + 断点续跑；正式超时写 `config.json`（靠部署同步）。
   timeout：`ai`120 / `contentseed`60 / `content`20 / `seed`20以上、`worddict`20。
 - 导入幂等：先删同 path 索引再上传 → **不必先「清空」**。主包体积不受影响。
+- **⚠️ TCB 密钥路线在本项目从未跑通**（cloud1- 不认普通 CAM 密钥 → INVALID_CREDENTIALS）；
+  控制台导入要求「**`.json` 扩展名 + JSON Lines 内容**」（纯数组会被拒）；
+  `prefix` 是首字母、必须建**非唯一**索引；控制台导入是**追加**模式（重复导 → 13473 条 = 4491×3）。
+- ✅ **13473 重复已解决**（2026-10-28）：删集合 + 用带 `_id` 的
+  `import-data/worddict-ielts-console.json` 重导（4491 行、每条 `_id`=word_id、唯一无重复）
+  → upsert 语义，再点几次也不会插重。
+  ⚠ **删集合会连带删掉 prefix 索引并重置读权限** → 必须重建**非唯一** prefix 索引 +
+  重设「所有用户可读」。`worddict` 云函数不需重部署（只按 `lib` 查集合名，不依赖索引）。
+- ⚠ **`seed`/`contentseed` 云函数完全不涉及 `worddict_ielts`**（只管考研 `worddict` + `content_files`）
+  → 雅思集合的导入/去重只能走控制台或 `scripts/import-worddict-ielts.mjs`。
 
-## 系列故事（换故事集必读）
-- 管线：源 `../memo-grad/src/data/stories.json` → `build-content-data.mjs` → `contentseed/content-data.js`
-  → 运行时走 `content` 云函数 `storyList`/`storyDetail`。
-- 字段：id:number / title,content,translation,theme / **summary 是字符串不是数组** / words:array / word_count。
-- ⚠ 换集必踩：① `**` 粗体不剥离（清洗顺序 3+连星→双星→单星）② `theme` 换了要补 `THEME_LABELS`
-  **散落三处**（`constants/index.js`、`read/read.js`、`story-read/story-read.js`）
-  ③ `words` 可能是 `{w,...}[]` → `String()` 变 `"[object Object]"` → **整篇零高亮且不报错**。
-- **`themeLabel` 回落三处必须一致**：`theme ? (THEME_LABELS[theme] || theme) : ''`。
-- 🌟 **段落对齐是硬约束**：前端按 `\n\n` 切段后**下标 1:1 配对**。最优切分：英文单 `\n`、中文 `\n\n`、
-  两侧过滤 `---`（15/20 对齐；都 `\n\n`→13，都 `\n+`→14）。
-- 工具：⭐`npm run stories:verify`（**总闸门**）、`stories:normalize`、`stories:adapt`、
-  `.workbuddy/_render_sim.mjs`（复刻渲染体检，**不能替代真机**）。规范见 `docs/故事数据对齐问题清单.md`。
-- 当前线上：**《4801 词烟火故事集》**（20 篇短篇）。
-
-## ⚠️「导入成功但界面还是旧内容」两条线分别取证
-1. **读取侧：tab 页不走 `onLoad`** → `read.js` 只在 onLoad 加载；修法 = `onShow` 看 dirty 标记刷。
-   ⭐ 用户当场自愈：**阅读页下拉刷新**（已开 `enablePullDownRefresh`）。
-2. **写入侧：同 cloudPath 上传可能不替换内容**（复用旧对象返回旧 fileID，字节从未变）。
-   改为严格幂等：`deleteFile(旧) → remove(旧索引) → uploadFile(同 path) → add(新索引)`。
-3. **自证钩子**（排查首选，别让用户数章数）：`contentseed#info()` 返回 `cloudStory` 真实标题/章数。
+## 防重入与去重（2026-10-27 修）
+- `storage.js#addArticle`：入参「标题+正文+目标词」一致 → 直接返回已有条目（不新增）。
+- `storage.js#getArticles`：读取时按同签名去重**自愈**（仅在确有重复时才写回），
+  修复前的历史重复下次进入自动合并。
 
 ## 模块级缓存
 `utils/story.js` 的 `indexCache`/`chapterCache` 从不失效 → 导出 `clearStoryCache()`；
@@ -174,6 +164,7 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，默认分支 **m
 
 ## 本机环境
 - Bash 缺 `ls/mkdir/cat/grep/head/wc/sed/xargs` → 目录/文件操作走 Node `fs`。
+- ⚠ **Bash 里嵌 node -e 含反引号/`$` 会炸**（转义地狱）→ 复杂脚本写成 `.cjs` 文件再跑。
 - Python venv：`C:\Users\Administrator\.workbuddy\binaries\python\envs\default\Scripts\python.exe`。
 - Node：`C:\Users\Administrator\.workbuddy\binaries\node\versions\22.22.2-3\node.exe`。
 - 开发者工具 CLI：`C:\Program Files (x86)\Tencent\微信web开发者工具\cli.bat`（IDE 须运行）；
