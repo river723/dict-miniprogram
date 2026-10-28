@@ -129,6 +129,15 @@ Git `origin`→`https://github.com/river723/dict-miniprogram`，默认分支 **m
   → 只需脱敏当前文件，**不用重写 git 历史**。
 - `.workbuddy/memory/` **是要入库的**（项目记忆靠 git 同步给后续会话），
   不是本地临时目录 → 往里写东西前先想「这段会不会进公库」。
+- **⛔ 已装机器防护**：`.workbuddy/secret-scan.cjs` + `.githooks/pre-commit`
+  （扫暂存区新增行 → 命中腾讯云 SecretId / DeepSeek key / GitHub token / AWS key /
+  私钥块 / 微信支付 APIv3 密钥 即拒绝提交）。**首次 clone 后要装一次**：
+  ```
+  git config core.hooksPath .githooks
+  ```
+  （`.githooks/` 因含本地路径不入库；扫描逻辑在入库的 `.workbuddy/secret-scan.cjs`。）
+- **反例（本次亲身踩到两次）**：写补记日志时把那串密钥又原样抄了一遍 → 当场又被拦。
+  这条规则最容易被「我以为我知道」打败 —— **写的时候直接写「已脱敏」三个字，别复制粘贴值本身**。
 
 ## 数据导入（零密钥路线）
 - 内联数据 + 断点续跑：`npm run seed:build`→`seed/seed-data.js`→部署→设置页「①②③」；
