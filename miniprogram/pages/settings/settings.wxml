@@ -194,6 +194,13 @@
           <view class="se-perm__nameWrap">
             <text class="se-perm__name">{{item.name}}</text>
             <text class="se-perm__desc2">{{item.desc}}</text>
+            <!--
+              ⚠ 把「当前实际生效的权限模式」直接显示出来。
+                「仅创建者可读写」≠「仅管理端可读写」——只差几个字，但前者客户端
+                照样能往共享集合里插文档（admins 集能直接给自己发管理员）。
+                不显示模式名，用户只会反复在控制台里配错同一个地方。
+            -->
+            <text class="se-perm__mode" wx:if="{{item.mode}}">当前：{{item.mode}}</text>
           </view>
           <text class="se-perm__badge {{item.ok ? 'is-ok' : 'is-bad'}}">{{item.ok ? '✓ 安全' : '⚠ 后门'}}</text>
         </view>
@@ -219,7 +226,7 @@
         loading="{{auditBusy}}"
         bind:tap="auditData"
       />
-      <text class="se-perm__desc2">查共享集合里有没有探测残留（权限自检会插测试文档，删不掉就留下一条垃圾，词库总数会多 1）。</text>
+      <text class="se-perm__desc2">查共享集合里有没有污染文档：① 自检插的测试文档（带 __mg_perm_probe 标记）；② 客户端从外面插进来的文档（带 _openid —— 服务端写入的记录不会自动带这个字段）。有的话词库总数会不准。</text>
 
       <view class="se-perm__result" wx:if="{{auditResult}}">
         <view class="se-perm__row" wx:for="{{auditResult.report}}" wx:key="name">
@@ -227,12 +234,12 @@
             <text class="se-perm__name">{{item.name}}</text>
             <text class="se-perm__desc2">{{item.desc}}</text>
           </view>
-          <text class="se-perm__badge {{item.probeCount ? 'is-bad' : 'is-ok'}}">{{item.countText}}</text>
+          <text class="se-perm__badge {{item.probeCount || item.injectedCount ? 'is-bad' : 'is-ok'}}">{{item.countText}}</text>
         </view>
-        <text class="se-perm__summary {{auditResult.probeTotal ? 'is-bad' : 'is-ok'}}">{{auditResult.summary}}</text>
+        <text class="se-perm__summary {{auditResult.probeTotal || auditResult.injectedTotal ? 'is-bad' : 'is-ok'}}">{{auditResult.summary}}</text>
         <mg-button
-          wx:if="{{auditResult.probeTotal}}"
-          title="清理探测残留"
+          wx:if="{{auditResult.probeTotal || auditResult.injectedTotal}}"
+          title="清理污染文档"
           variant="secondary"
           size="sm"
           block

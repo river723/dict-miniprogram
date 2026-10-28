@@ -243,6 +243,15 @@
   line-height: 28rpx;
 }
 
+/* 当前实际生效的权限模式 —— 让人一眼看出是不是「仅管理端可读写」 */
+.se-perm__mode {
+  display: block;
+  font-size: 20rpx;
+  color: var(--mg-text-2, var(--mg-text-3));
+  line-height: 28rpx;
+  word-break: break-all;
+}
+
 .se-perm__badge {
   font-size: 22rpx;
   padding: 4rpx 16rpx;

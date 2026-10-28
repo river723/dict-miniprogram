@@ -146,6 +146,13 @@ exports.main = async (event = {}) => {
  * （客户端可写时才插得进去）。如果权限恰好是「客户端可写」而删除又失败，
  * 那条文档会留在生产集合里 → 词库总数被污染（浏览页显示的数字就不准了）。
  * 服务端 SDK 不受集合权限限制，所以即便集合门户大开也能查出这些痕迹。
+ *
+ * ⚠ 两种污染要分开查：
+ *   ① 带 __mg_perm_probe 标记的 → 自检工具插的测试文档
+ *   ② 带 _openid 的            → **客户端插的**（服务端写入的记录不会自动带
+ *      _openid）→ 可能是别人手动/恶意插进去的，标记查不出来，只能靠 _openid 揪。
+ *      ⚠ admins 里带 _openid 的条目 = 有人试图给自己发管理员，已被 admin-guard
+ *        拒绝承认（只认无 _openid 的服务端条目），但仍应清掉。
  */
 async function auditCollections() {
   const report = [];
@@ -163,6 +170,20 @@ async function auditCollections() {
       row.probeCount = (probes.data || []).length;
       row.probeIds = (probes.data || []).map((d) => d._id);
 
+      // ⚠ 客户端插入的文档：服务端/控制台写入的记录**不会**自动生成 _openid，
+      //   只有小程序端创建的才带 → 共享集合里带 _openid 的就是客户端插进来的。
+      //   数量不限，只报个数 + 少量样本（词库集合可能很多）。
+      const injected = await db.collection(c.name)
+        .where({ _openid: db.command.exists(true) })
+        .limit(50)
+        .get();
+      row.injectedCount = (injected.data || []).length;
+      row.injectedSample = (injected.data || []).slice(0, 5).map((d) => ({
+        _id: d._id,
+        word: d.word || d.path || '',
+        probe: !!d[PROBE_MARK],
+      }));
+
       // 与基线比：偏差只提示，不当成错误（词库可能后续补词）
       if (c.expect != null) {
         row.diff = total - c.expect;
@@ -174,23 +195,32 @@ async function auditCollections() {
     report.push(row);
   }
   const polluted = report.filter((r) => (r.probeCount || 0) > 0);
+  const injected = report.filter((r) => (r.injectedCount || 0) > 0);
   const drifted = report.filter((r) => r.countOk === false);
+  const issues = polluted.length || injected.length || drifted.length;
   return {
     ok: true,
     report,
     probeTotal: polluted.reduce((n, r) => n + r.probeCount, 0),
+    injectedTotal: injected.reduce((n, r) => n + r.injectedCount, 0),
     polluted: polluted.map((r) => r.name),
+    injected: injected.map((r) => r.name),
     drifted: drifted.map((r) => r.name),
-    summary: polluted.length || drifted.length
-      ? `发现 ${polluted.length} 个集合有探测残留、${drifted.length} 个集合文档数偏离基线`
-      : '共享集合数据完整，无探测残留、文档数符合基线',
+    summary: issues
+      ? `发现 ${polluted.length} 个集合有探测残留、${injected.length} 个集合有客户端插入的文档、${drifted.length} 个集合文档数偏离基线`
+      : '共享集合数据完整，无探测残留、无客户端插入文档、文档数符合基线',
   };
 }
 
 /**
- * 清理探测残留：只删带 __mg_perm_probe 标记的文档，不碰任何业务数据。
+ * 清理共享集合里的污染文档：
+ *   ① 带 __mg_perm_probe 标记的（自检插的测试文档）
+ *   ② 带 _openid 的（客户端插进来的 —— 共享集合里这类文档本就不该存在）
  * 逐条删而不是批量 where.remove —— 后者在服务端 SDK 里语义不够稳，
  * 且逐条删能把失败的文档单独报告出来。
+ *
+ * ⚠ 只在共享集合上做。带 _openid 的文档在共享集合里一定是外来物
+ *   （服务端写入的记录不会自动带 _openid），删掉不会误伤业务数据。
  */
 async function cleanupProbes(event) {
   const only = event && event.collection ? String(event.collection) : '';
@@ -215,6 +245,19 @@ async function cleanupProbes(event) {
       detail.push({ name: c.name, removed: 0, error: (e && e.message) || String(e) });
       continue;
     }
+    // 再捞一批「带 _openid 但没有探测标记」的 —— 那是被别人插进来的
+    try {
+      const res2 = await db.collection(c.name)
+        .where({
+          _openid: db.command.exists(true),
+          [PROBE_MARK]: db.command.exists(false),
+        })
+        .limit(100)
+        .get();
+      ids = ids.concat((res2.data || []).map((d) => d._id));
+    } catch (e) {
+      /* 捞不到就只清探测标记那批，不算失败 */
+    }
     let ok = 0;
     const failed = [];
     for (const id of ids) {
@@ -232,6 +275,6 @@ async function cleanupProbes(event) {
     ok: true,
     removed,
     detail,
-    summary: removed ? `已清理 ${removed} 条探测残留` : '没有需要清理的探测残留',
+    summary: removed ? `已清理 ${removed} 条污染文档` : '没有需要清理的污染文档',
   };
 }

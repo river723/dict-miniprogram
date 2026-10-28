@@ -12,18 +12,39 @@
  * 所以这个探测跑在**小程序端**：wx.cloud.database() 走客户端通道，
  * 会被集合权限规则拦截。
  *
- * ## 判定逻辑
- * 对每个集合做两次尝试：
- *   1. 读 → 期望被拒（客户端不可读）
- *   2. 写 → 期望被拒（客户端不可写）
- * 结果分三档：
- *   - locked  : 读写都被拒 → ✓ 符合「仅管理端可读写」
- *   - readable: 读成功 → ✗ 后门（客户端能读，白名单会泄漏）
- *   - writable: 写成功 → ✗ 后门（客户端能写，普通用户能给自己发管理员！）
+ * ## 官方只有四种基础权限模式
+ * 控制台「权限设置」下拉里就这四个（顺序按宽松→严格）：
+ *   1. 仅创建者可写，所有人可读
+ *   2. 仅创建者可读写
+ *   3. 仅管理端可写，所有人可读
+ *   4. 仅管理端可读写        ← 共享集合只要这一个
+ * ⚠ 模式 2「仅创建者可读写」**不是**安全模式 —— 客户端照样能往共享集合里
+ *   插文档（详见下面「为什么仍算后门」）。
+ *
+ * ## 判定逻辑（共享集合）
+ * 对每个共享集合做两次尝试：
+ *   1. 读 → 看客户端能不能读到**别人/服务端**的数据
+ *   2. 写 → 看客户端能不能插文档（插进去就立刻删）
+ * 结果分档：
+ *   - locked   : 读写都被拒           → ✓ 符合「仅管理端可读写」
+ *   - ownWrite : 读不到，但能插        → ✗ 后门（「仅创建者可读写」）
+ *   - publicWrite: 读到 + 能插         → ✗✗ 严重后门（「仅创建者可写，所有人可读」）
+ *   - readable : 读到，但插不了        → ✗ 泄漏（「仅管理端可写，所有人可读」）
+ *
+ * ## ⚠ 为什么「仅创建者可读写」对共享集合仍是后门（关键，别想当然）
+ * 平台按 `_openid` 隔离「谁能读写**哪条**数据」，但**云函数读集合时不带
+ * `_openid` 过滤** —— 服务端看到的是全表。
+ * 于是：客户端在共享集合里插一条自己的文档 → 这条文档对**全站所有用户**
+ * 都可见（服务端查询会把它查出来）。
+ *   · `admins`：插一条 `{openid:"自己的openid"}` → 云函数 isAdmin 查得到
+ *     → **普通用户直接把自己变成管理员，绕过全部鉴权**。
+ *   · `worddict`/`worddict_ielts`：插一条假词条 → 全站用户都能搜到，
+ *     而且 `count()` 会虚高（浏览页显示的词条数就不准了）。
+ *   · `content_files`：插一条假映射 → 内容索引被污染。
+ * 唯一能挡住这些的只有「**仅管理端可读写**」（客户端读写全被拒）。
  *
  * ## ⚠ 共享集合 vs 用户私有集合（重要，别一视同仁）
- * 官方基础权限只有四种，而**四种模式下小程序端永远不能写他人创建的数据**
- * （平台按 _openid 强制隔离，见官方「权限管理」文档的权限矩阵）。所以：
+ * 官方四种模式下小程序端永远不能写他人创建的数据（平台按 _openid 强制隔离）。所以：
  *   - **共享集合**（admins / worddict / worddict_ielts / content_files）：
  *     客户端能写 = 全站数据被污染 / 鉴权被绕过 → 真后门，必须写探测。
  *   - **用户私有集合**（words / study_* / user_settings）：
@@ -31,10 +52,12 @@
  *     不是后门。而且真写进去一条脏数据会污染用户自己的生词本/学习记录。
  *     → 这几个只做读探测，不做写探测。
  *
- * ⚠ 写探测会真的尝试插入一条测试文档。如果权限恰好是「可写」，
+ * ⚠ 写探测会真的尝试插入一条测试文档。插入成功时（说明权限开放）
  *   那条文档会被写进去（自己创建的，_openid 是当前用户）。
  *   为了不留垃圾，成功写入后会立刻删除；删除失败则在返回里标出来。
  *   探测用的文档带 __mg_perm_probe 标记，便于事后识别与清理。
+ *   ⚠ 但**只有本工具插的**才带标记；若有人手动/恶意插过不带标记的，
+ *     服务端 auditCollections 会按「文档带 _openid」把它揪出来（见下）。
  *
  * ⚠ 探测只在**开发者本人**的机器上跑（小程序端），openid 是管理员本人，
  *   对 admins 集合而言管理员也是「非创建者」（文档由云函数写入，无 _openid），
@@ -72,9 +95,6 @@ const EXPECT = [
   { name: 'user_settings', desc: '用户设置', risk: 'low' },
 ];
 
-/** 需要「客户端不可读不可写」的集合（服务端专用集合）。 */
-const SERVER_ONLY = EXPECT.map((e) => e.name);
-
 /**
  * 需要「客户端可读」的集合（前端可能直连读的公开数据）。
  * 本项目当前前端 0 处直连数据库，全走云函数 → 实际不需要任何可读集合，
@@ -82,19 +102,49 @@ const SERVER_ONLY = EXPECT.map((e) => e.name);
  */
 const CLIENT_READABLE = [];
 
+/** 探测残留标记：与云函数 admin/index.js 的 PROBE_MARK 一致。 */
 const PROBE_MARK = '__mg_perm_probe';
 
-/** 用客户端 SDK 试读一个集合。 */
+/** 官方四种基础权限模式的名称（控制台里就是这四个选项）。 */
+const PERM_MODE = {
+  ADMIN_ONLY: '仅管理端可读写',
+  CREATOR_RW: '仅创建者可读写',
+  CREATOR_W_ALL_READ: '仅创建者可写，所有人可读',
+  ADMIN_W_ALL_READ: '仅管理端可写，所有人可读',
+};
+
+/**
+ * 用客户端 SDK 试读一个集合。
+ *
+ * 返回：
+ *   ok            —— 查询本身是否被拒（false = 客户端完全读不到）
+ *   count         —— 读回来的条数（0 = 被 _openid 过滤掉了，等于读不到别人数据）
+ *   globalReadable—— 读回来的文档里有没有**没有 _openid** 的（= 服务端/控制台
+ *                    创建的全局共享数据）。服务端写入的记录不会自动带 _openid，
+ *                    客户端写入的才带 → 这就是「客户端读到了全局数据」的判据。
+ */
 function probeRead(collName) {
   return new Promise((resolve) => {
     try {
       const db = wx.cloud.database();
-      db.collection(collName).limit(1).get({
-        success: (res) => resolve({ ok: true, count: (res.data || []).length }),
-        fail: (err) => resolve({ ok: false, errMsg: (err && err.errMsg) || String(err) }),
+      db.collection(collName).limit(3).get({
+        success: (res) => {
+          const docs = res.data || [];
+          resolve({
+            ok: true,
+            count: docs.length,
+            globalReadable: docs.some((d) => !d || !d._openid),
+          });
+        },
+        fail: (err) => resolve({
+          ok: false,
+          count: 0,
+          globalReadable: false,
+          errMsg: (err && err.errMsg) || String(err),
+        }),
       });
     } catch (e) {
-      resolve({ ok: false, errMsg: (e && e.message) || String(e) });
+      resolve({ ok: false, count: 0, globalReadable: false, errMsg: (e && e.message) || String(e) });
     }
   });
 }
@@ -140,8 +190,37 @@ function probeWrite(collName) {
 }
 
 /**
+ * 推断当前是官方四种模式里的哪一种（只对共享集合有意义）。
+ *
+ * 判据（共享集合的正常文档由服务端写入 → **没有** _openid）：
+ *   读被拒 + 写被拒        → 仅管理端可读写            ✓ 安全
+ *   读被拒 + 写通          → 异常组合（能写 = 仍是后门）
+ *   读到全局数据 + 写通    → 仅创建者可写，所有人可读   ✗✗ 严重
+ *   读到全局数据 + 写被拒  → 仅管理端可写，所有人可读   ✗ 泄漏
+ *   只读到自己的 + 写通    → 仅创建者可读写             ✗ 能插 = 污染
+ *   只读到自己的 + 写被拒  → 非官方四选一（自定义规则）或集合为空 → 暂按安全
+ *
+ * ⚠ 为什么用 globalReadable（有没有读到**没有 _openid** 的文档）而不是「读到了几条」：
+ *   「仅创建者可读写」模式下客户端**能**读到自己的文档（自检插的探测文档就有
+ *   _openid）→ 条数 > 0 但拿到的全是自己的数据，这不构成泄漏。
+ *   真正的泄漏标志是「读到了服务端创建的全局数据」（服务端写入的记录不会
+ *   自动生成 _openid）。
+ */
+function inferMode(read, write) {
+  const canWrite = !!(write && write.ok);
+  const readOk = !!(read && read.ok);
+  const global = !!(read && read.globalReadable);
+  if (!readOk && !canWrite) return PERM_MODE.ADMIN_ONLY;
+  if (!readOk && canWrite) return '写通读不通（异常组合）';
+  if (global && canWrite) return PERM_MODE.CREATOR_W_ALL_READ;
+  if (global && !canWrite) return PERM_MODE.ADMIN_W_ALL_READ;
+  if (canWrite) return PERM_MODE.CREATOR_RW;
+  return `${PERM_MODE.ADMIN_W_ALL_READ}（未读到全局数据，模式待复检）`;
+}
+
+/**
  * 自检单个集合的权限。
- * @returns {Promise<{name:string, status:string, read:object, write:object, expected:string, ok:boolean}>}
+ * @returns {Promise<{name:string, status:string, mode:string, ok:boolean, ...}>}
  */
 async function checkCollection(meta) {
   const { name, risk } = meta;
@@ -156,28 +235,50 @@ async function checkCollection(meta) {
   const write = needWrite ? await probeWrite(name) : { ok: null, skipped: true };
 
   let status;
+  let ok;
+  let mode = '';
+  let needRecheck = false;
+
   if (needWrite) {
-    if (!read.ok && !write.ok) {
+    const canWrite = !!write.ok;
+    // 「客户端能读到服务端创建的全局数据」= 真泄漏。
+    // ⚠ 判据不是「读到了几条」，而是「读到的文档有没有 _openid」：
+    //   服务端/控制台写入的记录**不会**自动带 _openid，客户端写入的才带。
+    //   「仅创建者可读写」下客户端能读到自己的文档（带 _openid）→ 不算泄漏。
+    const leak = !!read.ok && !!read.globalReadable;
+    if (!canWrite && !leak) {
+      // 读不到全局数据 + 插不进文档 = 「仅管理端可读写」→ 符合预期
       status = 'locked';
-    } else if (read.ok && write.ok) {
-      status = 'open';
+      ok = true;
+    } else if (canWrite && leak) {
+      // 既能读全站数据、又能插文档 → 最严重
+      status = 'publicWrite';
+      ok = false;
+    } else if (canWrite) {
+      // 插得进（即便读不到全局数据）→ 共享集合的后门：
+      //   服务端读集合不带 _openid 过滤，插进去的内容对全站可见；
+      //   admins 更是能直接给自己发管理员。
+      status = 'ownWrite';
+      ok = false;
     } else {
-      status = read.ok ? 'readable' : 'writable';
+      // 插不进、但读得到全局数据 → 泄漏
+      status = 'readable';
+      ok = false;
+      if (!read.count) needRecheck = true;
     }
+    mode = inferMode(read, write);
   } else {
     // 用户私有集合：客户端读到的只会是自己的数据（平台按 _openid 隔离），
     // 所以「能读」不等于泄漏。只有「能读到别人的」才是问题 —— 但那需要
     // 一个真实存在的他人 openid 才能测，客户端拿不到。
     // → 这里只区分「完全读不了」（最理想）与「能读自己的」（可接受）。
     status = read.ok ? 'own' : 'locked';
+    ok = true;
   }
 
   const expected = risk === 'critical'
-    ? '客户端不可读写'
+    ? '客户端不可读写（仅管理端可读写）'
     : '客户端只能读到自己（仅创建者可读写即可接受）';
-  const ok = risk === 'critical'
-    ? (!read.ok && !write.ok)
-    : true; // 用户私有集合的「仅创建者可读写」是安全状态，不算问题
 
   return {
     name,
@@ -185,25 +286,32 @@ async function checkCollection(meta) {
     risk,
     expected,
     status,
+    mode,
     ok,
+    needRecheck,
     read,
     write,
-    hint: ok ? (risk === 'critical' ? '' : '（用户私有数据，_openid 隔离由平台保证，可接受）') : buildHint(status, name, write),
+    hint: ok
+      ? (risk === 'critical' ? '' : '（用户私有数据，_openid 隔离由平台保证，可接受）')
+      : buildHint(status, name, write, mode),
   };
 }
 
-function buildHint(status, collName, write) {
+function buildHint(status, collName, write, mode) {
   // 写探测真的插进去了、还没删掉 → 必须在提示里说清楚（生产数据被污染了）
   const dirty = write && write.ok && write.cleaned === false
     ? ` 另：本次探测的测试文档未能自动删除（${collName} 里可能已残留 1 条），请用 admin#cleanupProbes 清理。`
     : '';
+  const FIX = `控制台 → 数据库 → 集合列表 → 点开 ${collName} → 权限设置 → 选「${PERM_MODE.ADMIN_ONLY}」。`;
   switch (status) {
-    case 'open':
-      return `⚠ ${collName} 客户端读写都不受限 —— 严重后门：任何人拿到小程序都能改全站数据。控制台 → 数据库 → ${collName} → 权限设置 → 选「仅管理端可读写」。${dirty}`;
+    case 'publicWrite':
+      return `⚠ ${collName} 当前是「${mode}」：客户端既能读全站数据、又能往里插文档 —— 严重后门，任何人拿到小程序都能改全站数据。${FIX}${dirty}`;
+    case 'ownWrite':
+      return `⚠ ${collName} 当前是「${mode}」：客户端读不到别人的数据，但**能往共享集合里插文档** —— 这仍是后门（服务端读集合不带 _openid 过滤，插进去的内容对全站可见；admins 更是能直接给自己发管理员）。${FIX}${dirty}`;
+    case 'writeOnly':
+      return `⚠ ${collName} 客户端能写（读被拒）—— 异常组合，但能写就是后门。${FIX}${dirty}`;
     case 'readable':
-      return `⚠ ${collName} 客户端可读 —— 共享数据会泄漏给所有用户。改成「仅管理端可读写」。${dirty}`;
-    case 'writable':
-      return `⚠ ${collName} 客户端可写 —— 任何人都能改全站数据（如污染词库 / 给自己发管理员）。改成「仅管理端可读写」。${dirty}`;
+      return `⚠ ${collName} 当前是「${mode}」：客户端能读到全站共享数据（泄漏），虽插不进文档但内容全被看见。${FIX}${dirty}`;
     default:
       return '';
   }
@@ -228,13 +336,17 @@ export async function checkCollectionPermissions(names) {
   const criticalBad = bad.filter((r) => r.risk === 'critical');
   let summary;
   if (criticalBad.length) {
-    summary = `${criticalBad.length} 个共享集合存在后门：${criticalBad.map((r) => r.name).join('、')}`;
+    summary = `${criticalBad.length} 个共享集合存在后门：${criticalBad.map((r) => `${r.name}（${r.mode}）`).join('、')}`;
   } else if (bad.length) {
     summary = `${bad.length} 个集合需注意：${bad.map((r) => r.name).join('、')}`;
   } else {
     summary = `全部 ${results.length} 个集合权限符合预期`;
   }
-  return { ok: !bad.length, results, bad, criticalBad, summary };
+  const recheck = results.filter((r) => r.needRecheck).map((r) => r.name);
+  if (recheck.length) {
+    summary += `（${recheck.join('、')} 当前为空，权限模式待补数据后复检）`;
+  }
+  return { ok: !bad.length, results, bad, criticalBad, recheck, summary };
 }
 
 /**
@@ -265,6 +377,10 @@ export async function checkAdminAndPermissions() {
  *   写探测会往共享集合真插一条测试文档（权限开放时插得进去），
  *   若删除失败就留下一条垃圾 —— 词库总数会多 1（4801 → 4802），
  *   浏览页显示的词条数就不准了。
+ *   ⚠ 更隐蔽的一种污染：别人插的文档**不带** __mg_perm_probe 标记，
+ *     所以按标记查不出来。判据是「文档带 _openid」—— 服务端/控制台写入的记录
+ *     **不会**自动带 _openid，只有客户端写入的才带 → 共享集合里出现带 _openid
+ *     的文档 = 有客户端往里插过东西。
  *
  * 服务端 SDK 不受集合权限限制 → 即便集合门户大开也能查出痕迹。
  */
@@ -277,7 +393,9 @@ export async function auditCollections() {
 }
 
 /**
- * 清理探测残留（服务端执行，只删带 __mg_perm_probe 标记的文档）。
+ * 清理共享集合里的污染文档（服务端执行）。
+ *   删两类：① 带 __mg_perm_probe 标记的（自检插的）
+ *          ② 带 _openid 的（客户端插的 —— 共享集合里这类文档本就不该存在）
  * @param {string} [collection] 只清理指定集合；不传则清理全部共享集合
  */
 export async function cleanupProbes(collection) {

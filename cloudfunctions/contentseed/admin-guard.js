@@ -60,8 +60,16 @@ async function isAdmin(openid, db) {
   if (BUILTIN_ADMIN_FINGERPRINTS.includes(fingerprint(id))) return true;
   if (!db) return false;
   try {
-    const res = await db.collection(ADMIN_COLLECTION).where({ openid: id }).limit(1).get();
-    return !!(res.data && res.data.length);
+    const res = await db.collection(ADMIN_COLLECTION).where({ openid: id }).limit(20).get();
+    const rows = res.data || [];
+    // ⚠⚠ **只认服务端创建的条目**（没有 _openid 的那些）。
+    //   官方规则：服务端(云函数)/控制台创建的记录**不会**自动生成 _openid，
+    //   而小程序端创建的记录**一定**带 _openid（平台强制注入）。
+    //   admins 的白名单条目只可能由本云函数写入 → 必然没有 _openid。
+    //   → 所以「带 _openid 的 admins 文档」= 有人从小程序端插进去的，
+    //     **一律不认**。这是纵深防御：即便 admins 集合权限被误设成
+    //     「仅创建者可读写」（客户端能插文档），对方也升不了管理员。
+    return rows.some((d) => !d || !d._openid);
   } catch (e) {
     // 集合不存在 / 无权限 / 查询异常 → 一律按非管理员处理。
     // 绝不能因为查不到就放行（fail-closed）；内置指纹已覆盖开发者本人，不影响可用性。

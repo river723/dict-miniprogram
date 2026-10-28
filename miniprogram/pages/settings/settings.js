@@ -122,6 +122,10 @@ Page({
    *
    * 集合权限是在云开发控制台里点的，点错了**不会有任何报错**，
    * 只在真有人越权时才暴露。这里主动验一把，把「以为设好了」变成「确认设好了」。
+   *
+   * ⚠ 结果里带 `mode`（当前实际生效的是官方四种模式里的哪一种）——
+   *   「仅创建者可读写」和「仅管理端可读写」只差几个字，含义完全不同，
+   *   不直接报出来的话很容易反复配错同一个地方。
    */
   async checkPerms() {
     if (this.data.permChecking) return;
@@ -145,8 +149,11 @@ Page({
 
   // ---------- 共享集合数据审计（服务端执行）----------
   // 权限自检只看「规则对不对」，看不出「数据有没有被污染」。
-  // 写探测会在权限开放时往生产集合插测试文档，删不掉就留下一条垃圾
-  // （词库总数 +1 → 浏览页显示的词条数不准）。
+  // 两种污染要分开统计：
+  //   ① probeCount   —— 自检插的测试文档（带 __mg_perm_probe 标记）
+  //   ② injectedCount—— 客户端从外面插进来的文档（带 _openid）。
+  //                      服务端/控制台写入的记录**不会**自动带 _openid，
+  //                      所以共享集合里带 _openid 的就是外来物。
   //
   // ⚠ countText 在 JS 侧拼好再给 WXML —— WXML 里 `=== undefined` 不可靠
   //   （数据序列化后 undefined 会变 null，比较结果不符合预期）。
@@ -158,6 +165,7 @@ Page({
         countText = r.expect ? `${r.count} / ${r.expect}` : String(r.count);
       }
       if (r.probeCount) countText += ` ⚠残留${r.probeCount}`;
+      if (r.injectedCount) countText += ` ⚠注入${r.injectedCount}`;
       return { ...r, countText };
     });
     return { ...res, report };
@@ -171,9 +179,10 @@ Page({
       const res = this.formatAudit(await auditCollections());
       this.setData({ auditResult: res });
       wx.hideLoading();
+      const bad = (res.probeTotal || 0) + (res.injectedTotal || 0);
       wx.showToast({
-        title: res.probeTotal ? `发现 ${res.probeTotal} 条残留` : '数据完整',
-        icon: res.probeTotal ? 'none' : 'success',
+        title: bad ? `发现 ${bad} 条污染` : '数据完整',
+        icon: bad ? 'none' : 'success',
       });
     } catch (e) {
       wx.hideLoading();
@@ -186,8 +195,8 @@ Page({
   async cleanProbes() {
     if (this.data.auditBusy) return;
     wx.showModal({
-      title: '清理探测残留',
-      content: '将删除共享集合里带 __mg_perm_probe 标记的测试文档（只删这些，不动任何业务数据）。确定？',
+      title: '清理污染文档',
+      content: '将删除共享集合里两类外来文档：带 __mg_perm_probe 标记的测试文档、以及带 _openid 的客户端插入文档（共享集合里这类文档本就不该存在）。不会动服务端写入的业务数据。确定？',
       confirmText: '清理',
       success: async (r) => {
         if (!r.confirm) return;

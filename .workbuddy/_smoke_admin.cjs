@@ -99,6 +99,19 @@ const makeDb = (rows, opts = {}) => ({
   ok('非内置 openid + 集合有记录 → 管理员（动态白名单生效）',
     (await guard.isAdmin('oOther', makeDb([{ openid: 'oOther' }]))) === true);
 
+  // ⚠⚠ 纵深防御：客户端插入的 admins 文档**一定**带 _openid（平台强制注入），
+  //   而服务端写入的记录**不会**自动带 _openid。
+  //   → 即使 admins 集合权限被误设成「仅创建者可读写」（客户端能插文档），
+  //     对方插进来的 {openid:"自己"} 也不能让他变成管理员。
+  ok('⚠ 客户端插入的条目（带 _openid）→ 不认（权限误配也无法提权）',
+    (await guard.isAdmin('oOther', makeDb([{ openid: 'oOther', _openid: 'oAttacker' }]))) === false);
+
+  ok('⚠ 只有服务端条目（无 _openid）才算管理员',
+    (await guard.isAdmin('oOther', makeDb([
+      { openid: 'oOther', _openid: 'oAttacker' },
+      { openid: 'oOther', note: 'by admin cloud function' },
+    ]))) === true);
+
   ok('空 OPENID → 拒绝（控制台/无上下文一律失败）',
     (await guard.isAdmin('', makeDb([{ openid: '' }]))) === false);
 
@@ -239,8 +252,12 @@ const makeDb = (rows, opts = {}) => ({
     permSrc.includes('__mg_perm_probe'));
   ok('写成功后立刻删除探测文档（不留垃圾）',
     /remove\(\{/.test(permSrc) && /cleaned/.test(permSrc));
-  ok('判定分三档：locked / readable / writable',
-    /locked/.test(permSrc) && /readable/.test(permSrc) && /writable/.test(permSrc));
+  ok('判定分多档：locked / ownWrite / publicWrite / readable',
+    /locked/.test(permSrc)
+    && /ownWrite/.test(permSrc)
+    && /publicWrite/.test(permSrc)
+    && /readable/.test(permSrc));
+
   // ⚠ 自检必须覆盖**全部**集合，不能只验 admins —— 其余 8 个同样是攻击面
   //   （worddict 客户端可写 = 任何人能污染全站词库）。
   const EXPECTED_COLLECTIONS = [
@@ -269,6 +286,34 @@ const makeDb = (rows, opts = {}) => ({
     !forIfOnSameEl);
   ok('有问题的集合在 JS 里预过滤成 permResult.bad',
     /bad:\s*bad/.test(permSrc) || /bad,/.test(permSrc));
+
+  console.log('\n=== 10·补、权限模式识别（官方只有四种，名字相近含义不同）===');
+  // ⚠ 背景：用户曾把三个共享集合设成「仅创建者可读写」而不是「仅管理端可读写」，
+  //   两者只差几个字，但前者客户端照样能往共享集合插文档 → 仍是真后门。
+  //   所以自检必须能**报出当前实际生效的是哪一种**，否则用户会反复配错同一个地方。
+  ok('permCheck 列出了官方四种权限模式名',
+    /仅管理端可读写/.test(permSrc)
+    && /仅创建者可读写/.test(permSrc)
+    && /仅创建者可写，所有人可读/.test(permSrc)
+    && /仅管理端可写，所有人可读/.test(permSrc));
+  ok('permCheck 有 inferMode（推断当前是哪种模式）',
+    /inferMode/.test(permSrc) && /PERM_MODE/.test(permSrc));
+  ok('permCheck 结果里带 mode 字段',
+    /\bmode\b/.test(permSrc) && /mode:/.test(permSrc));
+  ok('判定用 globalReadable（读到的文档有没有 _openid）而非单纯条数',
+    /globalReadable/.test(permSrc));
+  ok('能区分 ownWrite（仅创建者可读写，能插 = 后门）',
+    /ownWrite/.test(permSrc));
+  ok('提示里点名当前模式，并给出唯一正确选项「仅管理端可读写」',
+    /buildHint/.test(permSrc)
+    && /仅管理端可读写/.test(permSrc)
+    && /权限设置/.test(permSrc));
+  ok('前端设置页展示了 mode',
+    /item\.mode/.test(permSettingsWxml) && /se-perm__mode/.test(permSettingsWxml));
+  // ⚠ 核心安全断言：「仅创建者可读写」绝不能被判为安全
+  ok('「仅创建者可读写」被显式标注为后门（ownWrite → ok=false）',
+    /status = 'ownWrite';[\s\S]{0,40}ok = false/.test(permSrc));
+
 
   console.log('\n=== 11. 官方权限选项名用词正确 ===');
   // ⚠ 控制台里没有「所有用户不可读写」这个选项，官方叫「仅管理端可读写」。
@@ -301,6 +346,17 @@ const makeDb = (rows, opts = {}) => ({
     /PROBE_MARK/.test(adminFnSrc) && !/clearWorddict/.test(adminFnSrc));
   ok('前端把「探测文档没删掉」如实提示给用户',
     /cleaned === false/.test(permSrc) && /cleanupProbes/.test(permSrc));
+  // ⚠ 两类污染：① 带标记的（自检插的）② 带 _openid 的（客户端插的）。
+  //   第二类标记查不出来，只能靠 _openid 揪 —— 服务端写入的记录不会自动带它。
+  ok('admin 审计能查出「客户端插入的文档」（按 _openid 判）',
+    /injectedCount/.test(adminFnSrc)
+    && /_openid: db\.command\.exists\(true\)/.test(adminFnSrc));
+  ok('admin 清理也覆盖客户端插入的文档（无标记但带 _openid）',
+    /_openid: db\.command\.exists\(true\)/.test(adminFnSrc)
+    && /PROBE_MARK\]: db\.command\.exists\(false\)/.test(adminFnSrc));
+  ok('admin-guard 只认无 _openid 的 admins 条目（纵深防御）',
+    /!d\._openid/.test(
+      fs.readFileSync(path.join(ROOT, 'scripts', 'lib', 'admin-guard.cjs'), 'utf8')));
 
   console.log('\n=== 13. 禁止「所有用户可读」这条错误指引回流 ===');
   // ⚠ 这条错误指引的实际后果：用户照着把词库设成客户端可写 = 全站词库谁都能改。
