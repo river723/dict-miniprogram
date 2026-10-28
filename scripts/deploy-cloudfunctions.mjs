@@ -52,8 +52,50 @@ const dir = join(ROOT, 'cloudfunctions');
 const all = readdirSync(dir).filter((n) => existsSync(join(dir, n, 'index.js')));
 const args = process.argv.slice(2);
 const listOnly = args.includes('--list');
-const wanted = args.filter((a) => !a.startsWith('-'));
-const names = wanted.length ? wanted : all;
+const dryRun = args.includes('--dry');
+
+// 参数归一：支持空格分隔、逗号分隔（admin,seed）。
+// ⚠ 不能用 / 做分隔符去 split —— Windows 路径里全是斜杠，且 Git Bash 还会把
+//   单独的 / 自动转成绝对路径（C:/.../PortableGit/）。凡是含斜杠的 token
+//   一律视为「分隔符误用 / 路径型误用」跳过，并明确提示正确写法。
+const splitTokens = (s) => s.split(/[\s,、;|]+/).filter(Boolean);
+const raw = [];
+const skipped = [];
+const pathLike = [];
+for (const a of args.filter((x) => !x.startsWith('-'))) {
+  for (const t of splitTokens(a)) {
+    if (/[/\\]/.test(t)) {
+      // 单独一个斜杠 = 分隔符误用；带盘符的长串 = Git Bash 的 MSYS 路径转换。
+      if (/^[/\\]+$/.test(t)) skipped.push(t);
+      else pathLike.push(t);
+    } else {
+      raw.push(t);
+    }
+  }
+}
+
+// 只给了分隔符、没给任何名字 → 显式报错，避免「误触发全量部署」。
+const nonFlag = args.filter((a) => !a.startsWith('-'));
+if (nonFlag.length && !raw.length) {
+  console.error(`✗ 只解析到分隔符，没解析出任何云函数名：${nonFlag.join(' ')}`);
+  console.error(`  可用：${all.join('、')}`);
+  console.error('  正例：npm run deploy:cf -- admin seed contentseed setup');
+  process.exit(1);
+}
+
+const unknown = raw.filter((n) => !all.includes(n));
+if (unknown.length) {
+  // ⚠ 必须显式失败而不是「跳过」：静默忽略会让人以为部署过了。
+  console.error(`✗ 不认识的云函数名：${unknown.join('、')}`);
+  console.error(`  可用：${all.join('、')}`);
+  console.error('');
+  console.error('  注意：多个函数请用空格或逗号分隔，不要用斜杠当分隔符。');
+  console.error('  正例：npm run deploy:cf -- admin seed contentseed setup');
+  console.error('  正例：npm run deploy:cf -- admin,seed,contentseed,setup');
+  process.exit(1);
+}
+
+const names = raw.length ? raw : all;
 
 const port = process.env.CLI_PORT || '';
 const PORT_PART = port ? ` --port ${port}` : '';
@@ -107,6 +149,16 @@ const deployOne = async (name) => {
 console.log(`环境: ${env}`);
 console.log(`CLI : ${cli}`);
 console.log('');
+
+if (dryRun) {
+  // 只解析参数、不调 CLI —— 用于验证命令写法对不对。
+  if (skipped.length) console.log(`（已忽略分隔符：${skipped.join(' ')}）`);
+  if (pathLike.length) {
+    console.log(`（已忽略 ${pathLike.length} 个路径型参数 —— 斜杠会被 Git Bash 转成绝对路径，别用斜杠分隔）`);
+  }
+  console.log(`将部署 ${names.length} 个：${names.join('、')}`);
+  process.exit(0);
+}
 
 if (listOnly) {
   const { out, code } = await call(`cloud functions list --env ${env} --project ${ROOT}`);

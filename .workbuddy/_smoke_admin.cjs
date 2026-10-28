@@ -215,6 +215,19 @@ const makeDb = (rows, opts = {}) => ({
   const setupSrc = fs.readFileSync(path.join(ROOT, 'cloudfunctions/setup/index.js'), 'utf8');
   ok('setup 的集合列表包含 admins', /name:\s*'admins'/.test(setupSrc));
 
+  console.log('\n=== 9. 部署脚本参数解析（防「斜杠被当函数名」）===');
+  const deployPath = path.join(ROOT, 'scripts', 'deploy-cloudfunctions.mjs');
+  const deploySrc = fs.existsSync(deployPath) ? fs.readFileSync(deployPath, 'utf8') : '';
+  ok('部署脚本存在', !!deploySrc);
+  ok('部署脚本对未知函数名显式报错而非静默跳过',
+    /unknown\.length[\s\S]{0,400}?process\.exit\(1\)/.test(deploySrc));
+  ok('部署脚本按白名单校验函数名（cloudfunctions 下真实存在）',
+    /all\.includes\(/.test(deploySrc));
+  ok('部署脚本不把含斜杠的参数当函数名（Windows 路径 / Git Bash MSYS 转换坑）',
+    deploySrc.includes('pathLike') && deploySrc.includes('splitTokens'));
+  ok('部署脚本提供 --dry 干跑（验证命令写法不触发真实部署）',
+    /--dry/.test(deploySrc));
+
   console.log(`\n────────────────────────────`);
   console.log(`通过 ${pass} 项，失败 ${fail} 项`);
   if (fail) process.exit(1);
