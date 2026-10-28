@@ -237,9 +237,13 @@ Page({
       let queue = [];
 
       if (this.isCustomReview) {
-        const set = {};
-        this.customIds.forEach((id) => { set[id] = true; });
-        queue = words.filter((w) => set[String(w.id)]);
+        // 严格按传入的 wordIds 顺序排队列（今日回顾每次进入都会洗牌，必须保留打乱后的顺序；
+        // 困难词则按正确率从低到高传入，同样需要保序）。不能按生词本自然序重排。
+        const order = {};
+        this.customIds.forEach((id, i) => { order[String(id)] = i; });
+        queue = words
+          .filter((w) => order[String(w.id)] !== undefined)
+          .sort((a, b) => order[String(a.id)] - order[String(b.id)]);
       } else {
         const records = StorageService.getStudyRecords();
         const studied = {};

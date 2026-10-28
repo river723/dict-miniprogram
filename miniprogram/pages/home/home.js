@@ -1,11 +1,11 @@
 /**
  * 首页仪表盘 —— 对齐 memo-grad HomeScreen。
  * 结构：Hero 卡（今日待学 + 环形进度）→ 主 CTA → StatStrip 三指标 → 细进度线
- *      → 待办行（错题本 / 困难词）→ 词库入口 → 最近添加 → 本周趋势。
+ *      → 待办行（今日回顾 / 错题本 / 困难词）→ 词库入口 → 最近添加 → 本周趋势。
  */
 import StorageService from '../../services/storage';
 import { getWeeklyTrend } from '../../services/studyPlan';
-import { fillTodayIfNeeded, getLastFillResult, enrichWordbookOnce } from '../../services/autoWord';
+import { fillTodayIfNeeded, getLastFillResult, enrichWordbookOnce, enrichWordbookDefinitionsOnce } from '../../services/autoWord';
 import { getLibrary } from '../../services/libraries';
 import { formatDate } from '../../utils/util';
 import { applyTheme } from '../../utils/theme';
@@ -42,6 +42,18 @@ function needsDifficultWords(stats) {
   if (stats.totalWords === 0) return false;
   if (stats.todayPending > 0) return false;
   return (stats.todayStudyCount >= 3 && stats.accuracy < 0.6) || stats.wrongQuestionCount === 0;
+}
+
+/** Fisher-Yates 洗牌（返回新数组，不改原数组）。用于「今日回顾」每次进入打乱词序。 */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+  return a;
 }
 
 /** 今日建议（与 App buildTodaySuggestion 同构，路由改为小程序页面）。 */
@@ -259,8 +271,8 @@ Page({
         settings.autoAddNewWords !== false &&
         stats.todayPending === 0 &&
         stats.unstudiedNewWordCount === 0;
-      // 今日回顾仅在「今日任务已清空」且「当天确实有过点过不认识的词」时出现。
-      const showTodayReview = stats.todayPending === 0 && todayReviewCount > 0;
+      // 今日回顾：只要有「今天点过不认识」的词就出现（趁热巩固，独立于今日计划是否清空）。
+      const showTodayReview = todayReviewCount > 0;
 
       this.setData({
         loading: false,
@@ -295,6 +307,9 @@ Page({
       // 后台一次性回填生词本里缺失的扩展字段（词根/记忆/易混词/音标），
       // 用 search action 取全文档，不依赖 wordict 云函数重新部署；仅运行一次。
       enrichWordbookOnce().catch(() => {});
+      // 后台一次性回填生词本里缺失的「中文释义」（旧版 enrichCandidate 漏搬 definitions，
+      // 导致雅思候选词进入生词本后卡片背面空白）；仅运行一次。
+      enrichWordbookDefinitionsOnce().catch(() => {});
     } catch (e) {
       console.error('[home] 加载失败', e);
       this.setData({ loading: false, error: true });
@@ -334,11 +349,13 @@ Page({
     wx.navigateTo({ url: `/pages/study/study?wordIds=${ids.join(',')}` });
   },
 
-  /** 今日回顾：纯加练，带 pure=1 进入学习页（不写记录、不推进复习计划）。 */
+  /** 今日回顾：纯加练，带 pure=1 进入学习页（不写记录、不推进复习计划）。每次进入打乱词序。 */
   onTodayReviewTap() {
     const ids = this.data.todayReviewIds || [];
     if (ids.length === 0) return;
-    wx.navigateTo({ url: `/pages/study/study?wordIds=${ids.join(',')}&pure=1` });
+    // 每次进入重新洗牌，避免顺序固化；shuffle 返回新数组，不污染 this.data.todayReviewIds。
+    const shuffled = shuffle(ids);
+    wx.navigateTo({ url: `/pages/study/study?wordIds=${shuffled.join(',')}&pure=1` });
   },
 
   goDictionary() {
