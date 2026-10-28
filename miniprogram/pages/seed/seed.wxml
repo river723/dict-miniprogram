@@ -1,4 +1,18 @@
 <view class="page {{themeClass}}">
+
+  <!-- ============ 非管理员：什么都不给看 ============ -->
+  <!-- 页面路由是公开的（可被直接跳转/分享进入），所以进页面先验管理员身份。
+       真正的闸门在云函数内部（服务端按 OPENID 判定），这里只是不展示操作界面。 -->
+  <view wx:if="{{adminState === 'checking'}}" class="mg-card">
+    <view class="mg-text-secondary">正在校验管理员身份…</view>
+  </view>
+
+  <view wx:if="{{adminState === 'denied'}}" class="mg-card err">
+    <view class="mg-text-secondary">仅管理员可访问本页。</view>
+    <view class="mg-text-tertiary sub">数据初始化会清空/重建全站共享词库与内容，所以只对管理员开放。</view>
+  </view>
+
+  <block wx:if="{{adminState === 'ok'}}">
   <view class="mg-card">
     <view class="mg-text-secondary">{{sourceText}}数据源 {{total}} 条 · 云端 {{countText}}</view>
     <view class="bar">
@@ -61,4 +75,5 @@
     <view class="mg-text-secondary">导入完进「练习 → 真题练习」应能看到 2010 年起的年份列表；「阅读 → 故事」应能看到 20 章。</view>
     <view class="mg-text-secondary">⚠️ 阅读页是 tab 页，只在首次进入时加载一次。导入/清空后要看新内容：<text class="strong">在阅读页下拉刷新</text>，或彻底杀掉小程序重进。</view>
   </view>
+  </block>
 </view>

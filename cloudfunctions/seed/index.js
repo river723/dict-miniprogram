@@ -25,6 +25,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const cloud = require('wx-server-sdk');
+const { isAdmin, forbidden } = require('./admin-guard');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -141,6 +142,13 @@ function loadAll() {
 
 exports.main = async (event = {}) => {
   try {
+    // ⚠ 闸门：seed 操作的是全站共享词库（任何用户都在读它），
+    //   clearWorddict 一按就是删光全站数据。必须先验明是管理员再做任何事。
+    //   身份取自 getWXContext().OPENID —— 微信平台注入，前端伪造不了。
+    const { OPENID } = cloud.getWXContext();
+    if (!(await isAdmin(OPENID, db))) {
+      return forbidden('FORBIDDEN: 仅管理员可执行词库初始化操作');
+    }
     switch (event.action) {
       case 'ensureCollections':
         return { ok: true, report: await ensureCollections() };

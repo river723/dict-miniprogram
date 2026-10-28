@@ -13,6 +13,7 @@ import { DEFAULT_SETTINGS } from '../../services/storage';
 import { DAILY_NEW_WORDS_LIMIT } from '../../theme/tokens';
 import { THEME_OPTIONS } from '../../constants/index';
 import { applyTheme, invalidateTheme } from '../../utils/theme';
+import { fetchAdminState, peekAdminState } from '../../services/admin';
 
 const save = (patch) => StorageService.saveSettings(patch);
 
@@ -21,17 +22,33 @@ Page({
     settings: null,
     themes: THEME_OPTIONS,
     dailyMax: DAILY_NEW_WORDS_LIMIT,
+    // 管理员身份：控制「词库初始化」入口是否显示。
+    // ⚠ 这只是体验层（少显示一个按钮），真正的闸门在云函数内部 ——
+    //   即便有人手改前端直接调 seed 云函数，服务端也会按 OPENID 挡下来。
+    isAdmin: false,
   },
 
   onShow() {
 
     applyTheme(this);
     this.refresh();
+    this.loadAdminState();
   },
 
   refresh() {
     const settings = StorageService.getSettings();
     this.setData({ settings });
+  },
+
+  /**
+   * 查管理员身份（异步）。
+   * 先用缓存同步上屏（避免「按钮先出现再消失」的闪烁），再回源确认。
+   */
+  async loadAdminState() {
+    const cached = peekAdminState();
+    if (cached.isAdmin) this.setData({ isAdmin: true });
+    const state = await fetchAdminState();
+    this.setData({ isAdmin: state.isAdmin });
   },
 
   // ---------- 外观 ----------
@@ -84,6 +101,12 @@ Page({
   },
 
   goSeed() {
+    // 双保险：按钮本来就只对管理员显示，这里再校验一次，
+    // 防止「按钮还没隐藏完 / 缓存过期」时被点进来。
+    if (!this.data.isAdmin) {
+      wx.showToast({ title: '仅管理员可使用', icon: 'none' });
+      return;
+    }
     wx.navigateTo({ url: '/pages/seed/seed' });
   },
 

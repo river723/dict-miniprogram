@@ -9,8 +9,15 @@
  *   stats              统计各集合文档数，用来判断数据到底有没有导进去
  *
  * 用法：开发者工具里 setup 右键 →「云端测试」，请求参数填 {"action":"ensureCollections"}
+ *
+ * ⚠ 闸门说明：本函数只建空集合 + 读计数，本身不破坏数据，但集合可以被任意用户
+ *   无限创建（垃圾集合 / 配额消耗），所以同样限管理员。
+ *   「先有鸡还是先有蛋」的问题由 admin-guard 的内置指纹解开：
+ *   开发者本人的 openid 指纹写在代码里，不依赖 admins 集合是否已建好，
+ *   所以首次部署后仍能正常建集合（admins 集合也在下面的列表里）。
  */
 const cloud = require('wx-server-sdk');
+const { isAdmin, forbidden } = require('./admin-guard');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
@@ -22,16 +29,25 @@ const COLLECTIONS = [
   { name: 'user_settings', desc: '用户设置' },
   { name: 'worddict', desc: '词库（需所有用户可读 + prefix 索引）' },
   { name: 'content_files', desc: '云存储路径→fileID 映射' },
+  { name: 'admins', desc: '管理员白名单（需所有用户不可读写）' },
 ];
 
 exports.main = async (event = {}) => {
-  switch (event.action) {
-    case 'ensureCollections':
-      return await ensureCollections();
-    case 'stats':
-      return await stats();
-    default:
-      return { ok: false, error: `unknown action: ${event.action}` };
+  try {
+    const { OPENID } = cloud.getWXContext();
+    if (!(await isAdmin(OPENID, db))) {
+      return forbidden('FORBIDDEN: 仅管理员可执行环境初始化操作');
+    }
+    switch (event.action) {
+      case 'ensureCollections':
+        return await ensureCollections();
+      case 'stats':
+        return await stats();
+      default:
+        return { ok: false, error: `unknown action: ${event.action}` };
+    }
+  } catch (e) {
+    return { ok: false, error: e && e.message ? e.message : String(e) };
   }
 };
 

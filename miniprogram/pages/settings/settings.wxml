@@ -168,7 +168,7 @@
       <mg-button title="立即云同步" variant="secondary" size="md" block icon="sync" bind:tap="syncNow" />
       <text class="se-data__desc">同步本机与微信云数据</text>
     </view>
-    <view class="se-data__item">
+    <view class="se-data__item" wx:if="{{isAdmin}}">
       <mg-button title="词库初始化" variant="secondary" size="md" block icon="import" bind:tap="goSeed" />
       <text class="se-data__desc">建集合 / 导入词库</text>
     </view>

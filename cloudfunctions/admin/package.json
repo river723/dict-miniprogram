@@ -1,0 +1,9 @@
+{
+  "name": "admin",
+  "version": "1.0.0",
+  "description": "管理员身份自证 + 白名单管理（openid 白名单，不做登录）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

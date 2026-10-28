@@ -23,6 +23,7 @@ const cloud = require('wx-server-sdk');
 const zlib = require('zlib');
 const fs = require('fs');
 const path = require('path');
+const { isAdmin, forbidden } = require('./admin-guard');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -64,6 +65,12 @@ function describeDir(dir) {
 
 exports.main = async (event = {}) => {
   try {
+    // ⚠ 闸门：contentseed 操作的是全站共享内容（真题 / 故事 + 云存储文件），
+    //   clear 一按就是删光全站内容。必须先验明是管理员。
+    const { OPENID } = cloud.getWXContext();
+    if (!(await isAdmin(OPENID, db))) {
+      return forbidden('FORBIDDEN: 仅管理员可执行内容数据初始化操作');
+    }
     switch (event.action) {
       case 'info':
         return { ok: true, ...(await info()) };

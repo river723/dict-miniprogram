@@ -5,6 +5,7 @@
 import { callCloud } from '../../services/cloud';
 import { applyTheme } from '../../utils/theme';
 import { clearStoryCache } from '../../utils/story';
+import { fetchAdminState } from '../../services/admin';
 
 const MAX_ROUNDS = 60; // 防死循环兜底（每轮约 2.2 秒，只写一部分）
 
@@ -79,17 +80,37 @@ Page({
     canClear: false,
     log: [],
     error: '',
-    // ---- 内容数据（真题 / 故事），来自 contentseed 云函数 ----
+    // 内容数据（真题 / 故事），来自 contentseed 云函数 ----
     contentTotal: 0,
     contentIndexed: -1,
     contentRemaining: 0,
     contentProgress: 0,
     cloudStoryText: '',
+    // 管理员校验状态：'checking' 时不渲染操作按钮
+    adminState: 'checking',
   },
 
   onShow() {
 
     applyTheme(this);
+    this.checkAdmin();
+  },
+
+  /**
+   * 管理员校验 —— 兜底防线。
+   *
+   * 设置页已经对非管理员隐藏了入口，但页面路由是公开的（可以被直接跳转 / 分享进入），
+   * 所以进页面时必须再验一次。真正的闸门在云函数内部（服务端按 OPENID 判定），
+   * 这里只是「不让普通用户看到操作界面」，避免他们点了才报错。
+   */
+  async checkAdmin() {
+    const state = await fetchAdminState(true);
+    if (!state.isAdmin) {
+      this.setData({ adminState: 'denied' });
+      wx.showToast({ title: '仅管理员可访问', icon: 'none' });
+      return;
+    }
+    this.setData({ adminState: 'ok' });
     if (!this.data.loaded) this.refresh();
   },
 
