@@ -241,8 +241,22 @@ const makeDb = (rows, opts = {}) => ({
     /remove\(\{/.test(permSrc) && /cleaned/.test(permSrc));
   ok('判定分三档：locked / readable / writable',
     /locked/.test(permSrc) && /readable/.test(permSrc) && /writable/.test(permSrc));
-  ok('admins 集合期望「客户端不可读写」',
-    /SERVER_ONLY\s*=\s*\[\s*'admins'/.test(permSrc));
+  // ⚠ 自检必须覆盖**全部**集合，不能只验 admins —— 其余 8 个同样是攻击面
+  //   （worddict 客户端可写 = 任何人能污染全站词库）。
+  const EXPECTED_COLLECTIONS = [
+    'admins', 'worddict', 'worddict_ielts', 'content_files',
+    'words', 'study_records', 'study_plans', 'wrong_questions', 'user_settings',
+  ];
+  const missingCols = EXPECTED_COLLECTIONS.filter((c) => !permSrc.includes(`'${c}'`));
+  ok('自检覆盖全部 9 个集合（含 4 个共享集合）',
+    missingCols.length === 0,
+    missingCols.length ? `漏了：${missingCols.join('、')}` : '');
+  ok('共享集合标为 critical（客户端可写 = 真后门）',
+    /risk:\s*'critical'/.test(permSrc));
+  ok('用户私有集合标为 low，不做写探测（避免污染用户数据）',
+    /risk:\s*'low'/.test(permSrc) && /needWrite/.test(permSrc));
+  ok('写探测只对共享集合执行',
+    /needWrite\s*=\s*risk\s*===\s*'critical'/.test(permSrc));
   ok('设置页已接上自检入口',
     /checkPerms/.test(fs.readFileSync(path.join(ROOT, 'miniprogram/pages/settings/settings.js'), 'utf8'))
     && /checkPerms/.test(fs.readFileSync(path.join(ROOT, 'miniprogram/pages/settings/settings.wxml'), 'utf8')));

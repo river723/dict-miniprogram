@@ -39,6 +39,7 @@ const COLLECTIONS = [
   { name: 'wrong_questions', desc: '错题本' },
   { name: 'user_settings', desc: '用户设置' },
   { name: 'worddict', desc: '词库（前端 0 直连，服务端读；如将来前端要直连需改为「所有用户可读」）' },
+  { name: 'worddict_ielts', desc: '雅思词库（同上；只走控制台导入，seed 不涉及）' },
   { name: 'content_files', desc: '云存储路径→fileID 映射' },
   { name: 'admins', desc: '管理员白名单（须「仅管理端可读写」= 客户端不可读写）' },
 ];

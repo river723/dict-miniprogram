@@ -12,8 +12,6 @@ Git `origin`→`github.com/river723/dict-miniprogram`，分支 **master**，
 云环境 `cloud1-d6gfdnelqf7478e85`。
 
 ## 通用约定
-- 1px(App)=2rpx；token 在 `theme/tokens.js` + `theme.wxss`（`--mg-*`）。
-- 图标：MCI 子集化，码位重映射 **U+E000–U+E0A5**；只能用 `mci-subset.ttf`。
 - `ai` 环境变量：`DEEPSEEK_API_KEY`(必填) + `AI_BASE_URL`/`AI_MODEL`/`AI_THINKING`。
   **换厂商＝改环境变量不改代码**，改完须重部署。
 - ⚠ 根 `package.json` 是 `"type":"module"` → 根下 `.js` 被当 ESM，脚本用 `.cjs`；
@@ -47,15 +45,16 @@ Git `origin`→`github.com/river723/dict-miniprogram`，分支 **master**，
 - 云函数各自独立打包 → **无法跨目录 require**，admin-guard 要放副本；权威源
   `scripts/lib/admin-guard.cjs`，改完跑 `node .workbuddy/admin_wire.cjs --apply`。
 - 查自己 openid：`admin#whoami`。**明文 openid 不入库**（只存 sha256 指纹）。
-- 📌 **前端 0 处直连数据库**（全走云函数）→ 所有集合都该「仅管理端可读写」。
-- 集合权限**在控制台点、点错不报错** → 用「设置 → 安全自检」（`services/permCheck.js`；
-  云函数是服务端永远有全权限，测不出来）。
+- 📌 **前端 0 处直连数据库**（全走云函数）→ 全部 9 个集合都该「仅管理端可读写」。
+- ⚠ **集合权限官方只有四种**；四种模式下**小程序端永远不能写他人数据**（平台按
+  `_openid` 强制）→ 共享集合（`admins`/`worddict`/`worddict_ielts`/`content_files`）
+  客户端可写＝真后门；用户私有集合客户端能写**自己**那份**不算**后门。
+- 集合权限**在控制台点、点错不报错** → 用「设置 → 安全自检」（`services/permCheck.js`，
+  必须跑在客户端；云函数是服务端永远有全权限，测不出来）。自检只对共享集合做写探测
+  （写探测会真插一条测试文档，别污染用户自己的生词本）。
 ## 词库体系（换/加词库必读 → `docs/开发约定.md` 第一节）
 - `all`＝云端考研 4801；`ielts`＝雅思 4491（云端富词条 + 内置 `data/libraries/ielts.js` 兜底）。
 - **新增词库只改两处**：`services/libraries.js` + `services/wordEnrich.js`。
-- 音标字段两集合不同名：雅思 `phonetic_uk`，考研无音标字段（发音走 TTS）。
-- **浏览页禁半云端半本地混排**：`ensureLocalCloudDecision` 一次性决定数据源。
-- **toRow 不许伪造缺省值**：缺值输出空串，筛选前必须先经 `toRow` 归一。
 - ⚠ **字段来源必须分离（用户拍板，勿改回整条搬运）**：内容字段可复用考研侧；
   `frequency`/`difficulty`/`phonetic_uk` 必须雅思自己的（两库难度差 ≥2 星的有 28%）。
 

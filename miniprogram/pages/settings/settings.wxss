@@ -224,6 +224,18 @@
   font-weight: 500;
 }
 
+.se-perm__nameWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.se-perm__desc2 {
+  display: block;
+  font-size: 20rpx;
+  color: var(--mg-text-3);
+  line-height: 28rpx;
+}
+
 .se-perm__badge {
   font-size: 22rpx;
   padding: 4rpx 16rpx;

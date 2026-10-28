@@ -187,11 +187,14 @@
         loading="{{permChecking}}"
         bind:tap="checkPerms"
       />
-      <text class="se-perm__desc">验证 admins 集合是否为「仅管理端可读写」。控制台里点错权限不会报错，这里能查出来。</text>
+      <text class="se-perm__desc">检测全部 9 个集合的权限。控制台里点错权限不会报错，这里能查出来。共享集合（词库/白名单）客户端可写 = 任何人能改全站数据。</text>
 
       <view class="se-perm__result" wx:if="{{permResult}}">
         <view class="se-perm__row" wx:for="{{permResult.results}}" wx:key="name">
-          <text class="se-perm__name">{{item.name}}</text>
+          <view class="se-perm__nameWrap">
+            <text class="se-perm__name">{{item.name}}</text>
+            <text class="se-perm__desc2">{{item.desc}}</text>
+          </view>
           <text class="se-perm__badge {{item.ok ? 'is-ok' : 'is-bad'}}">{{item.ok ? '✓ 安全' : '⚠ 后门'}}</text>
         </view>
         <text class="se-perm__summary {{permResult.ok ? 'is-ok' : 'is-bad'}}">{{permResult.summary}}</text>
