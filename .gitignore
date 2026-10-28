@@ -4,7 +4,8 @@ dist/
 *.log
 .env
 .env.local
-# 小程序上传私钥，绝不入库
+# Git 钩子（含本地路径，团队成员需各自 git config core.hooksPath .githooks）
+.githooks/
 private.*.key
 # 控制台导入用的临时产物（可由 npm run export:jsonl 重新生成）
 import-data/
