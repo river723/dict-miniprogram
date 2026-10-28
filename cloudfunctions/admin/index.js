@@ -13,6 +13,11 @@
  *                 写入后立即生效，不需要重新部署任何云函数。
  *   revokeAdmin   仅管理员。{ openid } 移出白名单。
  *   ensureCollection  仅管理员。幂等建 admins 集合（也可由 setup 云函数建）。
+ *   auditCollections  仅管理员。审计共享集合的数据完整性：
+ *                     探测残留（permCheck 写探测插进来的测试文档）、
+ *                     词库文档数与预期基线的偏差。服务端 SDK 不受集合权限限制，
+ *                     所以即便集合被设成「客户端可写」，也能查出被污染的痕迹。
+ *   cleanupProbes     仅管理员。清理探测残留文档（只删带 __mg_perm_probe 标记的）。
  *
  * ⚠ 关于「谁能把别人加进白名单」：grantAdmin 本身要求已是管理员，
  *   且 admins 集合的客户端权限须设为「仅管理端可读写」——
@@ -31,6 +36,21 @@ const {
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+
+/**
+ * 需要审计的共享集合 + 预期文档数基线。
+ * ⚠ 基线只是「导入完应该是多少」，用于发现异常漂移，不是硬约束：
+ *   词库可能因为后续补词而变多，所以偏差只提示、不阻断。
+ */
+const SHARED_COLLECTIONS = [
+  { name: 'admins', desc: '管理员白名单', expect: null },
+  { name: 'worddict', desc: '考研词库', expect: 4801 },
+  { name: 'worddict_ielts', desc: '雅思词库', expect: 4491 },
+  { name: 'content_files', desc: '内容文件索引', expect: null },
+];
+
+/** 探测残留标记：与前端 miniprogram/services/permCheck.js 的 PROBE_MARK 一致。 */
+const PROBE_MARK = '__mg_perm_probe';
 
 /** 从各种脏输入里提取一个像样的 openid（28 位、o 开头）。 */
 function normalizeOpenid(raw) {
@@ -100,6 +120,16 @@ exports.main = async (event = {}) => {
         return { ok: true, removed: 1, openid: target };
       }
 
+      case 'auditCollections': {
+        if (!(await isAdmin(OPENID, db))) return forbidden();
+        return await auditCollections();
+      }
+
+      case 'cleanupProbes': {
+        if (!(await isAdmin(OPENID, db))) return forbidden();
+        return await cleanupProbes(event);
+      }
+
       default:
         return { ok: false, error: `unknown action: ${event.action}` };
     }
@@ -108,3 +138,100 @@ exports.main = async (event = {}) => {
     return { ok: false, error: (e && e.message) || String(e) };
   }
 };
+
+/**
+ * 审计共享集合的数据完整性。
+ *
+ * 为什么需要：前端「安全自检」的写探测会往共享集合里真插一条测试文档
+ * （客户端可写时才插得进去）。如果权限恰好是「客户端可写」而删除又失败，
+ * 那条文档会留在生产集合里 → 词库总数被污染（浏览页显示的数字就不准了）。
+ * 服务端 SDK 不受集合权限限制，所以即便集合门户大开也能查出这些痕迹。
+ */
+async function auditCollections() {
+  const report = [];
+  for (const c of SHARED_COLLECTIONS) {
+    const row = { name: c.name, desc: c.desc, expect: c.expect };
+    try {
+      const total = (await db.collection(c.name).count()).total;
+      row.count = total;
+
+      // 探测残留：只按标记字段查，不扫全表
+      const probes = await db.collection(c.name)
+        .where({ [PROBE_MARK]: db.command.exists(true) })
+        .limit(50)
+        .get();
+      row.probeCount = (probes.data || []).length;
+      row.probeIds = (probes.data || []).map((d) => d._id);
+
+      // 与基线比：偏差只提示，不当成错误（词库可能后续补词）
+      if (c.expect != null) {
+        row.diff = total - c.expect;
+        row.countOk = row.diff === 0;
+      }
+    } catch (e) {
+      row.error = (e && e.message) || String(e);
+    }
+    report.push(row);
+  }
+  const polluted = report.filter((r) => (r.probeCount || 0) > 0);
+  const drifted = report.filter((r) => r.countOk === false);
+  return {
+    ok: true,
+    report,
+    probeTotal: polluted.reduce((n, r) => n + r.probeCount, 0),
+    polluted: polluted.map((r) => r.name),
+    drifted: drifted.map((r) => r.name),
+    summary: polluted.length || drifted.length
+      ? `发现 ${polluted.length} 个集合有探测残留、${drifted.length} 个集合文档数偏离基线`
+      : '共享集合数据完整，无探测残留、文档数符合基线',
+  };
+}
+
+/**
+ * 清理探测残留：只删带 __mg_perm_probe 标记的文档，不碰任何业务数据。
+ * 逐条删而不是批量 where.remove —— 后者在服务端 SDK 里语义不够稳，
+ * 且逐条删能把失败的文档单独报告出来。
+ */
+async function cleanupProbes(event) {
+  const only = event && event.collection ? String(event.collection) : '';
+  const targets = only
+    ? SHARED_COLLECTIONS.filter((c) => c.name === only)
+    : SHARED_COLLECTIONS;
+  if (!targets.length) {
+    return { ok: false, error: `未知集合名：${only}（可清理：${SHARED_COLLECTIONS.map((c) => c.name).join('、')}）` };
+  }
+
+  const detail = [];
+  let removed = 0;
+  for (const c of targets) {
+    let ids = [];
+    try {
+      const res = await db.collection(c.name)
+        .where({ [PROBE_MARK]: db.command.exists(true) })
+        .limit(100)
+        .get();
+      ids = (res.data || []).map((d) => d._id);
+    } catch (e) {
+      detail.push({ name: c.name, removed: 0, error: (e && e.message) || String(e) });
+      continue;
+    }
+    let ok = 0;
+    const failed = [];
+    for (const id of ids) {
+      try {
+        await db.collection(c.name).doc(id).remove();
+        ok += 1;
+      } catch (e) {
+        failed.push({ id, error: (e && e.message) || String(e) });
+      }
+    }
+    removed += ok;
+    detail.push({ name: c.name, found: ids.length, removed: ok, failed });
+  }
+  return {
+    ok: true,
+    removed,
+    detail,
+    summary: removed ? `已清理 ${removed} 条探测残留` : '没有需要清理的探测残留',
+  };
+}

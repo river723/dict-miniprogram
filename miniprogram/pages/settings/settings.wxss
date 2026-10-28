@@ -211,6 +211,13 @@
   border-top: 1rpx solid var(--mg-border);
 }
 
+/* 权限自检 / 数据审计 两块之间的分隔 */
+.se-perm__divider {
+  height: 1rpx;
+  margin: 32rpx 0 24rpx;
+  background: var(--mg-border);
+}
+
 .se-perm__row {
   display: flex;
   align-items: center;

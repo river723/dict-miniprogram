@@ -281,6 +281,47 @@ const makeDb = (rows, opts = {}) => ({
   ok('admin-guard 权威源用了官方选项名',
     fs.readFileSync(guardPath, 'utf8').includes('仅管理端可读写'));
 
+  console.log('\n=== 12. 共享集合数据完整性审计（audit / cleanup）===');
+  // 📌 背景：写探测会往共享集合真插测试文档。权限开放时插得进去，
+  //   若删除失败 → 生产集合留垃圾（词库总数被污染 → 浏览页数字不准）。
+  //   服务端 SDK 不受集合权限限制，所以必须能在服务端审计+清理。
+  const adminFnSrc = fs.readFileSync(path.join(ROOT, 'cloudfunctions/admin/index.js'), 'utf8');
+  ok('admin 云函数提供 auditCollections（审计共享集合完整性）',
+    /case 'auditCollections'/.test(adminFnSrc) && /auditCollections/.test(adminFnSrc));
+  ok('admin 云函数提供 cleanupProbes（清理探测残留）',
+    /case 'cleanupProbes'/.test(adminFnSrc) && /cleanupProbes/.test(adminFnSrc));
+  ok('审计/清理都要求管理员身份',
+    /case 'auditCollections'[\s\S]{0,200}isAdmin/.test(adminFnSrc)
+    && /case 'cleanupProbes'[\s\S]{0,200}isAdmin/.test(adminFnSrc));
+  ok('探测残留按标记字段查（不扫全表）',
+    /PROBE_MARK/.test(adminFnSrc) && /exists\(true\)/.test(adminFnSrc));
+  ok('探测标记与前端 permCheck 一致',
+    adminFnSrc.includes('__mg_perm_probe') && permSrc.includes('__mg_perm_probe'));
+  ok('清理只删带标记的文档，不碰业务数据',
+    /PROBE_MARK/.test(adminFnSrc) && !/clearWorddict/.test(adminFnSrc));
+  ok('前端把「探测文档没删掉」如实提示给用户',
+    /cleaned === false/.test(permSrc) && /cleanupProbes/.test(permSrc));
+
+  console.log('\n=== 13. 禁止「所有用户可读」这条错误指引回流 ===');
+  // ⚠ 这条错误指引的实际后果：用户照着把词库设成客户端可写 = 全站词库谁都能改。
+  //   前端 0 处直连数据库 → 没有任何集合需要「所有人可读」。
+  const worddictSrc = fs.readFileSync(path.join(ROOT, 'cloudfunctions/worddict/index.js'), 'utf8');
+  const opManual = fs.readFileSync(path.join(ROOT, 'docs/运维手册.md'), 'utf8');
+  const badGuide = (s) => {
+    // 只抓「建议设成可读」的表述；「⚠ 不要设成…」这类纠正性说明不算。
+    return /重设集合权限为「所有用户可读」/.test(s)
+      || /将读权限设为「所有用户可读」/.test(s)
+      || /权限设为「所有用户可读」/.test(s);
+  };
+  ok('运维手册没有「重设权限为所有用户可读」的错误指引',
+    !badGuide(opManual),
+    badGuide(opManual) ? '运维手册仍在建议设成所有人可读' : '');
+  ok('worddict 云函数没有「将读权限设为所有用户可读」的错误指引',
+    !badGuide(worddictSrc),
+    badGuide(worddictSrc) ? 'worddict 注释仍在建议设成所有人可读' : '');
+  ok('运维手册明确写了「前端 0 直连，不需开放读权限」的理由',
+    opManual.includes('0 处直连') || opManual.includes('0处直连'));
+
   console.log(`\n────────────────────────────`);
   console.log(`通过 ${pass} 项，失败 ${fail} 项`);
   if (fail) process.exit(1);

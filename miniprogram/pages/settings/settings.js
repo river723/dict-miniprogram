@@ -14,7 +14,7 @@ import { DAILY_NEW_WORDS_LIMIT } from '../../theme/tokens';
 import { THEME_OPTIONS } from '../../constants/index';
 import { applyTheme, invalidateTheme } from '../../utils/theme';
 import { fetchAdminState, peekAdminState } from '../../services/admin';
-import { checkCollectionPermissions } from '../../services/permCheck';
+import { checkCollectionPermissions, auditCollections, cleanupProbes } from '../../services/permCheck';
 
 const save = (patch) => StorageService.saveSettings(patch);
 
@@ -30,6 +30,9 @@ Page({
     // 集合权限自检结果（仅管理员可见）。
     permChecking: false,
     permResult: null,   // { ok, summary, results: [...] }
+    // 共享集合数据完整性审计结果（仅管理员可见）。
+    auditBusy: false,
+    auditResult: null,  // { ok, summary, report: [...], probeTotal }
   },
 
   onShow() {
@@ -138,6 +141,76 @@ Page({
     } finally {
       this.setData({ permChecking: false });
     }
+  },
+
+  // ---------- 共享集合数据审计（服务端执行）----------
+  // 权限自检只看「规则对不对」，看不出「数据有没有被污染」。
+  // 写探测会在权限开放时往生产集合插测试文档，删不掉就留下一条垃圾
+  // （词库总数 +1 → 浏览页显示的词条数不准）。
+  //
+  // ⚠ countText 在 JS 侧拼好再给 WXML —— WXML 里 `=== undefined` 不可靠
+  //   （数据序列化后 undefined 会变 null，比较结果不符合预期）。
+  formatAudit(res) {
+    const report = (res && res.report ? res.report : []).map((r) => {
+      let countText = '—';
+      if (r.error) countText = '读取失败';
+      else if (typeof r.count === 'number') {
+        countText = r.expect ? `${r.count} / ${r.expect}` : String(r.count);
+      }
+      if (r.probeCount) countText += ` ⚠残留${r.probeCount}`;
+      return { ...r, countText };
+    });
+    return { ...res, report };
+  },
+
+  async auditData() {
+    if (this.data.auditBusy) return;
+    this.setData({ auditBusy: true, auditResult: null });
+    wx.showLoading({ title: '审计中' });
+    try {
+      const res = this.formatAudit(await auditCollections());
+      this.setData({ auditResult: res });
+      wx.hideLoading();
+      wx.showToast({
+        title: res.probeTotal ? `发现 ${res.probeTotal} 条残留` : '数据完整',
+        icon: res.probeTotal ? 'none' : 'success',
+      });
+    } catch (e) {
+      wx.hideLoading();
+      wx.showToast({ title: '审计失败', icon: 'none' });
+    } finally {
+      this.setData({ auditBusy: false });
+    }
+  },
+
+  async cleanProbes() {
+    if (this.data.auditBusy) return;
+    wx.showModal({
+      title: '清理探测残留',
+      content: '将删除共享集合里带 __mg_perm_probe 标记的测试文档（只删这些，不动任何业务数据）。确定？',
+      confirmText: '清理',
+      success: async (r) => {
+        if (!r.confirm) return;
+        this.setData({ auditBusy: true });
+        wx.showLoading({ title: '清理中' });
+        try {
+          const res = await cleanupProbes();
+          wx.hideLoading();
+          wx.showToast({
+            title: res.removed ? `已清理 ${res.removed} 条` : '无需清理',
+            icon: res.removed ? 'success' : 'none',
+          });
+          // 清完立刻重跑审计，让用户看到最新状态
+          const after = this.formatAudit(await auditCollections());
+          this.setData({ auditResult: after });
+        } catch (e) {
+          wx.hideLoading();
+          wx.showToast({ title: '清理失败', icon: 'none' });
+        } finally {
+          this.setData({ auditBusy: false });
+        }
+      },
+    });
   },
 
   // ---------- 高级选项 ----------

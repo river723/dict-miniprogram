@@ -99,7 +99,14 @@ function probeRead(collName) {
   });
 }
 
-/** 用客户端 SDK 试写一个集合，并尝试清理掉探测文档。 */
+/**
+ * 用客户端 SDK 试写一个集合，并尝试清理掉探测文档。
+ *
+ * ⚠ 共享集合若恰好「客户端可写」，这条测试文档会真的写进生产数据。
+ *   所以这里必须**当场删掉**，并把删除结果如实带回（cleaned / note）——
+ *   删不掉时要让用户看得见，否则生产集合里会留垃圾（词库总数被污染）。
+ *   服务端有 admin#cleanupProbes 可兜底清理。
+ */
 function probeWrite(collName) {
   return new Promise((resolve) => {
     try {
@@ -119,6 +126,7 @@ function probeWrite(collName) {
             fail: (err) => resolve({
               ok: true,
               cleaned: false,
+              id,
               note: `写入成功但删除失败（${(err && err.errMsg) || err}），请手动清理 ${collName}/${id}`,
             }),
           });
@@ -180,18 +188,22 @@ async function checkCollection(meta) {
     ok,
     read,
     write,
-    hint: ok ? (risk === 'critical' ? '' : '（用户私有数据，_openid 隔离由平台保证，可接受）') : buildHint(status, name),
+    hint: ok ? (risk === 'critical' ? '' : '（用户私有数据，_openid 隔离由平台保证，可接受）') : buildHint(status, name, write),
   };
 }
 
-function buildHint(status, collName) {
+function buildHint(status, collName, write) {
+  // 写探测真的插进去了、还没删掉 → 必须在提示里说清楚（生产数据被污染了）
+  const dirty = write && write.ok && write.cleaned === false
+    ? ` 另：本次探测的测试文档未能自动删除（${collName} 里可能已残留 1 条），请用 admin#cleanupProbes 清理。`
+    : '';
   switch (status) {
     case 'open':
-      return `⚠ ${collName} 客户端读写都不受限 —— 严重后门。控制台 → 数据库 → ${collName} → 权限设置 → 选「仅管理端可读写」。`;
+      return `⚠ ${collName} 客户端读写都不受限 —— 严重后门：任何人拿到小程序都能改全站数据。控制台 → 数据库 → ${collName} → 权限设置 → 选「仅管理端可读写」。${dirty}`;
     case 'readable':
-      return `⚠ ${collName} 客户端可读 —— 共享数据会泄漏给所有用户。改成「仅管理端可读写」。`;
+      return `⚠ ${collName} 客户端可读 —— 共享数据会泄漏给所有用户。改成「仅管理端可读写」。${dirty}`;
     case 'writable':
-      return `⚠ ${collName} 客户端可写 —— 任何人都能改全站数据（如污染词库 / 给自己发管理员）。改成「仅管理端可读写」。`;
+      return `⚠ ${collName} 客户端可写 —— 任何人都能改全站数据（如污染词库 / 给自己发管理员）。改成「仅管理端可读写」。${dirty}`;
     default:
       return '';
   }
@@ -244,4 +256,38 @@ export async function checkAdminAndPermissions() {
     },
     permissions: perm,
   };
+}
+
+/**
+ * 审计共享集合的数据完整性（服务端执行）。
+ *
+ * ⚠ 为什么要单独做：权限自检只看「权限规则对不对」，看不出**数据有没有被污染**。
+ *   写探测会往共享集合真插一条测试文档（权限开放时插得进去），
+ *   若删除失败就留下一条垃圾 —— 词库总数会多 1（4801 → 4802），
+ *   浏览页显示的词条数就不准了。
+ *
+ * 服务端 SDK 不受集合权限限制 → 即便集合门户大开也能查出痕迹。
+ */
+export async function auditCollections() {
+  const res = await callCloud('admin', { action: 'auditCollections' }, { silent: true });
+  if (!res || !res.ok) {
+    throw new Error((res && res.error) || '审计失败');
+  }
+  return res;
+}
+
+/**
+ * 清理探测残留（服务端执行，只删带 __mg_perm_probe 标记的文档）。
+ * @param {string} [collection] 只清理指定集合；不传则清理全部共享集合
+ */
+export async function cleanupProbes(collection) {
+  const res = await callCloud(
+    'admin',
+    collection ? { action: 'cleanupProbes', collection } : { action: 'cleanupProbes' },
+    { silent: true },
+  );
+  if (!res || !res.ok) {
+    throw new Error((res && res.error) || '清理失败');
+  }
+  return res;
 }

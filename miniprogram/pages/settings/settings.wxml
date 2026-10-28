@@ -207,6 +207,39 @@
           <text class="se-perm__hint">{{item.hint}}</text>
         </block>
       </view>
+
+      <!-- ===== 数据完整性审计（服务端执行）===== -->
+      <view class="se-perm__divider" />
+      <mg-button
+        title="{{auditBusy ? '处理中…' : '审计集合数据'}}"
+        variant="secondary"
+        size="md"
+        block
+        icon="database-outline"
+        loading="{{auditBusy}}"
+        bind:tap="auditData"
+      />
+      <text class="se-perm__desc2">查共享集合里有没有探测残留（权限自检会插测试文档，删不掉就留下一条垃圾，词库总数会多 1）。</text>
+
+      <view class="se-perm__result" wx:if="{{auditResult}}">
+        <view class="se-perm__row" wx:for="{{auditResult.report}}" wx:key="name">
+          <view class="se-perm__nameWrap">
+            <text class="se-perm__name">{{item.name}}</text>
+            <text class="se-perm__desc2">{{item.desc}}</text>
+          </view>
+          <text class="se-perm__badge {{item.probeCount ? 'is-bad' : 'is-ok'}}">{{item.countText}}</text>
+        </view>
+        <text class="se-perm__summary {{auditResult.probeTotal ? 'is-bad' : 'is-ok'}}">{{auditResult.summary}}</text>
+        <mg-button
+          wx:if="{{auditResult.probeTotal}}"
+          title="清理探测残留"
+          variant="secondary"
+          size="sm"
+          block
+          icon="trash-can-outline"
+          bind:tap="cleanProbes"
+        />
+      </view>
     </view>
   </block>
 
