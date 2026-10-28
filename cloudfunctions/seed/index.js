@@ -49,7 +49,7 @@ const SYSTEM_COLLECTIONS = [
   { name: 'study_plans', desc: '复习计划' },
   { name: 'wrong_questions', desc: '错题本' },
   { name: 'user_settings', desc: '用户设置' },
-  { name: DATA_COLLECTION, desc: '词库（须「仅管理端可读写」；前端 0 直连，不需所有人可读）' },
+  { name: DATA_COLLECTION, desc: '词库（须「所有用户不可读写」；前端 0 直连，不需所有人可读）' },
   { name: 'worddict_ielts', desc: '雅思词库（仅建空集合，数据走控制台导入）' },
   { name: 'content_files', desc: '云存储路径→fileID 映射' },
 ];

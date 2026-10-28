@@ -287,15 +287,22 @@ const makeDb = (rows, opts = {}) => ({
   ok('有问题的集合在 JS 里预过滤成 permResult.bad',
     /bad:\s*bad/.test(permSrc) || /bad,/.test(permSrc));
 
-  console.log('\n=== 10·补、权限模式识别（官方只有四种，名字相近含义不同）===');
-  // ⚠ 背景：用户曾把三个共享集合设成「仅创建者可读写」而不是「仅管理端可读写」，
-  //   两者只差几个字，但前者客户端照样能往共享集合插文档 → 仍是真后门。
+  console.log('\n=== 10·补、权限模式识别（四种，名字相近含义不同）===');
+  // ⚠ 背景：用户曾把三个共享集合设成「仅创建者可读写」，两者只差几个字，
+  //   但后者客户端照样能往共享集合插文档 → 仍是真后门。
   //   所以自检必须能**报出当前实际生效的是哪一种**，否则用户会反复配错同一个地方。
-  ok('permCheck 列出了官方四种权限模式名',
-    /仅管理端可读写/.test(permSrc)
+  // ⚠⚠ 更狠的一次踩坑：官方文档术语叫「仅管理端可读写」，但**控制台根本不显示这几个字**，
+  //   控制台显示的是「所有用户不可读写」→ 用户按术语去找，找不到选项。
+  //   所以下面同时断言「控制台显示名」和「官方术语名」都在，且提示用显示名。
+  ok('permCheck 列出了控制台里的四个显示名',
+    /所有用户不可读写/.test(permSrc)
     && /仅创建者可读写/.test(permSrc)
-    && /仅创建者可写，所有人可读/.test(permSrc)
-    && /仅管理端可写，所有人可读/.test(permSrc));
+    && /所有用户可读，仅创建者可读写/.test(permSrc)
+    && /所有用户可读'/.test(permSrc));
+  ok('permCheck 保留了官方术语名做对照（仅管理端可读写）',
+    /仅管理端可读写/.test(permSrc));
+  ok('PERM_MODE.ADMIN_ONLY 用的是控制台显示名「所有用户不可读写」',
+    /ADMIN_ONLY:\s*'所有用户不可读写'/.test(permSrc));
   ok('permCheck 有 inferMode（推断当前是哪种模式）',
     /inferMode/.test(permSrc) && /PERM_MODE/.test(permSrc));
   ok('permCheck 结果里带 mode 字段',
@@ -304,10 +311,10 @@ const makeDb = (rows, opts = {}) => ({
     /globalReadable/.test(permSrc));
   ok('能区分 ownWrite（仅创建者可读写，能插 = 后门）',
     /ownWrite/.test(permSrc));
-  ok('提示里点名当前模式，并给出唯一正确选项「仅管理端可读写」',
+  ok('提示里点名当前模式，并给出唯一正确选项「所有用户不可读写」+「数据权限」页签',
     /buildHint/.test(permSrc)
-    && /仅管理端可读写/.test(permSrc)
-    && /权限设置/.test(permSrc));
+    && /所有用户不可读写/.test(permSrc)
+    && /数据权限/.test(permSrc));
   ok('前端设置页展示了 mode',
     /item\.mode/.test(permSettingsWxml) && /se-perm__mode/.test(permSettingsWxml));
   // ⚠ 核心安全断言：「仅创建者可读写」绝不能被判为安全
@@ -315,16 +322,29 @@ const makeDb = (rows, opts = {}) => ({
     /status = 'ownWrite';[\s\S]{0,40}ok = false/.test(permSrc));
 
 
-  console.log('\n=== 11. 官方权限选项名用词正确 ===');
-  // ⚠ 控制台里没有「所有用户不可读写」这个选项，官方叫「仅管理端可读写」。
-  //   写错会让用户反复在控制台里找不存在的选项。
+  console.log('\n=== 11. 权限选项名用控制台显示名（别再让用户找不存在的名字）===');
+  // ⚠ 历史教训：曾经反过来断言「控制台没有『所有用户不可读写』」——**完全错了**。
+  //   2026 版控制台「数据权限」页显示的就是「所有用户不可读写」，
+  //   「仅管理端可读写」只是官方文档术语。写反会让用户反复找不到选项。
   const setupSrc2 = fs.readFileSync(path.join(ROOT, 'cloudfunctions/setup/index.js'), 'utf8');
-  ok('setup 用了官方选项名「仅管理端可读写」',
-    setupSrc2.includes('仅管理端可读写'));
+  const guardSrc2 = fs.readFileSync(guardPath, 'utf8');
+  ok('setup 用了控制台显示名「所有用户不可读写」',
+    setupSrc2.includes('所有用户不可读写'));
   ok('setup 明确提示「建集合 ≠ 权限正确」',
     /建集合 ≠ 权限正确/.test(setupSrc2));
-  ok('admin-guard 权威源用了官方选项名',
-    fs.readFileSync(guardPath, 'utf8').includes('仅管理端可读写'));
+  ok('admin-guard 权威源用了控制台显示名「所有用户不可读写」',
+    guardSrc2.includes('所有用户不可读写'));
+  // 反向断言：禁止「控制台没有『所有用户不可读写』」这类错误说法回流
+  const FE_SRCS = [
+    ['permCheck.js', permSrc],
+    ['setup/index.js', setupSrc2],
+    ['admin-guard.cjs', guardSrc2],
+  ];
+  const badClaim = FE_SRCS.filter(([, s]) =>
+    /没有[「']?\s*「所有用户不可读写」/.test(s)
+    || /控制台[^。\n]{0,12}没有[^。\n]{0,12}所有用户不可读写/.test(s));
+  ok('没有任何文件再声称「控制台没有『所有用户不可读写』」',
+    badClaim.length === 0, badClaim.map(([n]) => n).join(', '));
 
   console.log('\n=== 12. 共享集合数据完整性审计（audit / cleanup）===');
   // 📌 背景：写探测会往共享集合真插测试文档。权限开放时插得进去，
