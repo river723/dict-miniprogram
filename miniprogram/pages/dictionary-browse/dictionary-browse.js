@@ -142,6 +142,17 @@ Page({
     this.localEntries = localMode ? (getLibraryEntries(dictId) || []) : null;
     this.setData({ dictId, dictName: lib.name, localMode, cloudBatch: !localMode });
     this.raw = [];
+    if (!localMode) {
+      // 云端词库（考研）：总词条数走云端 count，否则状态栏一直显示 '?'。
+      // 集合身份校验失败（col 不符）时不做假数字，保持 '?' 作为加载/异常提示。
+      countWorddict(dictId)
+        .then((res) => {
+          const expectCol = dictId === 'ielts' ? 'worddict_ielts' : 'worddict';
+          if (res.col && res.col !== expectCol) return;
+          this.setData({ totalText: fmtNum(res.total || 0) });
+        })
+        .catch(() => {});
+    }
     this.loadLetter('A');
   },
 
