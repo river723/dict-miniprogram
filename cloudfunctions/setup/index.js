@@ -15,6 +15,17 @@
  *   「先有鸡还是先有蛋」的问题由 admin-guard 的内置指纹解开：
  *   开发者本人的 openid 指纹写在代码里，不依赖 admins 集合是否已建好，
  *   所以首次部署后仍能正常建集合（admins 集合也在下面的列表里）。
+ *
+ * ⚠⚠ 建集合 ≠ 权限正确！本函数只能建空集合，**权限仍需在控制台手动设置**：
+ *   云开发控制台 → 数据库 → 点集合 → 权限设置 → 选「仅管理端可读写」
+ *   （= 小程序端读不了也写不了，只有云函数/控制台能访问）。
+ *   ⚠ 控制台里**没有**「所有用户不可读写」这个选项名，别找错。
+ *   漏设的后果：admins 集合若客户端可写 → 普通用户能给自己写一条白名单，
+ *   直接绕过全部鉴权。用小程序「设置 → 安全自检 → 检测集合权限」可验证。
+ *
+ * 📌 本项目前端 0 处直连数据库（全部走云函数），所以**所有**集合都应该是
+ *   「仅管理端可读写」。若将来前端要直连读某集合，才把那一个改成
+ *   「所有用户可读，仅管理端可写」。
  */
 const cloud = require('wx-server-sdk');
 const { isAdmin, forbidden } = require('./admin-guard');
@@ -27,9 +38,9 @@ const COLLECTIONS = [
   { name: 'study_plans', desc: '复习计划' },
   { name: 'wrong_questions', desc: '错题本' },
   { name: 'user_settings', desc: '用户设置' },
-  { name: 'worddict', desc: '词库（需所有用户可读 + prefix 索引）' },
+  { name: 'worddict', desc: '词库（前端 0 直连，服务端读；如将来前端要直连需改为「所有用户可读」）' },
   { name: 'content_files', desc: '云存储路径→fileID 映射' },
-  { name: 'admins', desc: '管理员白名单（需所有用户不可读写）' },
+  { name: 'admins', desc: '管理员白名单（须「仅管理端可读写」= 客户端不可读写）' },
 ];
 
 exports.main = async (event = {}) => {

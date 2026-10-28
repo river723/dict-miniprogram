@@ -228,6 +228,45 @@ const makeDb = (rows, opts = {}) => ({
   ok('部署脚本提供 --dry 干跑（验证命令写法不触发真实部署）',
     /--dry/.test(deploySrc));
 
+  console.log('\n=== 10. 集合权限自检模块（permCheck）===');
+  const permPath = path.join(ROOT, 'miniprogram', 'services', 'permCheck.js');
+  const permSrc = fs.existsSync(permPath) ? fs.readFileSync(permPath, 'utf8') : '';
+  ok('permCheck 模块存在', !!permSrc);
+  ok('自检跑在客户端 SDK 上（wx.cloud.database），不是服务端',
+    permSrc.includes('wx.cloud.database()'));
+  ok('自检做了读 + 写两次探测', /probeRead/.test(permSrc) && /probeWrite/.test(permSrc));
+  ok('写探测带标记，便于事后识别与清理',
+    permSrc.includes('__mg_perm_probe'));
+  ok('写成功后立刻删除探测文档（不留垃圾）',
+    /remove\(\{/.test(permSrc) && /cleaned/.test(permSrc));
+  ok('判定分三档：locked / readable / writable',
+    /locked/.test(permSrc) && /readable/.test(permSrc) && /writable/.test(permSrc));
+  ok('admins 集合期望「客户端不可读写」',
+    /SERVER_ONLY\s*=\s*\[\s*'admins'/.test(permSrc));
+  ok('设置页已接上自检入口',
+    /checkPerms/.test(fs.readFileSync(path.join(ROOT, 'miniprogram/pages/settings/settings.js'), 'utf8'))
+    && /checkPerms/.test(fs.readFileSync(path.join(ROOT, 'miniprogram/pages/settings/settings.wxml'), 'utf8')));
+  // ⚠ 小程序里 wx:if 优先级高于 wx:for —— 同元素上两者并用，条件里的 item 尚未定义，
+  //   永远不成立 → 提示永远不显示。必须先在 JS 里过滤（permResult.bad）。
+  const permSettingsWxml = fs.readFileSync(path.join(ROOT, 'miniprogram/pages/settings/settings.wxml'), 'utf8');
+  const forIfOnSameEl = /<[a-z-]+[^>]*wx:for[^>]*wx:if[^>]*>/.test(permSettingsWxml)
+    || /<[a-z-]+[^>]*wx:if[^>]*wx:for[^>]*>/.test(permSettingsWxml);
+  ok('WXML 没有把 wx:for 与 wx:if 放同一元素（小程序里 wx:if 优先级更高，会失效）',
+    !forIfOnSameEl);
+  ok('有问题的集合在 JS 里预过滤成 permResult.bad',
+    /bad:\s*bad/.test(permSrc) || /bad,/.test(permSrc));
+
+  console.log('\n=== 11. 官方权限选项名用词正确 ===');
+  // ⚠ 控制台里没有「所有用户不可读写」这个选项，官方叫「仅管理端可读写」。
+  //   写错会让用户反复在控制台里找不存在的选项。
+  const setupSrc2 = fs.readFileSync(path.join(ROOT, 'cloudfunctions/setup/index.js'), 'utf8');
+  ok('setup 用了官方选项名「仅管理端可读写」',
+    setupSrc2.includes('仅管理端可读写'));
+  ok('setup 明确提示「建集合 ≠ 权限正确」',
+    /建集合 ≠ 权限正确/.test(setupSrc2));
+  ok('admin-guard 权威源用了官方选项名',
+    fs.readFileSync(guardPath, 'utf8').includes('仅管理端可读写'));
+
   console.log(`\n────────────────────────────`);
   console.log(`通过 ${pass} 项，失败 ${fail} 项`);
   if (fail) process.exit(1);

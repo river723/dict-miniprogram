@@ -196,6 +196,73 @@
   color: var(--mg-text-3);
 }
 
+/* ---------- 安全自检 ---------- */
+.se-perm__desc {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: var(--mg-text-3);
+  line-height: 32rpx;
+}
+
+.se-perm__result {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--mg-border);
+}
+
+.se-perm__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10rpx 0;
+}
+
+.se-perm__name {
+  font-size: 26rpx;
+  color: var(--mg-text-primary);
+  font-weight: 500;
+}
+
+.se-perm__badge {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.se-perm__badge.is-ok {
+  color: var(--mg-primary);
+  background: rgba(46, 94, 78, 0.1);
+}
+
+.se-perm__badge.is-bad {
+  color: var(--mg-danger, #C0392B);
+  background: rgba(192, 57, 43, 0.1);
+}
+
+.se-perm__summary {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.se-perm__summary.is-ok {
+  color: var(--mg-primary);
+}
+
+.se-perm__summary.is-bad {
+  color: var(--mg-danger, #C0392B);
+}
+
+.se-perm__hint {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: var(--mg-text-2);
+  line-height: 32rpx;
+}
+
 /* ---------- 高级选项 ---------- */
 .se-danger {
   display: flex;

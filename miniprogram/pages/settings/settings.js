@@ -14,6 +14,7 @@ import { DAILY_NEW_WORDS_LIMIT } from '../../theme/tokens';
 import { THEME_OPTIONS } from '../../constants/index';
 import { applyTheme, invalidateTheme } from '../../utils/theme';
 import { fetchAdminState, peekAdminState } from '../../services/admin';
+import { checkCollectionPermissions } from '../../services/permCheck';
 
 const save = (patch) => StorageService.saveSettings(patch);
 
@@ -26,6 +27,9 @@ Page({
     // ⚠ 这只是体验层（少显示一个按钮），真正的闸门在云函数内部 ——
     //   即便有人手改前端直接调 seed 云函数，服务端也会按 OPENID 挡下来。
     isAdmin: false,
+    // 集合权限自检结果（仅管理员可见）。
+    permChecking: false,
+    permResult: null,   // { ok, summary, results: [...] }
   },
 
   onShow() {
@@ -108,6 +112,32 @@ Page({
       return;
     }
     wx.navigateTo({ url: '/pages/seed/seed' });
+  },
+
+  /**
+   * 集合权限自检 —— 用客户端 SDK 探测 admins 集合是否真的「仅管理端可读写」。
+   *
+   * 集合权限是在云开发控制台里点的，点错了**不会有任何报错**，
+   * 只在真有人越权时才暴露。这里主动验一把，把「以为设好了」变成「确认设好了」。
+   */
+  async checkPerms() {
+    if (this.data.permChecking) return;
+    this.setData({ permChecking: true, permResult: null });
+    wx.showLoading({ title: '检测中' });
+    try {
+      const res = await checkCollectionPermissions();
+      this.setData({ permResult: res });
+      wx.hideLoading();
+      wx.showToast({
+        title: res.ok ? '权限正常' : '发现后门',
+        icon: res.ok ? 'success' : 'none',
+      });
+    } catch (e) {
+      wx.hideLoading();
+      wx.showToast({ title: '检测失败', icon: 'none' });
+    } finally {
+      this.setData({ permChecking: false });
+    }
   },
 
   // ---------- 高级选项 ----------
