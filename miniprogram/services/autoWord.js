@@ -11,6 +11,7 @@ import { formatDate, diffDays } from '../utils/util';
 import { REVIEW_INTERVALS } from '../theme/tokens';
 import { pickWorddict, searchWorddict } from './worddict';
 import { getLibraryWords, seededShuffle } from './libraries';
+import { fromCloudEntry, enrichSync } from './wordEnrich';
 
 // 最近一次配词结果：用于「继续学习」区分『词库真·用尽』与『配词失败/超时』，
 // 避免把网络/云函数抖动误报成「词库已用尽」，让用户误以为自动配词开关失效。
@@ -190,28 +191,81 @@ async function lookupFullWord(word, lib) {
 }
 
 /**
- * 补全单条候选词的扩展字段（词根/记忆/易混词/音标）。
+ * 把云端原始文档收敛成「整串释义」兜底单条（本地内置词库 d 串的同款结构）。
+ * 用于云端无结构化 definitions 时，保证生词本里至少有中文释义可显示。
+ */
+function defStringToRow(def) {
+  return def
+    ? [{ part_of_speech: '', meaning: String(def).trim(), example: '', is_core: true, is_rare_sense: false }]
+    : [];
+}
+
+/**
+ * 补全单条候选词的扩展字段（词根/记忆/易混词/音标/**结构化中文释义**）。
  * 用 search action（返回全文档，无 field 限制）兜底——不依赖 wordict 云函数 pick 的 FIELDS 部署。
- * 若 pick 已返回扩展字段则直接返回；补全失败也不阻断配词（原样返回）。
+ *
+ * ⚠️ 修复点：旧版只搬 etymology/memory/similar/pronunciation，**漏搬 definitions**。
+ *   云端考研候选（pick 已带回 definitions）没问题；但「内置词库（雅思）候选」是客户端
+ *   生成的 `{word}` 裸串，definitions 只能靠这里从云端富词条取——漏搬会导致雅思词
+ *   加入生词本后卡片背面没有中文释义（词库里明明有）。
+ *   云端未命中（如雅思集合尚未导入/离线）再回落本地内置词条的整串释义 d。
+ *
+ * 若 pick 已带回全量字段（含 definitions）则原样返回，避免重复云调用。
  * @param {object} entry 候选词
  * @param {string} lib   候选词所属词库（决定先查哪个云集合）
  */
 async function enrichCandidate(entry, lib) {
-  if (entry.etymology || (entry.similar_words && entry.similar_words.length) || entry.memory_tip) {
+  // 候选词已带全量扩展字段（云端 pick 已返回 definitions + 词根/记忆/易混词）则直接返回
+  if (entry.definitions && entry.definitions.length &&
+      (entry.etymology || (entry.similar_words && entry.similar_words.length) || entry.memory_tip)) {
     return entry;
   }
-  const full = await lookupFullWord(entry.word, lib);
-  if (!full) return entry;
+
+  const word = entry.word;
+  let etymology = entry.etymology || '';
+  let memory_tip = entry.memory_tip || '';
+  let similar_words = entry.similar_words && entry.similar_words.length ? entry.similar_words : [];
+  let pronunciation_uk = entry.pronunciation_uk || '';
+  let pronunciation_us = entry.pronunciation_us || '';
+  let definitions = entry.definitions && entry.definitions.length ? entry.definitions : [];
+
+  // 云端富词条（按 lib 选集合，未命中再查考研兜底）：结构化 definitions 含例句
+  const full = await lookupFullWord(word, lib);
+  if (full) {
+    const norm = fromCloudEntry(full);
+    if (!etymology) etymology = norm.etymology || '';
+    if (!memory_tip) memory_tip = norm.memory_tip || '';
+    if (!similar_words.length) similar_words = norm.similar_words || [];
+    // 雅思集合用 phonetic_uk；考研集合无音标（发音走 TTS）
+    if (!pronunciation_uk) pronunciation_uk = norm.ph || '';
+    if (!pronunciation_us) pronunciation_us = full.pronunciation_us || '';
+    if (!definitions.length && norm.definitions && norm.definitions.length) {
+      definitions = norm.definitions;
+    }
+  }
+
+  // 云端未命中（如雅思集合尚未导入）或云端也无结构化释义：回落本地内置词条，
+  // 至少保证「中文释义」存在（本地 d 是整串释义），避免卡片背面空白。
+  if (!definitions.length) {
+    const localLibs = lib === 'all' ? ['all', 'ielts'] : [lib, 'all'];
+    for (const l of localLibs) {
+      const local = enrichSync(l, word);
+      if (local && local.def) {
+        definitions = defStringToRow(local.def);
+        if (!pronunciation_uk && local.ph) pronunciation_uk = local.ph;
+        break;
+      }
+    }
+  }
+
   return {
-    ...entry,
-    etymology: entry.etymology || full.etymology || '',
-    memory_tip: entry.memory_tip || full.memory_tip || '',
-    similar_words: entry.similar_words && entry.similar_words.length
-      ? entry.similar_words
-      : (full.similar_words || []),
-    // 雅思集合用 phonetic_uk 存音标；考研集合无音标字段（发音走 TTS）
-    pronunciation_uk: entry.pronunciation_uk || full.phonetic_uk || full.pronunciation_uk || '',
-    pronunciation_us: entry.pronunciation_us || full.pronunciation_us || '',
+    word,
+    definitions,
+    etymology,
+    memory_tip,
+    similar_words,
+    pronunciation_uk,
+    pronunciation_us,
   };
 }
 
@@ -253,5 +307,63 @@ export async function enrichWordbookOnce() {
     StorageService.setFlag('wordbookEnrichedV1', true);
   } catch (e) {
     console.error('[AutoWord] 回填生词本字段失败', e);
+  }
+}
+
+/**
+ * 一次性回填：生词本里缺失「结构化中文释义」的词，从词库补全。
+ * 修复历史遗留——旧版 enrichCandidate 漏搬 definitions，导致通过自动配词进入生词本的
+ * 雅思词（客户端裸 `{word}` 候选）没有中文释义，卡片背面空白。
+ * 已运行过（mg_flags.wordbookDefsV1）则跳过。分块并发避免一次性过多云调用；
+ * 云端未命中再回落本地内置词条的整串释义。
+ */
+export async function enrichWordbookDefinitionsOnce() {
+  try {
+    if (StorageService.getFlag('wordbookDefsV1')) return;
+    const needDefs = StorageService.getWords().filter(
+      (w) => !(w.definitions && w.definitions.length)
+    );
+    if (needDefs.length === 0) {
+      StorageService.setFlag('wordbookDefsV1', true);
+      return;
+    }
+    const CHUNK = 8;
+    const lib = (StorageService.getSettings().activeLibraryId) || 'all';
+    for (let i = 0; i < needDefs.length; i += CHUNK) {
+      const batch = needDefs.slice(i, i + CHUNK);
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.all(batch.map(async (w) => {
+        try {
+          const full = await lookupFullWord(w.word, lib);
+          let definitions = [];
+          let ph = '';
+          if (full) {
+            const norm = fromCloudEntry(full);
+            if (norm.definitions && norm.definitions.length) definitions = norm.definitions;
+            if (norm.ph) ph = norm.ph;
+          }
+          if (!definitions.length) {
+            const localLibs = lib === 'all' ? ['all', 'ielts'] : [lib, 'all'];
+            for (const l of localLibs) {
+              const local = enrichSync(l, w.word);
+              if (local && local.def) {
+                definitions = defStringToRow(local.def);
+                if (!ph && local.ph) ph = local.ph;
+                break;
+              }
+            }
+          }
+          if (definitions.length || ph) {
+            const patch = {};
+            if (definitions.length) patch.definitions = definitions;
+            if (ph && !w.pronunciation_uk) patch.pronunciation_uk = ph;
+            await StorageService.updateWord(w.id, patch);
+          }
+        } catch (e) { /* 单个词补全失败不影响整体 */ }
+      }));
+    }
+    StorageService.setFlag('wordbookDefsV1', true);
+  } catch (e) {
+    console.error('[AutoWord] 回填生词本释义失败', e);
   }
 }

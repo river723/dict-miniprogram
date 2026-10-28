@@ -32,10 +32,10 @@ const cacheKey = (libId, word) => `${libId || ''}|${String(word).toLowerCase()}`
 const num = (n, dflt) => (Number.isFinite(Number(n)) ? Number(n) : dflt);
 
 /**
- * 云端词条 → 统一富词条结构。
+ * 云端词条 → 统一富词条结构（纯函数，供外部复用，避免重复写字段归一逻辑）。
  * 兼容两个集合的字段差异：雅思集合用 phonetic_uk，考研集合无音标字段。
  */
-function fromCloudEntry(hit) {
+export function fromCloudEntry(hit) {
   const definitions = (Array.isArray(hit.definitions) ? hit.definitions : [])
     .filter((d) => d && String(d.meaning || '').trim())
     .map((d) => ({
